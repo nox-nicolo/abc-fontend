@@ -1,0 +1,156 @@
+import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
+import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
+import 'package:africa_beuty/feature/booking/view_modal/salon_offer.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class ChooseSalonPage extends ConsumerWidget {
+  final String subServiceId;
+
+  const ChooseSalonPage({
+    super.key,
+    required this.subServiceId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state =
+        ref.watch(salonOfferViewModelProvider(subServiceId));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Choose a Salon'),
+      ),
+      body: state.when(
+        loading: () =>
+            const Center(child: CircularProgressIndicator()),
+
+        error: (e, _) =>
+            Center(child: Text(e.toString())),
+
+        data: (salons) => ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: salons.length,
+          itemBuilder: (_, i) {
+            final s = salons[i];
+
+            return InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                ref
+                    .read(bookingDraftProvider.notifier)
+                    .selectSalonOffer(
+                      salonServicePriceId: s.salonServicePriceId,
+                      salonName: s.salonName,
+                      price: s.price,
+                      currency: s.currency,
+                      durationMinutes: s.durationMinutes,
+                    );
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PickDateTimePage(),
+                  ),
+                );
+              },
+              child: Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      // -----------------------
+                      // Salon image
+                      // -----------------------
+                      ClipRRect(
+                        borderRadius:
+                            BorderRadius.circular(12),
+                        child: s.salonImage.isNotEmpty &&
+                                s.salonImage != 'Not Set'
+                            ? Image.network(
+                                s.salonImage,
+                                width: 72,
+                                height: 72,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                width: 72,
+                                height: 72,
+                                color: Colors.grey.shade300,
+                                child: const Icon(
+                                  Icons.store,
+                                  size: 32,
+                                ),
+                              ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // -----------------------
+                      // Salon info
+                      // -----------------------
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              s.salonName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              s.salonCity,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.schedule,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${s.durationMinutes} mins',
+                                ),
+                                const SizedBox(width: 12),
+                                const Icon(
+                                  Icons.payments_outlined,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${s.currency} ${s.price.toStringAsFixed(0)}',
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}

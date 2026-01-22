@@ -1,0 +1,61 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+
+class SalonOfferModel {
+  final String salonServicePriceId;
+
+  final String salonId;
+  final String salonName;
+  final String salonCity;
+  final String salonImage;
+
+  final String subServiceId;
+  final String subServiceName;
+
+  final double price;
+  final String currency;
+  final int durationMinutes;
+
+  final double? rated;
+
+  const SalonOfferModel({
+    required this.salonServicePriceId,
+    required this.salonId,
+    required this.salonName,
+    required this.salonCity,
+    required this.salonImage,
+    required this.subServiceId,
+    required this.subServiceName,
+    required this.price,
+    required this.currency,
+    required this.durationMinutes,
+    this.rated,
+  });
+
+  factory SalonOfferModel.fromMap(Map<String, dynamic> map) {
+    return SalonOfferModel(
+      salonServicePriceId:
+          map['salon_service_price_id']?.toString() ?? '',
+
+      salonId: map['salon_id']?.toString() ?? '',
+      salonName: map['salon_name']?.toString() ?? '',
+      salonCity: map['salon_city']?.toString() ?? '',
+      salonImage: map['salon_image']?.toString() ?? '',
+
+      subServiceId: map['sub_service_id']?.toString() ?? '',
+      subServiceName: map['sub_service_name']?.toString() ?? '',
+
+      price: (map['price'] as num?)?.toDouble() ?? 0,
+      currency: map['currency']?.toString() ?? '',
+      durationMinutes:
+          (map['duration_minutes'] as num?)?.toInt() ?? 0,
+
+      rated: (map['rated'] as num?)?.toDouble(),
+    );
+  }
+
+  static List<SalonOfferModel> listFromJson(List list) {
+    return list
+        .map((e) => SalonOfferModel.fromMap(e))
+        .toList();
+  }
+}
