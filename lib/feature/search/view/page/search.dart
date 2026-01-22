@@ -1,7 +1,5 @@
 
 import 'package:africa_beuty/feature/search/model/search.dart';
-import 'package:africa_beuty/feature/search/view/widgets/nearby_salons_section.dart';
-import 'package:africa_beuty/feature/search/view/widgets/recommendation_section.dart';
 import 'package:africa_beuty/feature/search/view/widgets/results/search_result_list.dart';
 import 'package:africa_beuty/feature/search/view/widgets/search_input.dart';
 import 'package:africa_beuty/feature/search/view_model/search.dart';
@@ -108,22 +106,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
         return SearchResultList(results: results);
       },
-    );
-  }
-}
-// Next implementation step
-/// Idle UI (no query)
-class _IdleContent extends StatelessWidget {
-  const _IdleContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: const [
-        NearbySalonsSection(),
-        SizedBox(height: 32),
-        RecommendationSection(),
-      ],
     );
   }
 }
