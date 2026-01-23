@@ -7,6 +7,7 @@ import 'package:africa_beuty/feature/auth/view/page/verify.dart';
 import 'package:africa_beuty/feature/home/views/page/home_screen.dart';
 import 'package:africa_beuty/core/theme/dark_theme.dart';
 import 'package:africa_beuty/core/theme/light_theme.dart';
+import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
 import 'package:africa_beuty/feature/welcome/view/page/select_account.dart';
 import 'package:africa_beuty/feature/welcome/view/page/welcome.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +48,8 @@ class MyApp extends StatelessWidget {
       // initialRoute: isFirstTime ? '/' : '/signin',
 
       routes: {
-        '/': (context) =>  WelcomePage(),
+        // '/': (context) =>  WelcomePage(),
+        '/': (context) => ViewProfilePage(),
         '/select_account': (context) => const SelectAccount(), 
         '/signup': (context) => const SignUpPage(), 
         '/signin': (context) => const SignInPage(), 
