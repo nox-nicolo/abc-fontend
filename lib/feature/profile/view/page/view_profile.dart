@@ -835,7 +835,7 @@ import 'package:flutter/material.dart';
 class ViewProfilePage extends StatelessWidget {
   const ViewProfilePage({super.key});
 
-  bool get isServiceProfile => false; // change to false to preview customer
+  bool get isServiceProfile => true; // change to false to preview customer
 
   @override
   Widget build(BuildContext context) {
