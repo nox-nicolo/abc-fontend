@@ -4,8 +4,8 @@ import 'package:africa_beuty/core/widgets/activity_feed.dart';
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
+import 'package:africa_beuty/feature/post/view/widgets/view_post/booking.dart';
 import 'package:africa_beuty/feature/profile/model/salon.dart';
-import 'package:africa_beuty/feature/profile/view/widget/setting.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -18,11 +18,19 @@ SalonProfileModel salon = SalonProfileModel(
   title: 'title', 
   slogan: 'slogan', 
   description: 'This is the description for salon slogan is another thing!', 
-  displayAds: 'http://192.168.43.160:8000/assets/user_profile_picture/user.png', 
+  displayAds: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg', 
   profileCompletion: 0.0,
-  profilePicture: 'http://192.168.43.160:8000/assets/user_profile_picture/user.png', 
+  profilePicture: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg', 
   contacts: [],
-  workingHours: [], 
+  workingHours: [
+    WorkingHourModel(dayOfWeek: 0, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
+    WorkingHourModel(dayOfWeek: 1, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
+    WorkingHourModel(dayOfWeek: 2, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
+    WorkingHourModel(dayOfWeek: 3, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
+    WorkingHourModel(dayOfWeek: 4, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
+    WorkingHourModel(dayOfWeek: 5, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
+    WorkingHourModel(dayOfWeek: 6, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
+  ], 
   gallery: [], 
   followers: 12, 
   rated: 0
@@ -51,7 +59,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
 
     _scrollController = ScrollController()..addListener(() => setState(() {}));
 
-    _tabController = TabController(length: 3, vsync: this)
+    _tabController = TabController(length: 2, vsync: this)
       ..addListener(() {
         if (_tabController.indexIsChanging) {
           setState(() {
@@ -80,6 +88,30 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
     );
   }
 
+  // Logic to get more data (Pagination)
+  Future<void> _loadMoreData() async {
+    setState(() => isLoadingMore = true);
+    
+    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
+    
+    setState(() {
+      items.addAll(List.generate(15, (index) => items.length + index));
+      isLoadingMore = false;
+    });
+  }
+
+  // Logic to refresh data (Pull-to-refresh)
+  Future<void> _handleRefresh() async {
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {
+      items = List.generate(15, (index) => index); // Reset to first 15
+    });
+  }
+
+  bool notFollowing = true;
+  List<int> items = List.generate(15, (index) => index);
+  bool isLoadingMore = false;
+
   Widget _buildContent(BuildContext context, SalonProfileModel salon) {
     // Dart weekday: Mon=1, Tue=2... Sun=7. 
     // We subtract 1 to match your backend (Mon=0... Sun=6).
@@ -107,9 +139,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
     final size = MediaQuery.of(context).size;
 
     return RefreshIndicator(
-      onRefresh: () async {
-        await Future.delayed(const Duration(seconds: 2));
-      },
+      onRefresh: _handleRefresh,
       child: CustomScrollView(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
@@ -125,29 +155,73 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                   ? Row(
                       children: [
                         Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black,
-                                blurRadius: 50,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 3), // Moves shadow down slightly
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  // Profile Image with Border
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 3),
+                                      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 2)],
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 45,
+                                      backgroundImage: CachedNetworkImageProvider(salon.profilePicture),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 15),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(salon.title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                                        Text("@${salon.username}", style: TextStyle(color: Colors.white.withOpacity(0.7))),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 15),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Follower Stats as a "pill"
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Text('${salon.followers}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                        const SizedBox(width: 4),
+                                        const Text('Followers', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                  // Clean Follow Button
+                                  FilledButton.icon(
+                                    style: FilledButton.styleFrom(backgroundColor: Colors.blueAccent),
+                                    onPressed: () {},
+                                    icon: Icon(notFollowing ? Icons.add : Icons.check),
+                                    label: Text(notFollowing ? "Follow" : "Following"),
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                          child: CircleAvatar(
-                            radius: 24,
-                            backgroundColor: Colors.grey[200],
-                            child: ClipOval(
-                              child: CachedNetworkImage(
-                                imageUrl: salon.profilePicture,
-                                fit: BoxFit.cover,
-                                width: 48,
-                                height: 48,
-                                errorWidget: (context, url, error) => const Icon(Icons.person),
-                              ),
-                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -166,7 +240,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // 1. YOUR ORIGINAL GRADIENT (Base Layer)
+                    // Base Layer
                     Container(
                       decoration: BoxDecoration(
                         gradient: RadialGradient(
@@ -175,7 +249,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                       ),
                     ),
 
-                    // 2. COVER IMAGE (Displayed only if URL is not empty)
+                    // COVER IMAGE 
                     if (salon.displayAds.isNotEmpty)
                       CachedNetworkImage(
                         imageUrl: salon.displayAds,
@@ -183,15 +257,34 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                         errorWidget: (context, url, error) => const SizedBox.shrink(),
                       ),
 
-                    // 3. DARK OVERLAY (Ensures text readability over any image)
-                    if (salon.displayAds.isNotEmpty)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.2), // Adjust darkness here
-                        ),
-                      ),
+                    // DARK OVERLAY 
+                    // if (salon.displayAds.isNotEmpty)
+                    //   Container(
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.black.withOpacity(0.2), // Adjust darkness here
+                    //     ),
+                    //   ),
+                    Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 160,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black54,
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
-                    // 4. YOUR ORIGINAL CONTENT COLUMN
+
+                    // CONTENT
                     Container(
                       padding: const EdgeInsets.all(10),
                       child: Column(
@@ -239,12 +332,13 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                   Row(
                                     children: [
                                       // Later Batch implementation
-                                      // Icon(
-                                      //   OctIcons.verified, 
-                                      //   size: 14, 
-                                      //   color: Colors.blue.shade500,
-                                      //   shadows: const [Shadow(blurRadius: 4, color: Colors.black26)],
-                                      // ),
+                                      Icon(
+                                        OctIcons.verified, 
+                                        size: 14, 
+                                        color: Colors.blue.shade500,
+                                        shadows: const [Shadow(blurRadius: 4, color: Colors.black26)],
+                                      ),
+                                      const SizedBox(width: 6),
                                       SizedBox(
                                         width: size.width * .5,
                                         child: Text(
@@ -273,59 +367,62 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              // Followers Column with Shadows
-                              GestureDetector(
-                                onTap: () { /* Navigate to followers list if needed */ },
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      '${salon.followers}',
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onPrimary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        shadows: [
-                                          Shadow(
-                                            blurRadius: 4.0,
-                                            color: Colors.black54,
-                                            offset: Offset(0, 1),
-                                          ),
-                                        ],
+                              notFollowing ?
+                                TextButton(
+                                  onPressed: () => setState(() => notFollowing = false),
+                                  child: const Text("Follow", style: TextStyle(color: Colors.white)),
+                                ) 
+                              :
+                                // Followers Column with Shadows
+                                GestureDetector(
+                                  onTap: () { /* Navigate to followers list if needed */ },
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        '${salon.followers}',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          shadows: [
+                                            Shadow(
+                                              blurRadius: 4.0,
+                                              color: Colors.black54,
+                                              offset: Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      'Followers',
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onPrimary,
-                                        fontSize: 12,
-                                        shadows: const [
-                                          Shadow(
-                                            blurRadius: 2.0,
-                                            color: Colors.black45,
-                                            offset: Offset(0, 1),
-                                          ),
-                                        ],
+                                      Text(
+                                        'Followers',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                          fontSize: 12,
+                                          shadows: const [
+                                            Shadow(
+                                              blurRadius: 2.0,
+                                              color: Colors.black45,
+                                              offset: Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
+                              // end if following
                               const SizedBox(width: 16), // Increased spacing for better UX
                               Row(
                                 children: [
-                                  Material(
-                                    color: Colors.black26, // Semi-transparent black
-                                    shape: const CircleBorder(),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: const SettingAccount(isCustomer: false),
-                                  ),
                                   const SizedBox(width: 8),
-                                  Material(
-                                    color: Colors.black26,
-                                    shape: const CircleBorder(),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: const ThreeDotsOptions(isCustomer: false),
-                                  ),
+                                  if (!notFollowing) // Only show the menu if the user IS following
+                                    Material(
+                                      color: Colors.black26,
+                                      shape: const CircleBorder(),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: const ThreeDotsOptions(isCustomer: false),
+                                    ),
+                                  // end of if not following do not show options
                                 ],
                               )
                             ],
@@ -434,7 +531,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
             ),
           ),
 
-          SliverSpaceHeader(title: 'Visuals'),
+          SliverSpaceHeader(iconData: Icons.star, title: '4.5'),
           SliverToBoxAdapter(
             child: salon.gallery.isEmpty
                 ? const Padding(
@@ -470,6 +567,14 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                   ),
           ),
 
+          // Book Button
+          SliverSpaceHeader(title: ''),
+          SliverToBoxAdapter(
+            child: BookingNowGlowButton(
+              onPressed: () {},
+            ),
+          ),
+
           SliverSpaceHeader(title: ''),
           SliverPersistentHeader(
             pinned: true,
@@ -479,7 +584,6 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                 tabs: const [
                   Tab(icon: Icon(Bootstrap.grid_3x3_gap_fill)),
                   Tab(icon: Icon(Bootstrap.view_stacked)),
-                  Tab(icon: Icon(Bootstrap.list_task)),
                 ],
               ),
             ),
@@ -505,7 +609,17 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                 ),
                 childCount: 3,
               ),
-            )
+            ),
+
+            // Loading Spinner at the bottom
+            if (isLoadingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              )
+
           else
             SliverList(
               delegate: SliverChildBuilderDelegate(

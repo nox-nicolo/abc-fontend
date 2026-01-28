@@ -1,4 +1,5 @@
 import 'package:africa_beuty/feature/post/view/page/hashtag_result.dart';
+import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
 import 'package:africa_beuty/feature/search/model/search.dart';
 import 'package:flutter/material.dart';
 
@@ -44,7 +45,12 @@ class _UserTile extends StatelessWidget {
       subtitle: user.fullName != null ? Text(user.fullName!) : null,
       trailing: const Icon(Icons.chevron_right),
       onTap: () {
-        // TODO: navigate to user profile
+        
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ViewProfilePage(),
+          ),
+        );
       },
     );
   }
