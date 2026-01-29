@@ -31,7 +31,12 @@ SalonProfileModel salon = SalonProfileModel(
     WorkingHourModel(dayOfWeek: 5, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
     WorkingHourModel(dayOfWeek: 6, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
   ], 
-  gallery: [], 
+  gallery: [
+    GalleryModel(id: '1', imageUrl: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg'),
+    GalleryModel(id: '2', imageUrl: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg'),
+    GalleryModel(id: '3', imageUrl: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg'),
+    GalleryModel(id: '4', imageUrl: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg'),
+  ], 
   followers: 12, 
   rated: 0
 );
@@ -108,6 +113,323 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
     });
   }
 
+  // Follow Bottom Sheet
+  void _showFollowersBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                // DRAG HANDLE
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+
+                // GLOBAL UNFOLLOW BUTTON (ONLY IF FOLLOWING)
+                if (!notFollowing)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 8),
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        minimumSize: const Size.fromHeight(44),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        // UNFOLLOW SALON
+                        setState(() {
+                          notFollowing = true;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        'Unfollow',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+
+                // HEADER
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Followers · ${salon.followers}',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                // FOLLOWERS LIST
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    itemCount: 20, // mock followers count for now
+                    itemBuilder: (context, index) {
+                      final bool isFollowing = index % 3 == 0;
+
+                      return ListTile(
+                        leading: CircleAvatar(
+                          radius: 24,
+                          backgroundImage: NetworkImage(
+                            salon.profilePicture,
+                          ),
+                        ),
+                        title: Text(
+                          'username_$index',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: const Text('Full Name'),
+                        trailing: isFollowing
+                            ? OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  // unfollow logic
+                                },
+                                child: const Text('Following'),
+                              )
+                            : FilledButton(
+                                style: FilledButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  // follow logic
+                                },
+                                child: const Text('Follow'),
+                              ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSalonActionsSheet(BuildContext context) {
+    bool notificationsOn = true;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // DRAG HANDLE
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12, bottom: 8),
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+
+                  // SALON HEADER
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundImage: NetworkImage(salon.profilePicture),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                salon.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              Text(
+                                "@${salon.username}",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const Divider(height: 1),
+
+                  // NOTIFICATIONS
+                  ListTile(
+                    leading: Icon(
+                      notificationsOn
+                          ? Icons.notifications_active
+                          : Icons.notifications_off,
+                    ),
+                    title: const Text(
+                      'Notifications',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      notificationsOn
+                          ? 'You will receive updates from this salon'
+                          : 'Notifications are turned off',
+                    ),
+                    trailing: Switch(
+                      value: notificationsOn,
+                      onChanged: (value) {
+                        setModalState(() {
+                          notificationsOn = value;
+                        });
+                      },
+                    ),
+                  ),
+
+                  const Divider(height: 1),
+
+                  // CONTACTS
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Contact salon',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge
+                            ?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.grey[700],
+                            ),
+                      ),
+                    ),
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.call),
+                    title: const Text('Call'),
+                    onTap: () {
+                      // launch tel:
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.sms),
+                    title: const Text('SMS'),
+                    onTap: () {
+                      // launch sms:
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.chat),
+                    title: const Text('WhatsApp'),
+                    onTap: () {
+                      // launch whatsapp:
+                    },
+                  ),
+
+                  const Divider(height: 1),
+
+                  // SHARE
+                  ListTile(
+                    leading: const Icon(Icons.share),
+                    title: const Text(
+                      'Share salon',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    onTap: () {
+                      // share logic
+                    },
+                  ),
+
+                  const Divider(height: 1),
+
+                  // DANGEROUS ACTIONS
+                  ListTile(
+                    leading: const Icon(Icons.flag, color: Colors.red),
+                    title: const Text(
+                      'Report salon',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onTap: () {
+                      // report logic
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.block, color: Colors.red),
+                    title: const Text(
+                      'Block salon',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onTap: () {
+                      // block logic
+                    },
+                  ),
+
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
   bool notFollowing = true;
   List<int> items = List.generate(15, (index) => index);
   bool isLoadingMore = false;
@@ -150,88 +472,54 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
             collapsedHeight: size.height * .12,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.all(10),
+              // Better alignment when pinned
+              centerTitle: false,
+              titlePadding: const EdgeInsetsDirectional.only(start: 12, bottom: 12, end: 12),
+
+              // COLLAPSED (PINNED) TITLE: avatar size + alignment fixed
               title: _isSliverAppBarExpanded
                   ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  // Profile Image with Border
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 3),
-                                      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 2)],
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 45,
-                                      backgroundImage: CachedNetworkImageProvider(salon.profilePicture),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 15),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(salon.title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                                        Text("@${salon.username}", style: TextStyle(color: Colors.white.withOpacity(0.7))),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 15),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Follower Stats as a "pill"
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Text('${salon.followers}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                        const SizedBox(width: 4),
-                                        const Text('Followers', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                      ],
-                                    ),
-                                  ),
-                                  // Clean Follow Button
-                                  FilledButton.icon(
-                                    style: FilledButton.styleFrom(backgroundColor: Colors.blueAccent),
-                                    onPressed: () {},
-                                    icon: Icon(notFollowing ? Icons.add : Icons.check),
-                                    label: Text(notFollowing ? "Follow" : "Following"),
-                                  ),
-                                ],
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                                offset: Offset(0, 3),
                               ),
                             ],
                           ),
+                          child: ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: salon.profilePicture,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => const Icon(Icons.person),
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 10),
-                        Text(
-                          salon.username,
-                          style: Theme.of(context).textTheme.bodyLarge,
+                        Expanded(
+                          child: Text(
+                            salon.username,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
                         ),
                       ],
                     )
                   : null,
+
               background: ClipRRect(
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(10),
@@ -249,269 +537,267 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                       ),
                     ),
 
-                    // COVER IMAGE 
+                    // COVER IMAGE
                     if (salon.displayAds.isNotEmpty)
                       CachedNetworkImage(
                         imageUrl: salon.displayAds,
                         fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => const SizedBox.shrink(),
+                        errorWidget: (_, __, ___) => const SizedBox.shrink(),
                       ),
 
-                    // DARK OVERLAY 
-                    // if (salon.displayAds.isNotEmpty)
-                    //   Container(
-                    //     decoration: BoxDecoration(
-                    //       color: Colors.black.withOpacity(0.2), // Adjust darkness here
-                    //     ),
-                    //   ),
+                    // Bottom Gradient (contrast)
                     Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 160,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black54,
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 160,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black54,
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
 
-
-                    // CONTENT
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Colors.white24,
-                                child: ClipOval(
-                                  child: CachedNetworkImage(
-                                    imageUrl: salon.profilePicture,
-                                    fit: BoxFit.cover,
-                                    width: 100,
-                                    height: 100,
-                                    errorWidget: (context, url, error) => Image.asset('assets/images/dp.jpg'),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    width: size.width * .6,
-                                    child: Text(
-                                      salon.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        shadows: [
-                                          Shadow(
-                                            offset: const Offset(0, 1),
-                                            blurRadius: 6.0,
-                                            color: Colors.black.withOpacity(0.6),
-                                          ),
-                                        ],
+                    // EXPANDED HEADER CONTENT (keeps your structure: title/user, followers+open, slogan)
+                    Positioned.fill(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                // Profile Image with Border + Shadow
+                                Container(
+                                  width: 96,
+                                  height: 96,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 3),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 10,
+                                        spreadRadius: 2,
                                       ),
+                                    ],
+                                  ),
+                                  child: ClipOval(
+                                    child: CachedNetworkImage(
+                                      imageUrl: salon.profilePicture,
+                                      fit: BoxFit.cover,
+                                      placeholder: (_, __) => Container(color: Colors.grey[300]),
+                                      errorWidget: (_, __, ___) =>
+                                          const Icon(Icons.person, size: 40),
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  Row(
+                                ),
+
+                                const SizedBox(width: 15),
+
+                                // Title + Username
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      // Later Batch implementation
-                                      Icon(
-                                        OctIcons.verified, 
-                                        size: 14, 
-                                        color: Colors.blue.shade500,
-                                        shadows: const [Shadow(blurRadius: 4, color: Colors.black26)],
+                                      Text(
+                                        salon.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                      const SizedBox(width: 6),
-                                      SizedBox(
-                                        width: size.width * .5,
-                                        child: Text(
-                                          salon.username,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            shadows: [
-                                              Shadow(
-                                                offset: const Offset(0, 1),
-                                                blurRadius: 6.0,
-                                                color: Colors.black.withOpacity(0.6),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "@${salon.username}",
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.7),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // Row: Left = Follow/Follower/Options, Right = Open/Hours
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                // LEFT SIDE
+                                Row(
+                                  children: [
+                                    if (notFollowing)
+                                      FilledButton.icon(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: Colors.blueAccent,
+                                          foregroundColor: Colors.white,
+                                        ),
+                                        onPressed: () {
+                                          setState(() => notFollowing = false);
+                                        },
+                                        icon: const Icon(Icons.add, size: 18),
+                                        label: const Text("Follow"),
+                                      )
+                                    else
+                                      GestureDetector(
+                                        onTap: () {
+                                          _showFollowersBottomSheet(context);
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.18),
+                                            borderRadius: BorderRadius.circular(18),
+                                            border: Border.all(color: Colors.white24),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Text(
+                                                '${salon.followers}',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              const Text(
+                                                'Followers',
+                                                style: TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ],
-                              )
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              notFollowing ?
-                                TextButton(
-                                  onPressed: () => setState(() => notFollowing = false),
-                                  child: const Text("Follow", style: TextStyle(color: Colors.white)),
-                                ) 
-                              :
-                                // Followers Column with Shadows
-                                GestureDetector(
-                                  onTap: () { /* Navigate to followers list if needed */ },
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        '${salon.followers}',
-                                        style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onPrimary,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          shadows: [
-                                            Shadow(
-                                              blurRadius: 4.0,
-                                              color: Colors.black54,
-                                              offset: Offset(0, 1),
-                                            ),
-                                          ],
+
+                                    const SizedBox(width: 10),
+
+                                    if (!notFollowing)
+                                      Material(
+                                        color: Colors.white.withOpacity(0.12),
+                                        shape: const CircleBorder(),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.more_horiz,
+                                            color: Colors.white,
+                                          ),
+                                          onPressed: () {
+                                            _showSalonActionsSheet(context);
+                                          },
                                         ),
                                       ),
+                                  ],
+                                ),
+
+                                const Spacer(),
+
+                                // RIGHT SIDE (Open status + hours)
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: todaysHours.isOpen
+                                                ? Colors.greenAccent
+                                                : Colors.redAccent,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: (todaysHours.isOpen
+                                                        ? Colors.greenAccent
+                                                        : Colors.redAccent)
+                                                    .withOpacity(0.55),
+                                                blurRadius: 6,
+                                                spreadRadius: 1,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          todaysHours.isOpen ? "OPEN" : "CLOSED",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 1.1,
+                                            color: todaysHours.isOpen
+                                                ? Colors.greenAccent
+                                                : Colors.redAccent,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    if (todaysHours.isOpen)
                                       Text(
-                                        'Followers',
+                                        "${formatTime(todaysHours.openTime)} - ${formatTime(todaysHours.closeTime)}",
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      )
+                                    else
+                                      const Text(
+                                        "See you tomorrow",
                                         style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onPrimary,
-                                          fontSize: 12,
-                                          shadows: const [
-                                            Shadow(
-                                              blurRadius: 2.0,
-                                              color: Colors.black45,
-                                              offset: Offset(0, 1),
-                                            ),
-                                          ],
+                                          fontSize: 11,
+                                          color: Colors.white70,
+                                          fontStyle: FontStyle.italic,
                                         ),
                                       ),
-                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            // SLOGAN at bottom (restored)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    salon.slogan.isNotEmpty ? salon.slogan : "",
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.92),
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              // end if following
-                              const SizedBox(width: 16), // Increased spacing for better UX
-                              Row(
-                                children: [
-                                  const SizedBox(width: 8),
-                                  if (!notFollowing) // Only show the menu if the user IS following
-                                    Material(
-                                      color: Colors.black26,
-                                      shape: const CircleBorder(),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: const ThreeDotsOptions(isCustomer: false),
-                                    ),
-                                  // end of if not following do not show options
-                                ],
-                              )
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  salon.slogan.isNotEmpty ? salon.slogan : "",
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onPrimary,
-                                    shadows: const [
-                                      Shadow(
-                                        blurRadius: 2.0,
-                                        color: Colors.black45,
-                                        offset: Offset(0, 1),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Pulsing-style status dot
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: (todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent).withOpacity(0.5),
-                                              blurRadius: 4,
-                                              spreadRadius: 1,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        todaysHours.isOpen ? "OPEN" : "CLOSED",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.1,
-                                          color: todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent,
-                                          shadows: const [
-                                            Shadow(blurRadius: 4, color: Colors.black87, offset: Offset(0, 1))
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  if (todaysHours.isOpen)
-                                    Text(
-                                      "${formatTime(todaysHours.openTime)} - ${formatTime(todaysHours.closeTime)}",
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        shadows: [
-                                          Shadow(blurRadius: 4, color: Colors.black87, offset: Offset(0, 1))
-                                        ],
-                                      ),
-                                    )
-                                  else
-                                    const Text(
-                                      "See you tomorrow",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.white70,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                ],
-                              )
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -524,14 +810,144 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Text(
-                salon.description,
-                style: Theme.of(context).textTheme.labelMedium,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // BIO TEXT
+                  Text(
+                    salon.description,
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // READ MORE (optional future expansion)
+                  GestureDetector(
+                    onTap: () {
+                      // Later: expand bio or open bottom sheet
+                    },
+                    child: Text(
+                      "Read more",
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // TRUST / CONTEXT CHIPS
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.location_on, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              "City Center",
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              "4.5 Rating",
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.verified, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Certified",
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.workspace_premium, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              "5+ Years",
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // SOFT CTA
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () {
+                      // Scroll to services / gallery / booking
+                    },
+                    icon: const Icon(Icons.design_services_outlined),
+                    label: const Text("View Services"),
+                  ),
+                ],
               ),
             ),
           ),
 
-          SliverSpaceHeader(iconData: Icons.star, title: '4.5'),
+          SliverSpaceHeader(title: 'Salon Gallery'),
           SliverToBoxAdapter(
             child: salon.gallery.isEmpty
                 ? const Padding(
@@ -539,34 +955,62 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                     child: Center(child: Text('No visuals uploaded')),
                   )
                 : SizedBox(
-                    height: 160, // Set the height for your horizontal gallery
+                    height: 190, // Portfolio feel
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: salon.gallery.length,
-                      itemBuilder: (_, i) => Container(
-                        width: 140, // Set the width for each image
-                        margin: const EdgeInsets.only(right: 12), // Spacing between items
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: CachedNetworkImage(
-                            imageUrl: salon.gallery[i].imageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: Colors.grey[200],
-                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      itemBuilder: (context, i) {
+                        return TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: 1),
+                          duration: Duration(milliseconds: 450 + (i * 120)),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, value, child) {
+                            return Transform.translate(
+                              offset: Offset(30 * (1 - value), 0),
+                              child: Opacity(opacity: value, child: child),
+                            );
+                          },
+                          child: Container(
+                            width: 150,
+                            margin: const EdgeInsets.only(right: 12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 6),
+                                ),
+                              ],
                             ),
-                            errorWidget: (context, url, error) => Container(
-                              color: Colors.grey[300],
-                              child: const Icon(Icons.broken_image, color: Colors.grey),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: CachedNetworkImage(
+                                imageUrl: salon.gallery[i].imageUrl,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  color: Colors.grey[300],
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
           ),
-
+          
           // Book Button
           SliverSpaceHeader(title: ''),
           SliverToBoxAdapter(
@@ -581,9 +1025,19 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
             delegate: _StickyTabBarDelegate(
               tabBar: TabBar(
                 controller: _tabController,
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor:
+                    Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 tabs: const [
-                  Tab(icon: Icon(Bootstrap.grid_3x3_gap_fill)),
-                  Tab(icon: Icon(Bootstrap.view_stacked)),
+                  Tab(
+                    icon: Icon(Bootstrap.grid_3x3_gap_fill),
+                    text: 'Grid',
+                  ),
+                  Tab(
+                    icon: Icon(Bootstrap.view_stacked),
+                    text: 'Posts',
+                  ),
                 ],
               ),
             ),
@@ -618,15 +1072,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: Center(child: CircularProgressIndicator()),
                 ),
-              )
-
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (_, i) => const ActivityFeed(),
-                childCount: 5,
               ),
-            ),
         ],
       ),
     );
@@ -634,15 +1080,139 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
 
   Widget _buildLoadingShimmer() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
       child: CustomScrollView(
+        physics: const NeverScrollableScrollPhysics(),
         slivers: [
-          SliverAppBar(expandedHeight: 250, backgroundColor: Colors.white),
+          // HEADER SHIMMER (Cover + Avatar)
+          SliverAppBar(
+            automaticallyImplyLeading: false,
+            expandedHeight: 280,
+            pinned: true,
+            backgroundColor: Colors.white,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                color: Colors.grey[300],
+                child: Stack(
+                  children: [
+                    // Bottom gradient placeholder
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 140,
+                      child: Container(color: Colors.grey[350]),
+                    ),
+
+                    // Avatar placeholder
+                    Positioned(
+                      bottom: 24,
+                      left: 16,
+                      child: Container(
+                        width: 96,
+                        height: 96,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+
+                    // Title + username placeholders
+                    Positioned(
+                      bottom: 48,
+                      left: 128,
+                      right: 16,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 20,
+                            width: 180,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 14,
+                            width: 120,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // BIO SHIMMER
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(height: 100, color: Colors.white),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(height: 14, width: double.infinity, color: Colors.white),
+                  const SizedBox(height: 8),
+                  Container(height: 14, width: double.infinity, color: Colors.white),
+                  const SizedBox(height: 8),
+                  Container(height: 14, width: 220, color: Colors.white),
+                ],
+              ),
+            ),
+          ),
+
+          // GALLERY SHIMMER
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 190,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: 4,
+                itemBuilder: (_, __) => Container(
+                  width: 150,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // BOOK BUTTON SHIMMER
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Container(
+                height: 54,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ),
+
+          // POSTS SHIMMER
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (_, __) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+              childCount: 3,
             ),
           ),
         ],

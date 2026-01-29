@@ -10,7 +10,7 @@ class BookingNowGlowButton extends StatelessWidget {
   const BookingNowGlowButton({
     super.key,
     required this.onPressed,
-    this.text = 'Booking Now',
+    this.text = 'Book Now',
     this.height = 54,
   });
 
