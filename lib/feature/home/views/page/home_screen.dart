@@ -248,8 +248,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Navigator.push(
                                 context, 
                                 MaterialPageRoute(
-                                  builder: (context) => const ViewProfilePage(
-                                    // salonId: salon.salonId
+                                  builder: (context) =>  ViewProfilePage(isServiceProfile: true,
+                                    userId: salon.salonId,
                                     )
                                   )
                                 );

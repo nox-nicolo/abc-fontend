@@ -43,13 +43,13 @@ class MyApp extends StatelessWidget {
       title: 'African Beauty',
       theme: LightTheme.theme,
       darkTheme: DarkTheme.theme,
-      // themeMode: ThemeMode.system,
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      // initialRoute: isFirstTime ? '/' : '/signin',
+      initialRoute: isFirstTime ? '/' : '/signin',
 
       routes: {
-        // '/': (context) =>  WelcomePage(),
-        '/': (context) => ViewProfilePage(),
+        '/': (context) =>  WelcomePage(),
+        // '/': (context) => ViewProfilePage(),
         '/select_account': (context) => const SelectAccount(), 
         '/signup': (context) => const SignUpPage(), 
         '/signin': (context) => const SignInPage(), 

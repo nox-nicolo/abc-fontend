@@ -833,14 +833,19 @@ import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart
 import 'package:flutter/material.dart';
 
 class ViewProfilePage extends StatelessWidget {
-  const ViewProfilePage({super.key});
+  const ViewProfilePage({
+    super.key,
+    required this.isServiceProfile,
+    required this.userId
+  });
 
-  bool get isServiceProfile => true; // change to false to preview customer
+  final bool isServiceProfile; // change to false to preview customer
+  final String userId;
 
   @override
   Widget build(BuildContext context) {
     return isServiceProfile
-        ? const ViewServiceProfilePage()
+        ? ViewServiceProfilePage(salonId: userId)
         : const ViewCustomerProfilePage();
   }
 }

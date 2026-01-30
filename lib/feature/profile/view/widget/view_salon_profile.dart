@@ -1,56 +1,36 @@
 
 
-import 'package:africa_beuty/core/widgets/activity_feed.dart';
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/booking.dart';
-import 'package:africa_beuty/feature/profile/model/salon.dart';
-import 'package:africa_beuty/feature/profile/view/widget/three_dots.dart';
+import 'package:africa_beuty/feature/profile/model/salon_view_profile.dart';
+import 'package:africa_beuty/feature/profile/view/widget/salon_profile_view_services.dart';
+import 'package:africa_beuty/feature/profile/view_model/salon_view_follow_action.dart';
+import 'package:africa_beuty/feature/profile/view_model/salon_view_profile.dart';
+import 'package:africa_beuty/feature/profile/view_model/salon_view_profile_followers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:shimmer/shimmer.dart';
 
-SalonProfileModel salon = SalonProfileModel(
-  id: 'id',
-  username: 'username', 
-  title: 'title', 
-  slogan: 'slogan', 
-  description: 'This is the description for salon slogan is another thing!', 
-  displayAds: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg', 
-  profileCompletion: 0.0,
-  profilePicture: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg', 
-  contacts: [],
-  workingHours: [
-    WorkingHourModel(dayOfWeek: 0, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
-    WorkingHourModel(dayOfWeek: 1, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
-    WorkingHourModel(dayOfWeek: 2, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
-    WorkingHourModel(dayOfWeek: 3, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
-    WorkingHourModel(dayOfWeek: 4, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
-    WorkingHourModel(dayOfWeek: 5, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
-    WorkingHourModel(dayOfWeek: 6, isOpen: true, openTime: '09:00:00', closeTime: '18:00:00'),
-  ], 
-  gallery: [
-    GalleryModel(id: '1', imageUrl: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg'),
-    GalleryModel(id: '2', imageUrl: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg'),
-    GalleryModel(id: '3', imageUrl: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg'),
-    GalleryModel(id: '4', imageUrl: 'http://192.168.43.160:8000/assets/images/user_profile_picture/service/adaf35b02bf24a21ba6abdc81553b5f6.jpg'),
-  ], 
-  followers: 12, 
-  rated: 0
-);
 
+class ViewServiceProfilePage extends ConsumerStatefulWidget {
+  final String salonId;
 
-class ViewServiceProfilePage extends StatefulWidget {
-  const ViewServiceProfilePage({super.key});
+  const ViewServiceProfilePage({
+    super.key,
+    required this.salonId,
+  });
 
   @override
-  State<ViewServiceProfilePage> createState() => _ViewServiceProfilePageState();
+  ConsumerState<ViewServiceProfilePage> createState() => _ViewServiceProfilePageState();
+
 }
 
 
-class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
+class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
     with SingleTickerProviderStateMixin {
   static const kExpandedHeight = kToolbarHeight + 270;
 
@@ -83,38 +63,43 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
   }
 
   bool get _isSliverAppBarExpanded =>
-      _scrollController.hasClients &&
-      _scrollController.offset > (kExpandedHeight - kToolbarHeight);
+    _scrollController.hasClients &&
+    _scrollController.offset > (kExpandedHeight - kToolbarHeight);
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildContent(context, salon),
+    final state = ref.watch(
+      salonViewProfileViewModelProvider(widget.salonId),
     );
-  }
 
-  // Logic to get more data (Pagination)
-  Future<void> _loadMoreData() async {
-    setState(() => isLoadingMore = true);
-    
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-    
-    setState(() {
-      items.addAll(List.generate(15, (index) => items.length + index));
-      isLoadingMore = false;
-    });
+    return Scaffold(
+      body: state.when(
+        loading: _buildLoadingShimmer,
+        error: (e, _) => Center(child: Text(e.toString())),
+        data: (salon) => _buildContent(context, salon),
+      ),
+    );
   }
 
   // Logic to refresh data (Pull-to-refresh)
   Future<void> _handleRefresh() async {
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      items = List.generate(15, (index) => index); // Reset to first 15
-    });
+    ref.invalidate(
+      salonViewProfileViewModelProvider(widget.salonId),
+    );
   }
 
-  // Follow Bottom Sheet
-  void _showFollowersBottomSheet(BuildContext context) {
+  void _showFollowersBottomSheet(
+    BuildContext context,
+    SalonViewProfileModel salon,
+  ) {
+       // 
+    final followLoading =
+        ref.watch(salonFollowActionViewModelProvider);
+    final followVM =
+        ref.read(salonFollowActionViewModelProvider.notifier);
+
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -123,118 +108,173 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.6,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          builder: (context, scrollController) {
-            return Column(
-              children: [
-                // DRAG HANDLE
-                Padding(
-                  padding: const EdgeInsets.only(top: 12, bottom: 8),
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
+        return Consumer(
+          builder: (context, ref, _) {
+            final notifier = ref.read(
+              salonFollowersViewModelProvider(salon.salon.id).notifier,
+            );
 
-                // GLOBAL UNFOLLOW BUTTON (ONLY IF FOLLOWING)
-                if (!notFollowing)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 8),
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        minimumSize: const Size.fromHeight(44),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+            // LOAD FIRST PAGE ONCE
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              notifier.loadInitial(salon.salon.id);
+            });
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.6,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              builder: (context, scrollController) {
+                return Column(
+                  children: [
+                    // ───── Drag Handle ─────
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 8),
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[400],
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
-                      onPressed: () {
-                        // UNFOLLOW SALON
-                        setState(() {
-                          notFollowing = true;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Unfollow',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+
+                    // ───── UNFOLLOW SALON BUTTON ─────
+                    if (salon.viewer.isFollowing)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 48,
+                          vertical: 8,
+                        ),
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red),
+                            minimumSize: const Size.fromHeight(44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          onPressed: followLoading
+                            ? null
+                            : () async {
+                                final success = await followVM.unfollow(
+                                  salonId: salon.salon.id,
+                                );
+
+                                if (success && context.mounted) {
+                                  Navigator.of(context).pop(); // close sheet
+                                }
+                              },
+                          
+                          child: const Text(
+                            'Unfollow',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+
+                    // ───── Header ─────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Text(
+                        'Followers · ${salon.metrics.followersCount}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                     ),
-                  ),
 
-                // HEADER
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Followers · ${salon.followers}',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                    const Divider(height: 1),
+
+                    // ───── Followers List ─────
+                    Expanded(
+                      child: Consumer(
+                        builder: (context, ref, _) {
+                          final state = ref.watch(
+                            salonFollowersViewModelProvider(salon.salon.id),
+                          );
+
+                          // pagination listener
+                          scrollController.addListener(() {
+                            if (scrollController.position.pixels >=
+                                scrollController.position.maxScrollExtent - 200) {
+                              notifier.loadMore(salon.salon.id);
+                            }
+                          });
+
+                          // FIRST LOADING
+                          if (state.isLoading && state.items.isEmpty) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          // EMPTY
+                          if (state.items.isEmpty) {
+                            return const Center(
+                              child: Text('No followers yet'),
+                            );
+                          }
+
+                          return ListView.builder(
+                            controller: scrollController,
+                            itemCount: state.items.length +
+                                (state.isLoadingMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index >= state.items.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+
+                              final follower = state.items[index];
+
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  radius: 22,
+                                  backgroundImage: follower.avatar != null
+                                      ? NetworkImage(follower.avatar!)
+                                      : null,
+                                  backgroundColor: Colors.grey.shade300,
+                                ),
+                                title: Text(
+                                  follower.username,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: Text(follower.name),
+                                trailing: follower.isFollowing
+                                    ? OutlinedButton(
+                                        onPressed: () {
+                                          // TODO: unfollow USER
+                                        },
+                                        child: const Text('Following'),
+                                      )
+                                    : FilledButton(
+                                        onPressed: () {
+                                          // TODO: follow USER
+                                        },
+                                        child: const Text('Follow'),
+                                      ),
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ),
-
-                const Divider(height: 1),
-
-                // FOLLOWERS LIST
-                Expanded(
-                  child: ListView.builder(
-                    controller: scrollController,
-                    itemCount: 20, // mock followers count for now
-                    itemBuilder: (context, index) {
-                      final bool isFollowing = index % 3 == 0;
-
-                      return ListTile(
-                        leading: CircleAvatar(
-                          radius: 24,
-                          backgroundImage: NetworkImage(
-                            salon.profilePicture,
-                          ),
-                        ),
-                        title: Text(
-                          'username_$index',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: const Text('Full Name'),
-                        trailing: isFollowing
-                            ? OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  // unfollow logic
-                                },
-                                child: const Text('Following'),
-                              )
-                            : FilledButton(
-                                style: FilledButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  // follow logic
-                                },
-                                child: const Text('Follow'),
-                              ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             );
           },
         );
@@ -242,7 +282,12 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
     );
   }
 
-  void _showSalonActionsSheet(BuildContext context) {
+
+
+  void _showSalonActionsSheet(
+    BuildContext context,
+    SalonViewProfileModel salon,) 
+  {
     bool notificationsOn = true;
 
     showModalBottomSheet(
@@ -280,7 +325,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                       children: [
                         CircleAvatar(
                           radius: 24,
-                          backgroundImage: NetworkImage(salon.profilePicture),
+                          backgroundImage: NetworkImage(salon.salon.profilePicture),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -288,7 +333,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                salon.title,
+                                salon.salon.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context)
@@ -297,7 +342,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                     ?.copyWith(fontWeight: FontWeight.w800),
                               ),
                               Text(
-                                "@${salon.username}",
+                                "@${salon.salon.username}",
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelSmall
@@ -428,37 +473,57 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
     );
   }
 
+  void _showSalonServicesSheet(
+    BuildContext context,
+    SalonViewProfileModel salon,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) => SalonServicesSheet(salon: salon),
+    );
+  }
+
 
 
   bool notFollowing = true;
   List<int> items = List.generate(15, (index) => index);
   bool isLoadingMore = false;
 
-  Widget _buildContent(BuildContext context, SalonProfileModel salon) {
+  Widget _buildContent(BuildContext context, SalonViewProfileModel salon) {
     // Dart weekday: Mon=1, Tue=2... Sun=7. 
     // We subtract 1 to match your backend (Mon=0... Sun=6).
     final int currentDayIndex = DateTime.now().weekday - 1;
 
-    final todaysHours = salon.workingHours.firstWhere(
-      (h) => h.dayOfWeek == currentDayIndex,
-      // If today isn't in the list, we assume they are closed
-      orElse: () => WorkingHourModel(
-        dayOfWeek: currentDayIndex, 
-        isOpen: false, 
-        openTime: '', 
-        closeTime: ''
+    final todaysHours = salon.availability.weekly.firstWhere(
+      (h) => h.day == currentDayIndex,
+      orElse: () => SalonWeeklyModel(
+        day: currentDayIndex,
+        isOpen: false,
+        open: '',
+        close: '',
       ),
     );
 
-    // Helper to format "10:00:00" -> "10:00"
     String formatTime(String time) {
       if (time.isEmpty) return '';
       final parts = time.split(':');
-      if (parts.length >= 2) return '${parts[0]}:${parts[1]}';
-      return time;
+      return parts.length >= 2 ? '${parts[0]}:${parts[1]}' : time;
     }
 
     final size = MediaQuery.of(context).size;
+
+    // 
+    final isFollowing = salon.viewer.isFollowing;
+    final followLoading =
+        ref.watch(salonFollowActionViewModelProvider);
+    final followVM =
+        ref.read(salonFollowActionViewModelProvider.notifier);
+
 
     return RefreshIndicator(
       onRefresh: _handleRefresh,
@@ -498,7 +563,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                           ),
                           child: ClipOval(
                             child: CachedNetworkImage(
-                              imageUrl: salon.profilePicture,
+                              imageUrl: salon.salon.profilePicture,
                               fit: BoxFit.cover,
                               errorWidget: (_, __, ___) => const Icon(Icons.person),
                             ),
@@ -507,7 +572,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            salon.username,
+                            salon.salon.username,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -538,11 +603,11 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                     ),
 
                     // COVER IMAGE
-                    if (salon.displayAds.isNotEmpty)
+                    if (salon.salon.coverImage.isNotEmpty)
                       CachedNetworkImage(
-                        imageUrl: salon.displayAds,
+                        imageUrl: salon.salon.coverImage,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                        errorWidget: (_, _, _) => const SizedBox.shrink(),
                       ),
 
                     // Bottom Gradient (contrast)
@@ -592,7 +657,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                   ),
                                   child: ClipOval(
                                     child: CachedNetworkImage(
-                                      imageUrl: salon.profilePicture,
+                                      imageUrl: salon.salon.profilePicture,
                                       fit: BoxFit.cover,
                                       placeholder: (_, __) => Container(color: Colors.grey[300]),
                                       errorWidget: (_, __, ___) =>
@@ -609,7 +674,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        salon.title,
+                                        salon.salon.name,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
@@ -620,7 +685,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        "@${salon.username}",
+                                        "@${salon.salon.username}",
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
@@ -643,25 +708,40 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                 // LEFT SIDE
                                 Row(
                                   children: [
-                                    if (notFollowing)
+                                    /// ---------------- FOLLOW / FOLLOWERS ----------------
+                                    if (!isFollowing)
                                       FilledButton.icon(
                                         style: FilledButton.styleFrom(
                                           backgroundColor: Colors.blueAccent,
                                           foregroundColor: Colors.white,
                                         ),
-                                        onPressed: () {
-                                          setState(() => notFollowing = false);
-                                        },
-                                        icon: const Icon(Icons.add, size: 18),
+                                        onPressed: followLoading
+                                            ? null
+                                            : () {
+                                                followVM.follow(
+                                                  salonId: salon.salon.id,
+                                                );
+                                              },
+                                        icon: followLoading
+                                            ? const SizedBox(
+                                                height: 16,
+                                                width: 16,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: Colors.white,
+                                                ),
+                                              )
+                                            : const Icon(Icons.add, size: 18),
                                         label: const Text("Follow"),
                                       )
                                     else
                                       GestureDetector(
                                         onTap: () {
-                                          _showFollowersBottomSheet(context);
+                                          _showFollowersBottomSheet(context, salon);
                                         },
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          padding:
+                                              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                           decoration: BoxDecoration(
                                             color: Colors.white.withOpacity(0.18),
                                             borderRadius: BorderRadius.circular(18),
@@ -670,7 +750,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                           child: Row(
                                             children: [
                                               Text(
-                                                '${salon.followers}',
+                                                '${salon.metrics.followersCount}',
                                                 style: const TextStyle(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.w800,
@@ -692,7 +772,8 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
 
                                     const SizedBox(width: 10),
 
-                                    if (!notFollowing)
+                                    /// ---------------- MORE ACTIONS ----------------
+                                    if (isFollowing)
                                       Material(
                                         color: Colors.white.withOpacity(0.12),
                                         shape: const CircleBorder(),
@@ -703,7 +784,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                             color: Colors.white,
                                           ),
                                           onPressed: () {
-                                            _showSalonActionsSheet(context);
+                                            _showSalonActionsSheet(context, salon);
                                           },
                                         ),
                                       ),
@@ -725,19 +806,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                           height: 8,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: todaysHours.isOpen
-                                                ? Colors.greenAccent
-                                                : Colors.redAccent,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: (todaysHours.isOpen
-                                                        ? Colors.greenAccent
-                                                        : Colors.redAccent)
-                                                    .withOpacity(0.55),
-                                                blurRadius: 6,
-                                                spreadRadius: 1,
-                                              ),
-                                            ],
+                                            color: todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent,
                                           ),
                                         ),
                                         const SizedBox(width: 6),
@@ -746,10 +815,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                           style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w900,
-                                            letterSpacing: 1.1,
-                                            color: todaysHours.isOpen
-                                                ? Colors.greenAccent
-                                                : Colors.redAccent,
+                                            color: todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent,
                                           ),
                                         ),
                                       ],
@@ -757,7 +823,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                     const SizedBox(height: 2),
                                     if (todaysHours.isOpen)
                                       Text(
-                                        "${formatTime(todaysHours.openTime)} - ${formatTime(todaysHours.closeTime)}",
+                                        "${formatTime(todaysHours.open.toString())} - ${formatTime(todaysHours.close.toString())}",
                                         style: const TextStyle(
                                           fontSize: 13,
                                           color: Colors.white,
@@ -766,7 +832,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                                       )
                                     else
                                       const Text(
-                                        "See you tomorrow",
+                                        "Closed today",
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: Colors.white70,
@@ -785,7 +851,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                               children: [
                                 Expanded(
                                   child: Text(
-                                    salon.slogan.isNotEmpty ? salon.slogan : "",
+                                    salon.salon.slogan.isNotEmpty ? salon.salon.slogan : "",
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -815,7 +881,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                 children: [
                   // BIO TEXT
                   Text(
-                    salon.description,
+                    salon.salon.description,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelMedium,
@@ -829,7 +895,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                       // Later: expand bio or open bottom sheet
                     },
                     child: Text(
-                      "Read more",
+                      "", // "Read more",
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w600,
@@ -937,7 +1003,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                       ),
                     ),
                     onPressed: () {
-                      // Scroll to services / gallery / booking
+                      _showSalonServicesSheet(context, salon);
                     },
                     icon: const Icon(Icons.design_services_outlined),
                     label: const Text("View Services"),
@@ -949,7 +1015,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
 
           SliverSpaceHeader(title: 'Salon Gallery'),
           SliverToBoxAdapter(
-            child: salon.gallery.isEmpty
+            child: salon.media.gallery.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.all(16),
                     child: Center(child: Text('No visuals uploaded')),
@@ -959,7 +1025,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: salon.gallery.length,
+                      itemCount: salon.media.gallery.length,
                       itemBuilder: (context, i) {
                         return TweenAnimationBuilder<double>(
                           tween: Tween(begin: 0, end: 1),
@@ -987,7 +1053,7 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(20),
                               child: CachedNetworkImage(
-                                imageUrl: salon.gallery[i].imageUrl,
+                                imageUrl: salon.media.gallery[i].imageUrl,
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) => Container(
                                   color: Colors.grey[200],
@@ -1052,9 +1118,9 @@ class _ViewServiceProfilePageState extends State<ViewServiceProfilePage>
                   postId: 'postId_$i',
                   isLiked: false,
                   aspectRatio: 1,
-                  username: salon.username,
-                  profileImage: salon.profilePicture,
-                  images: [salon.displayAds],
+                  username: salon.salon.username,
+                  profileImage: salon.salon.profilePicture,
+                  images: [salon.salon.coverImage],
                   likesCount: 100,
                   sharesCount: 50,
                   commentsCount: 20,

@@ -48,7 +48,7 @@ class _UserTile extends StatelessWidget {
         
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ViewProfilePage(),
+            builder: (_) => ViewProfilePage(isServiceProfile: false, userId: user.id),
           ),
         );
       },
@@ -81,7 +81,11 @@ class _SalonTile extends StatelessWidget {
           ? const Icon(Icons.verified, color: Colors.blue)
           : null,
       onTap: () {
-        // TODO: navigate to salon page
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ViewProfilePage(isServiceProfile: true, userId: salon.id),
+          ),
+        );
       },
     );
   }
