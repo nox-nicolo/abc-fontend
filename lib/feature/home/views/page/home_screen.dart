@@ -7,6 +7,7 @@ import 'package:africa_beuty/feature/home/view_model/home_posts.dart';
 import 'package:africa_beuty/feature/home/view_model/top_salon.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
+import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:africa_beuty/feature/search/view/page/search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,6 +28,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final topSalons = ref.watch(topSalonViewModelProvider);
     final feed = ref.watch(feedViewModelProvider);
     final categories = ref.watch(homeCategoriesViewModelProvider);
+    final size = MediaQuery.of(context).size;
     
     return Scaffold(
       body: SafeArea(
@@ -243,8 +245,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                           return GestureDetector(
                             onTap: () {
-                              print('Tapped on salon: ${salon.salonId}');
-                              // TODO: navigate to salon profile
+                              
                               Navigator.push(
                                 context, 
                                 MaterialPageRoute(
@@ -414,7 +415,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                             // ---------------- LONG PRESS (FUTURE) ----------------
                             onLongPress: () {
-                              // TODO: show bottom sheet (report, share, save, etc.)
+                              
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ViewServiceProfilePage(
+                                    salonId: post.author.salon.id,
+                                  ),
+                                ),
+                              );
                             },
 
                             child: Post(
@@ -445,53 +453,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 
                 // Events
-                SliverSpaceHeader(title: 'Events'), 
-                SliverGrid(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(child: Text('Event $index')),
-                    ),
-                    childCount: 4, // Replace with actual event count
-                  ),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 1,
-                    crossAxisSpacing: 1,
-                    childAspectRatio: .9,
-                  ),
-                ),
-
-                // More Content & Ads (some)
-                // SliverSpaceHeader(title: ''), 
-                // SliverList(
+                // SliverSpaceHeader(title: 'Events'), 
+                // SliverGrid(
                 //   delegate: SliverChildBuilderDelegate(
-                //     (context, index) {
-                //       if (index % 5 == 0 && index != 0) {
-                //         return Container(
-                //           margin: const EdgeInsets.symmetric(vertical: 8),
-                //           height: 200,
-                //           child: Card(
-                //             elevation: 4,
-                //             child: const Center(child: Text('Ad'))),
-                //         );
-                //       }
-                //       return Post(
-                //         aspectRatio: (index % 3 == 0 && index != 0) ? 1 : .5,
-                //         username: 'user123',
-                //         profileImage: 'assets/images/dp1.jpg',
-                //         postImage: (index % 3 == 0 && index != 0) ? 'assets/images/nails.jpeg' : 'assets/images/dp.jpg',
-                //         likesCount: 1400,
-                //         sharesCount: 1200,
-                //         commentsCount: 450,
-                //         description: 'This is a sample post description, showcasing how to pass dynamic data to the Post widget. The description is quite long to show the "Read More" functionality.',
-                //         datePosted: '12/02/2025 18:12:32',
-                //       );
-                //     },
-                //     childCount: 20, // Replace with actual post count
+                //     (context, index) => Container(
+                //       decoration: BoxDecoration(
+                //         color: Colors.grey.shade200,
+                //         borderRadius: BorderRadius.circular(8),
+                //       ),
+                //       child: Center(child: Text('Event $index')),
+                //     ),
+                //     childCount: 4, // Replace with actual event count
+                //   ),
+                //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                //     crossAxisCount: 2,
+                //     mainAxisSpacing: 1,
+                //     crossAxisSpacing: 1,
+                //     childAspectRatio: .9,
                 //   ),
                 // ),
               ],

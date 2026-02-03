@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 
 class ViewServiceProfilePage extends ConsumerStatefulWidget {
@@ -86,6 +87,88 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
   Future<void> _handleRefresh() async {
     ref.invalidate(
       salonViewProfileViewModelProvider(widget.salonId),
+    );
+  }
+
+  // To be updated in the AddroidManifest.xml file
+  // <queries>
+  //   <intent>
+  //     <action android:name="android.intent.action.VIEW" />
+  //     <data android:scheme="tel" />
+  //   </intent>
+  //   <intent>
+  //     <action android:name="android.intent.action.VIEW" />
+  //     <data android:scheme="sms" />
+  //   </intent>
+  //   <intent>
+  //     <action android:name="android.intent.action.VIEW" />
+  //     <data android:scheme="mailto" />
+  //   </intent>
+  //   <intent>
+  //     <action android:name="android.intent.action.VIEW" />
+  //     <data android:scheme="https" />
+  //   </intent>
+  // </queries>
+
+  // for IoS info.plist
+  // <key>LSApplicationQueriesSchemes</key>
+  // <array>
+  //   <string>tel</string>
+  //   <string>sms</string>
+  //   <string>mailto</string>
+  //   <string>https</string>
+  // </array>
+  
+  Future<void> openPhone(String phoneNumber) async {
+    final uri = Uri(scheme: 'tel', path: phoneNumber);
+
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+  }
+
+  // 
+  Future<void> openSms(String phoneNumber) async {
+    final uri = Uri.parse('sms:$phoneNumber');
+
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+  }
+
+  // 
+  Future<void> openWhatsApp(String phoneNumber) async {
+    // Remove any non-numeric characters (like + or spaces)
+    final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    final uri = Uri.parse('https://wa.me/$cleanPhone');
+
+    // mode: LaunchMode.externalApplication is essential for WhatsApp!
+    await launchUrl(
+      uri, 
+      mode: LaunchMode.externalApplication
+    );
+  }
+
+  // 
+  Future<void> openEmail(String email) async {
+    final uri = Uri.parse('mailto:$email');
+
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,   
+    );
+  }
+
+  // 
+  Future<void> openMap(double lat, double lng) async {
+    // This works universally across Google Maps and Apple Maps
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+
+    await launchUrl(
+      uri, 
+      mode: LaunchMode.externalApplication
     );
   }
 
@@ -406,23 +489,17 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                   ListTile(
                     leading: const Icon(Icons.call),
                     title: const Text('Call'),
-                    onTap: () {
-                      // launch tel:
-                    },
+                    onTap: () => openPhone(salon.contacts.phone.toString()),
                   ),
                   ListTile(
                     leading: const Icon(Icons.sms),
                     title: const Text('SMS'),
-                    onTap: () {
-                      // launch sms:
-                    },
+                    onTap: () => openSms(salon.contacts.phone.toString()),
                   ),
                   ListTile(
                     leading: const Icon(Icons.chat),
                     title: const Text('WhatsApp'),
-                    onTap: () {
-                      // launch whatsapp:
-                    },
+                    onTap: () => openWhatsApp(salon.contacts.phone.toString()),
                   ),
 
                   const Divider(height: 1),
@@ -712,8 +789,8 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                     if (!isFollowing)
                                       FilledButton.icon(
                                         style: FilledButton.styleFrom(
-                                          backgroundColor: Colors.blueAccent,
-                                          foregroundColor: Colors.white,
+                                          backgroundColor: Theme.of(context).colorScheme.secondary,
+                                          foregroundColor: Theme.of(context).colorScheme.onSecondary,
                                         ),
                                         onPressed: followLoading
                                             ? null
@@ -723,12 +800,12 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                                 );
                                               },
                                         icon: followLoading
-                                            ? const SizedBox(
+                                            ? SizedBox(
                                                 height: 16,
                                                 width: 16,
                                                 child: CircularProgressIndicator(
                                                   strokeWidth: 2,
-                                                  color: Colors.white,
+                                                  color: Theme.of(context).colorScheme.primary,
                                                 ),
                                               )
                                             : const Icon(Icons.add, size: 18),
@@ -909,6 +986,8 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
+                    runAlignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -921,10 +1000,10 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.location_on, size: 14),
+                            const Icon(Icons.star, size: 18, color: Color.fromARGB(255, 255, 174, 0),),
                             const SizedBox(width: 4),
                             Text(
-                              "City Center",
+                              salon.metrics.rating.toString(),
                               style: Theme.of(context).textTheme.labelSmall,
                             ),
                           ],
@@ -941,27 +1020,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              "4.5 Rating",
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.verified, size: 14),
+                            const Icon(Icons.verified, size: 18, color: Color.fromARGB(255, 205, 250, 3),),
                             const SizedBox(width: 4),
                             Text(
                               "Certified",
@@ -981,7 +1040,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.workspace_premium, size: 14),
+                            const Icon(Icons.workspace_premium, size: 18, color: Color.fromARGB(255, 151, 143, 116),),
                             const SizedBox(width: 4),
                             Text(
                               "5+ Years",
@@ -991,6 +1050,52 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Container(
+                    width: size.width * 0.9,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(20),
+                      // Added the border color here
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.secondary,
+                        width: 1, // You can adjust thickness here
+                      ),
+                    ),
+                    child: Row(
+                      // mainAxisSize: MainAxisSize.min is no longer strictly necessary 
+                      // since the Container has a fixed width, but it doesn't hurt.
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 4),
+                        // Expanded is the secret sauce for text overflow
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => openMap(
+                              salon.contacts.location?.lat ?? 0,
+                              salon.contacts.location?.lng ?? 0,
+                            ),
+                            child: Text(
+                              salon.contacts.location?.address ?? "No Address",
+                              // Handles the "..." at the end
+                              overflow: TextOverflow.ellipsis, 
+                              maxLines: 1,
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    decorationThickness: 5,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 16),
@@ -1016,65 +1121,65 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
           SliverSpaceHeader(title: 'Salon Gallery'),
           SliverToBoxAdapter(
             child: salon.media.gallery.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: Text('No visuals uploaded')),
-                  )
-                : SizedBox(
-                    height: 190, // Portfolio feel
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: salon.media.gallery.length,
-                      itemBuilder: (context, i) {
-                        return TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: 1),
-                          duration: Duration(milliseconds: 450 + (i * 120)),
-                          curve: Curves.easeOutCubic,
-                          builder: (context, value, child) {
-                            return Transform.translate(
-                              offset: Offset(30 * (1 - value), 0),
-                              child: Opacity(opacity: value, child: child),
-                            );
-                          },
-                          child: Container(
-                            width: 150,
-                            margin: const EdgeInsets.only(right: 12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black26,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 6),
-                                ),
-                              ],
+            ? const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: Text('No visuals uploaded')),
+              )
+            : SizedBox(
+                height: 190, // Portfolio feel
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: salon.media.gallery.length,
+                  itemBuilder: (context, i) {
+                    return TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: Duration(milliseconds: 450 + (i * 120)),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, child) {
+                        return Transform.translate(
+                          offset: Offset(30 * (1 - value), 0),
+                          child: Opacity(opacity: value, child: child),
+                        );
+                      },
+                      child: Container(
+                        width: 150,
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              offset: Offset(0, 6),
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: CachedNetworkImage(
-                                imageUrl: salon.media.gallery[i].imageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: Colors.grey[200],
-                                  child: const Center(
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: Colors.grey[300],
-                                  child: const Icon(
-                                    Icons.broken_image,
-                                    color: Colors.grey,
-                                  ),
-                                ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: CachedNetworkImage(
+                            imageUrl: salon.media.gallery[i].imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
           ),
           
           // Book Button
