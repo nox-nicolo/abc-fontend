@@ -1,6 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 
 class SalonProfileModel {
   final String id;
@@ -15,7 +14,7 @@ class SalonProfileModel {
   final List<ContactModel> contacts;
   final List<WorkingHourModel> workingHours;
   final List<GalleryModel> gallery;
-  final int followers;
+  final int followers; // Mapped from SalonFollower
   final double rated;
 
   SalonProfileModel({
@@ -35,40 +34,6 @@ class SalonProfileModel {
     required this.rated,
   });
 
-  SalonProfileModel copyWith({
-    String? id,
-    String? username,
-    String? title,
-    String? slogan,
-    String? description,
-    String? displayAds,
-    double? profileCompletion,
-    String? profilePicture,
-    LocationModel? location,
-    List<ContactModel>? contacts,
-    List<WorkingHourModel>? workingHours,
-    List<GalleryModel>? gallery,
-    int? followers,
-    double? rated,
-  }) {
-    return SalonProfileModel(
-      id: id ?? this.id,
-      username: username ?? this.username,
-      title: title ?? this.title,
-      slogan: slogan ?? this.slogan,
-      description: description ?? this.description,
-      displayAds: displayAds ?? this.displayAds,
-      profileCompletion: profileCompletion ?? this.profileCompletion,
-      profilePicture: profilePicture ?? this.profilePicture,
-      location: location ?? this.location,
-      contacts: contacts ?? this.contacts,
-      workingHours: workingHours ?? this.workingHours,
-      gallery: gallery ?? this.gallery,
-      followers: followers ?? this.followers,
-      rated: rated ?? this.rated,
-    );
-  }
-
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'id': id,
@@ -83,7 +48,7 @@ class SalonProfileModel {
       'contacts': contacts.map((x) => x.toMap()).toList(),
       'workingHours': workingHours.map((x) => x.toMap()).toList(),
       'gallery': gallery.map((x) => x.toMap()).toList(),
-      'followers': followers,
+      'SalonFollower': followers, // Backend key
       'rated': rated,
     };
   }
@@ -98,52 +63,39 @@ class SalonProfileModel {
       displayAds: map['displayAds']?.toString() ?? '',
       profileCompletion: (map['profileCompletion'] as num?)?.toDouble() ?? 0.0,
       profilePicture: map['profilePicture']?.toString() ?? '',
-      location: map['location'] != null ? LocationModel.fromMap(map['location'] as Map<String, dynamic>) : null,
+      
+      // Fixed: Casting nested map
+      location: map['location'] != null 
+        ? LocationModel.fromMap(Map<String, dynamic>.from(map['location'] as Map)) 
+        : null,
+
+      // Fixed: Cleaning nested lists for Hive compatibility
       contacts: map['contacts'] is List 
-          ? List<ContactModel>.from((map['contacts'] as List).map((x) => ContactModel.fromMap(x as Map<String, dynamic>)))
+          ? (map['contacts'] as List).map((x) => 
+              ContactModel.fromMap(Map<String, dynamic>.from(x as Map))).toList()
           : [],
+
       workingHours: map['workingHours'] is List 
-          ? List<WorkingHourModel>.from((map['workingHours'] as List).map((x) => WorkingHourModel.fromMap(x as Map<String, dynamic>)))
+          ? (map['workingHours'] as List).map((x) => 
+              WorkingHourModel.fromMap(Map<String, dynamic>.from(x as Map))).toList()
           : [],
+
       gallery: map['gallery'] is List 
-          ? List<GalleryModel>.from((map['gallery'] as List).map((x) => GalleryModel.fromMap(x as Map<String, dynamic>)))
+          ? (map['gallery'] as List).map((x) => 
+              GalleryModel.fromMap(Map<String, dynamic>.from(x as Map))).toList()
           : [],
-      followers: (map['followers'] as num?)?.toInt() ?? 0,
+          
+      // Fixed: Backend sends "SalonFollower"
+      followers: (map['SalonFollower'] as num?)?.toInt() ?? 0,
       rated: (map['rated'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   String toJson() => json.encode(toMap());
-
   factory SalonProfileModel.fromJson(String source) => SalonProfileModel.fromMap(json.decode(source) as Map<String, dynamic>);
-
-  @override
-  String toString() => 'SalonProfileModel(id: $id, title: $title, contacts: ${contacts.length}, gallery: ${gallery.length})';
-
-  @override
-  bool operator ==(covariant SalonProfileModel other) {
-    if (identical(this, other)) return true;
-    return other.id == id &&
-      other.username == username &&
-      other.title == title &&
-      other.slogan == slogan &&
-      other.description == description &&
-      other.displayAds == displayAds &&
-      other.profileCompletion == profileCompletion &&
-      other.profilePicture == profilePicture &&
-      other.location == location &&
-      listEquals(other.contacts, contacts) &&
-      listEquals(other.workingHours, workingHours) &&
-      listEquals(other.gallery, gallery) &&
-      other.followers == followers &&
-      other.rated == rated;
-  }
-
-  @override
-  int get hashCode => id.hashCode ^ username.hashCode ^ title.hashCode ^ slogan.hashCode ^ description.hashCode ^ displayAds.hashCode ^ profileCompletion.hashCode ^ profilePicture.hashCode ^ location.hashCode ^ contacts.hashCode ^ workingHours.hashCode ^ gallery.hashCode ^ followers.hashCode ^ rated.hashCode;
 }
 
-// --- Sub-Models in the same style ---
+// --- Sub-Models aligned with Backend Keys ---
 
 class LocationModel {
   final String country;
@@ -184,7 +136,7 @@ class ContactModel {
       id: map['id']?.toString() ?? '',
       type: map['type']?.toString() ?? '',
       value: map['value']?.toString() ?? '',
-      isPrimary: map['is_primary'] ?? false,
+      isPrimary: map['is_primary'] ?? false, // Backend uses snake_case
     );
   }
 }
@@ -201,10 +153,10 @@ class WorkingHourModel {
 
   factory WorkingHourModel.fromMap(Map<String, dynamic> map) {
     return WorkingHourModel(
-      dayOfWeek: (map['day_of_week'] as num?)?.toInt() ?? 0,
-      isOpen: map['is_open'] ?? false,
-      openTime: map['open_time']?.toString() ?? '',
-      closeTime: map['close_time']?.toString() ?? '',
+      dayOfWeek: (map['day_of_week'] as num?)?.toInt() ?? 0, // Backend uses snake_case
+      isOpen: map['is_open'] ?? false,                      // Backend uses snake_case
+      openTime: map['open_time']?.toString() ?? '',         // Backend uses snake_case
+      closeTime: map['close_time']?.toString() ?? '',       // Backend uses snake_case
     );
   }
 }
@@ -220,7 +172,7 @@ class GalleryModel {
   factory GalleryModel.fromMap(Map<String, dynamic> map) {
     return GalleryModel(
       id: map['id']?.toString() ?? '',
-      imageUrl: map['image_url']?.toString() ?? '',
+      imageUrl: map['image_url']?.toString() ?? '', // Backend uses image_url
     );
   }
 }

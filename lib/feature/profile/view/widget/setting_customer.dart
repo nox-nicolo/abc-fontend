@@ -12,6 +12,7 @@ class _CustomerSettingsState extends State<CustomerSettings> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       child: Container(
         width: double.infinity,
@@ -28,49 +29,49 @@ class _CustomerSettingsState extends State<CustomerSettings> {
             ), 
             const SizedBox(height: 16,), 
             ListTile(
-              leading: Icon(Icons.edit, color: Colors.orange.shade400,),
+              leading: Icon(Icons.edit, color: theme.colorScheme.secondary,),
               title: Text('Edit'),
               subtitle: Text('username, phone number ...'),
             ),
             const SizedBox(height: 10,), 
             ListTile(
-              leading: Icon(FontAwesome.lock_solid, color: Colors.orange.shade400,),
+              leading: Icon(FontAwesome.lock_solid, color: theme.colorScheme.secondary,),
               title: Text('Privacy'),
               subtitle: Text('user data'),
             ),
             const SizedBox(height: 10,), 
             ListTile(
-              leading: Icon(FontAwesome.calendar_check, color: Colors.orange.shade400,),
+              leading: Icon(FontAwesome.calendar_check, color: theme.colorScheme.secondary,),
               title: Text('Appointment'),
               subtitle: Text('Remeinder, Communication'),
             ), 
             const SizedBox(height: 10,), 
             ListTile(
-              leading: Icon(FontAwesome.shield_solid, color: Colors.orange.shade400,),
+              leading: Icon(FontAwesome.shield_solid, color: theme.colorScheme.secondary,),
               title: Text('Security'),
               subtitle: Text('Two-factor authentication, Change password'),
             ), 
             const SizedBox(height: 10,), 
             ListTile(
-              leading: Icon(FontAwesome.database_solid, color: Colors.orange.shade400,),
+              leading: Icon(FontAwesome.database_solid, color: theme.colorScheme.secondary,),
               title: Text('Storage and Data'),
               subtitle: Text('Network usage, Storage'),
             ), 
             const SizedBox(height: 10,), 
             ListTile(
-              leading: Icon(FontAwesome.bell_solid, color: Colors.orange.shade400,),
+              leading: Icon(FontAwesome.bell_solid, color: theme.colorScheme.secondary,),
               title: Text('Notification'),
               subtitle: Text('Notification preferences'),
             ), 
             const SizedBox(height: 10,), 
             ListTile(
-              leading: Icon(FontAwesome.sliders_solid, color: Colors.orange.shade400,),
+              leading: Icon(FontAwesome.sliders_solid, color: theme.colorScheme.secondary,),
               title: Text('Account'),
               subtitle: Text('Delete, Manage contents'),
             ), 
             const SizedBox(height: 10,), 
             ListTile(
-              leading: Icon(FontAwesome.globe_solid, color: Colors.orange.shade400,),
+              leading: Icon(FontAwesome.globe_solid, color: theme.colorScheme.secondary,),
               title: Text('Language'),
               subtitle: Text('English, Device language'),
             )

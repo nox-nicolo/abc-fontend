@@ -43,8 +43,15 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
       });
 
     // Load profile (checks Hive cache first, then hits API)
-    Future.microtask(() {
-      ref.read(salonProfileViewModelProvider.notifier).getSalonProfileData();
+    // Future.microtask(() {
+    //   ref.read(salonProfileViewModelProvider.notifier).getSalonProfileData();
+    // });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = ref.read(salonProfileViewModelProvider);
+      // Only fetch if we don't have data yet or if it's an error
+      if (state is! AsyncData || state.value == null) {
+        ref.read(salonProfileViewModelProvider.notifier).getSalonProfileData();
+      }
     });
   }
 
@@ -298,7 +305,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16), // Increased spacing for better UX
+                              const SizedBox(width: 16), 
                               Row(
                                 children: [
                                   Material(
@@ -474,7 +481,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
           ),
 
           if (_selectedTabIndex == 0)
-            const GridWidget()
+            UniversalPostGrid(posts: const [], onPostTap: (post) => print(post))
           else if (_selectedTabIndex == 1)
             SliverList(
               delegate: SliverChildBuilderDelegate(

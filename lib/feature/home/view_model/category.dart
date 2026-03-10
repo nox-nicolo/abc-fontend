@@ -23,6 +23,8 @@ class HomeCategoriesViewModel extends _$HomeCategoriesViewModel {
   Future<void> _load() async {
     final res = await _repository.getCategories();
 
+    if (!ref.mounted) return;
+
     state = switch (res) {
       Left(value: final failure) =>
         AsyncError(failure.message, StackTrace.current),

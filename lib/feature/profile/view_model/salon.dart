@@ -25,6 +25,8 @@ class SalonProfileViewModel extends _$SalonProfileViewModel {
     final salonRepository = ref.read(salonProfileProvider);
     final res = await salonRepository.salonProfile();
 
+    if (!ref.mounted) return;
+
     res.fold(
       (l) {
         // If we already have cached data in the state, don't overwrite it with an error.

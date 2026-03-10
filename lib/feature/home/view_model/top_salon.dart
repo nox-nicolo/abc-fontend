@@ -24,6 +24,8 @@ class TopSalonViewModel extends _$TopSalonViewModel {
   Future<void> _load() async {
     final res = await _repository.getTopSalons();
 
+    if (!ref.mounted) return;
+    
     state = switch (res) {
       Left(value: final failure) =>
         AsyncError(failure.message, StackTrace.current),

@@ -14,6 +14,7 @@ import 'package:africa_beuty/feature/post/view_model/single_post_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
 
 class PostViewPage extends ConsumerWidget {
   final String postId;
@@ -61,19 +62,76 @@ class _PostViewBody extends StatelessWidget {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
+        // ------------- User Details -------------
+        SliverToBoxAdapter(
+          child: SizedBox(
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.grey.shade300,
+                        child: ClipOval(
+                          child: post.author.displayPicture!.isNotEmpty
+                              ? Image.network(
+                                  post.author.displayPicture.toString(),
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                )
+                              : const Icon(Icons.person, size: 48),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // show salon title
+                          Row(
+                            children: [
+                              Text(
+                                post.author.salonName,
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                              const SizedBox(width: 5),
+                              Icon(
+                                OctIcons.verified,
+                                size: 12,
+                                color: Colors.blue.shade500,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5,),
+                          Text(
+                            post.author.username,
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ],
+                      ),
+                      
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         // ---------------- Images ----------------
         if (post.images.isNotEmpty)
           SliverToBoxAdapter(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
 
-              // Single tap → open post
+              // Single tap → (What)
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => PostViewPage(postId: post.id),
-                  ),
-                );
+                // Navigator.of(context).push(
+                //   MaterialPageRoute(
+                //     builder: (_) => PostViewPage(postId: post.id),
+                //   ),
+                // );
               },
 
               //  Double tap → like post
@@ -90,6 +148,7 @@ class _PostViewBody extends StatelessWidget {
               onLongPress: () {
                 // TODO: open bottom sheet / post actions
                 // Not implemented yet
+                // show the salon
               },
 
               child: PostImages(

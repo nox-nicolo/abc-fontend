@@ -48,7 +48,7 @@ class BookingRepository {
           return Left(AppFailure('Unexpected server response'));
         }
 
-        // ✅ CORRECT: response → BookingModel
+        // CORRECT: response → BookingModel
         return Right(BookingModel.fromMap(decoded));
       }
 

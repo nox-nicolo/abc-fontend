@@ -4,6 +4,7 @@ import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:africa_beuty/feature/profile/model/salon.dart';
+import 'package:africa_beuty/feature/profile/model/salon_posts.dart';
 import 'package:africa_beuty/feature/profile/repositories/local_salon.dart';// Your local storage
 import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
@@ -34,15 +35,15 @@ class SalonProfileRepository {
 
     try {
       final response = await _client
-          .get(
-            uri,
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Accept': 'application/json',
-            },
-          )
-          .timeout(const Duration(seconds: 15));
-
+        .get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(const Duration(seconds: 15));
+          
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final decoded = jsonDecode(response.body);
 
@@ -52,7 +53,7 @@ class SalonProfileRepository {
 
         final salonModel = SalonProfileModel.fromMap(decoded);
 
-        // 🔥 FUNCTIONALITY ADDED: Sync to local storage on every successful fetch
+        // FUNCTIONALITY ADDED: Sync to local storage on every successful fetch
         await SalonProfileStorage.save(salonModel);
 
         return Right(salonModel);
@@ -62,7 +63,7 @@ class SalonProfileRepository {
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
     } on http.ClientException {
-      // 💡 ADDED: If network fails, try to return cache instead of showing error
+      // ADDED: If network fails, try to return cache instead of showing error
       final cached = await SalonProfileStorage.load();
       if (cached != null) return Right(cached);
       
@@ -71,6 +72,61 @@ class SalonProfileRepository {
       return Left(AppFailure('Invalid server response'));
     } catch (e) {
       return Left(AppFailure('Mapping Error: ${e.toString()}'));
+    }
+  }
+
+  /// Fetches paginated posts for a specific profile
+  /// [profileUserId] - The ID from the path parameter
+  /// [cursor] - The next_cursor from the previous response (optional)
+  Future<Either<AppFailure, PostResponseModel>> getProfilePosts({
+    required String profileUserId,
+    String? cursor,
+    int limit = 20,
+  }) async {
+    final token = await LocalStorageService.getAccessToken();
+
+    if (token == null || token.isEmpty) {
+      return Left(AppFailure('Authentication required'));
+    }
+
+    // Building the URI with query parameters for pagination
+    final queryParameters = {
+      if (cursor != null) 'cursor': cursor,
+      'limit': limit.toString(),
+    };
+
+    final uri = Uri.parse('${ServerConstants.serverUrl}/posts/profile/$profileUserId/posts')
+        .replace(queryParameters: queryParameters);
+
+    try {
+      final response = await _client.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+
+        if (decoded is! Map<String, dynamic>) {
+          return Left(AppFailure('Unexpected server response format'));
+        }
+
+        // Using the Model we created in the previous step
+        final postResponse = PostResponseModel.fromMap(decoded);
+        
+        return Right(postResponse);
+      }
+
+      return Left(_mapHttpError(response));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on http.ClientException {
+      return Left(AppFailure('Network error. Check your internet connection.'));
+    } catch (e) {
+      return Left(AppFailure('An unexpected error occurred: ${e.toString()}'));
     }
   }
 

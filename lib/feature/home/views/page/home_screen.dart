@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/page/bottom_nav.dart';
 import 'package:africa_beuty/core/page/chats.dart';
 import 'package:africa_beuty/feature/home/view_model/post_like.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
@@ -86,7 +87,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const SearchPage(),
+                                  builder: (context) => const BottomNavigationPage(initialIndex: 1,),
                                 ),
                               );
                             },
@@ -375,6 +376,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 child: const Center(child: Text('Ad')),
                               ),
                             );
+                            // implement the ads data here!
                           }
 
                           // FIX index shift due to ads

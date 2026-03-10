@@ -93,16 +93,19 @@ class _PickDateTimePageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Select Date & Time')),
+      appBar: AppBar(
+        title: const Text('Select Date & Time'),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // DATE
-            const Text(
+            Text(
               'Select Date',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
             _buildDateList(),
@@ -121,8 +124,8 @@ class _PickDateTimePageState
 
             SizedBox(
               width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
+              height: 54,
+              child: FilledButton(
                 onPressed: _selectedTime == null ? null : _continue,
                 child: const Text('Continue'),
               ),
@@ -134,41 +137,62 @@ class _PickDateTimePageState
   }
 
   Widget _buildDateList() {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
     return SizedBox(
-      height: 90,
+      height: 96,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
           ..._dates.map((date) {
-            final isSelected =
-                DateUtils.isSameDay(date, _selectedDate);
+            final isSelected = DateUtils.isSameDay(date, _selectedDate);
 
             return GestureDetector(
               onTap: () => setState(() => _selectedDate = date),
-              child: Container(
-                width: 80,
-                margin: const EdgeInsets.only(right: 8),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: 86,
+                margin: const EdgeInsets.only(right: 12),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(12),
+                      ? scheme.primary
+                      : scheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: isSelected
+                        ? scheme.primary
+                        : scheme.outlineVariant,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: scheme.primary.withOpacity(.25),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          )
+                        ]
+                      : [],
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       DateFormat('EEE').format(date),
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                        fontWeight: FontWeight.bold,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: isSelected
+                            ? scheme.onPrimary
+                            : scheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
-                      DateFormat('d MMM').format(date),
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
+                      DateFormat('d').format(date),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? scheme.onPrimary
+                            : scheme.onSurface,
                       ),
                     ),
                   ],
@@ -177,15 +201,20 @@ class _PickDateTimePageState
             );
           }),
 
+          /// calendar picker
           GestureDetector(
             onTap: _openDatePicker,
             child: Container(
-              width: 80,
+              width: 86,
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: scheme.outlineVariant),
               ),
-              child: const Icon(Icons.calendar_month),
+              child: Icon(
+                Icons.calendar_month_rounded,
+                color: scheme.primary,
+              ),
             ),
           ),
         ],
@@ -194,25 +223,43 @@ class _PickDateTimePageState
   }
 
   Widget _buildTimeSelector() {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
     return InkWell(
       onTap: _pickTime,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        height: 56,
+      borderRadius: BorderRadius.circular(18),
+      child: Ink(
+        height: 60,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(12),
+          color: scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: scheme.outlineVariant),
         ),
         child: Row(
           children: [
-            const Icon(Icons.access_time),
+            Icon(
+              Icons.schedule_rounded,
+              color: scheme.primary,
+            ),
             const SizedBox(width: 12),
-            Text(
-              _selectedTime == null
-                  ? 'Select time'
-                  : _selectedTime!.format(context),
-              style: const TextStyle(fontSize: 16),
+
+            Expanded(
+              child: Text(
+                _selectedTime == null
+                    ? 'Select time'
+                    : _selectedTime!.format(context),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: scheme.outline,
             ),
           ],
         ),

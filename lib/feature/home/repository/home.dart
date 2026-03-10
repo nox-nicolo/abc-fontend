@@ -116,8 +116,7 @@ class HomeRepositoryImpl implements HomeRepository {
             },
           )
           .timeout(const Duration(seconds: 15));
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+          
       if (response.statusCode != 200) {
         Map<String, dynamic>? body;
         try {

@@ -42,6 +42,9 @@ class _PostState extends ConsumerState<Post> {
   late bool _isLiked;
   late int _likesCount;
 
+  final PageController _pageController = PageController();
+  int _currentPage = 0; // Track the active image index
+
   late final ProviderSubscription _likeSub;
 
   @override
@@ -68,9 +71,11 @@ class _PostState extends ConsumerState<Post> {
     );
   }
 
+  // Impotant for cleanup
   @override
   void dispose() {
     _likeSub.close(); 
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -99,12 +104,19 @@ class _PostState extends ConsumerState<Post> {
                       bottom: Radius.circular(12),
                     ),
                     child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (int page) {
+                        setState(() {
+                          _currentPage = page;
+                        });
+                      },
                       itemCount: widget.images.length,
                       itemBuilder: (context, index) {
                         return CachedNetworkImage(
                           imageUrl: widget.images[index],
                           fit: BoxFit.cover,
                           memCacheWidth: 1080,
+                          fadeOutDuration: const Duration(milliseconds: 300),
                           filterQuality: FilterQuality.low,
                           placeholder: (context, url) => Container(
                             color: Theme.of(context).colorScheme.surfaceVariant,
@@ -122,15 +134,20 @@ class _PostState extends ConsumerState<Post> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
                         widget.images.length,
-                        (index) => Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.8),
-                          ),
-                        ),
+                        (index) {
+                          bool isActive = _currentPage == index;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 300), // Smoothly transition
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: isActive ? 12 : 6, // Active dot is wider
+                            height: 6,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(3),
+                              // Active dot is solid white, others are faded
+                              color: isActive ? Colors.white : Colors.white.withOpacity(0.5),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -158,16 +175,32 @@ class _PostState extends ConsumerState<Post> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  widget.username,
-                  style: Theme.of(context).textTheme.labelMedium,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // show salon title
+                    Row(
+                      children: [
+                        Text(
+                          widget.username,
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                        const SizedBox(width: 5),
+                        Icon(
+                          OctIcons.verified,
+                          size: 12,
+                          color: Colors.blue.shade500,
+                        ),
+                      ],
+                    ),
+                    // const SizedBox(height: 5,),
+                    // Text(
+                    //   widget.username,
+                    //   style: Theme.of(context).textTheme.labelSmall,
+                    // ),
+                  ],
                 ),
-                const SizedBox(width: 5),
-                Icon(
-                  OctIcons.verified,
-                  size: 12,
-                  color: Colors.blue.shade500,
-                ),
+                
               ],
             ),
           ),
@@ -214,40 +247,40 @@ class _PostState extends ConsumerState<Post> {
 
                     const SizedBox(width: 24),
 
-                    Column(
+                    Row(
                       children: [
-                        // Icon(
-                        //   FontAwesome.paper_plane_solid,
-                        //   color: Colors.blue.shade500,
-                        //   size: 24,
-                        // ),
-                        // const SizedBox(height: 5),
-                        // Text(
-                        //   widget.sharesCount.toString(),
-                        //   style:
-                        //       Theme.of(context).textTheme.labelLarge,
-                        // ),
+                        Icon(
+                          FontAwesome.paper_plane_solid,
+                          color: Colors.blue.shade500,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          widget.sharesCount.toString(),
+                          style:
+                              Theme.of(context).textTheme.labelLarge,
+                        ),
                       ],
                     ),
 
                     const SizedBox(width: 24),
 
-                    // Icon(
-                    //   FontAwesome.comment,
-                    //   size: 24,
-                    //   color: Colors.blue.shade500,
-                    // ),
+                    Icon(
+                      FontAwesome.comment,
+                      size: 24,
+                      color: Colors.blue.shade500,
+                    ),
                   ],
                 ),
               ),
-              // IconButton(
-              //   onPressed: () {},
-              //   icon: Icon(
-              //     Icons.bookmark_rounded,
-              //     size: 32,
-              //     color: Colors.blue.shade500,
-              //   ),
-              // ),
+              IconButton(
+                onPressed: () {},
+                icon: Icon(
+                  Icons.bookmark_rounded,
+                  size: 32,
+                  color: Colors.blue.shade500,
+                ),
+              ),
             ],
           ),
 
@@ -261,7 +294,7 @@ class _PostState extends ConsumerState<Post> {
               children: [
                 Text(
                   widget.description,
-                  maxLines: isExpanded ? null : 2,
+                  maxLines: isExpanded ? 100 : null,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (widget.description.length > 100)
@@ -276,7 +309,8 @@ class _PostState extends ConsumerState<Post> {
                       child: Text(
                         isExpanded ? 'Show Less' : 'Read More',
                         style: TextStyle(
-                          color: Colors.blue.shade500,
+                          fontSize: 10,
+                          color: Theme.of(context).colorScheme.onPrimaryFixedVariant,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -290,7 +324,7 @@ class _PostState extends ConsumerState<Post> {
           // DATE
           // --------------------------------------------------
           Padding(
-            padding: const EdgeInsets.only(left: 16, top: 4),
+            padding: const EdgeInsets.only(left: 8, top: 4),
             child: Text(
               widget.datePosted,
               style: Theme.of(context)

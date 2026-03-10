@@ -15,8 +15,7 @@ class ConfirmBookingPage extends ConsumerStatefulWidget {
       _ConfirmBookingPageState();
 }
 
-class _ConfirmBookingPageState
-    extends ConsumerState<ConfirmBookingPage> {
+class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
   final _noteController = TextEditingController();
 
   @override
@@ -29,15 +28,16 @@ class _ConfirmBookingPageState
         next.whenOrNull(
           error: (err, _) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(err.toString())),
+              SnackBar(
+                content: Text(err.toString()),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Colors.redAccent,
+              ),
             );
           },
           data: (booking) {
             if (booking != null) {
-              // 1. Clear the draft
               ref.read(bookingDraftProvider.notifier).reset();
-
-              // 2. Show the success modal
               _showSuccessDialog(context);
             }
           },
@@ -46,56 +46,66 @@ class _ConfirmBookingPageState
     );
   }
 
-  // The Success Modal Function
   void _showSuccessDialog(BuildContext context) {
     showDialog(
       context: context,
-      barrierDismissible: false, // User must click the button
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Icon(
-            Icons.check_circle_outline,
-            color: Colors.green,
-            size: 60,
-          ),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Booking Confirmed!",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              SizedBox(height: 8),
-              Text(
-                "Your appointment has been successfully scheduled. You can view it in your bookings.",
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // 3. Navigate away ONLY after clicking OK
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const BottomNavigationPage(initialIndex: 2,),
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check_circle, color: Colors.green, size: 60),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Booking Confirmed!",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Your appointment has been successfully scheduled. You can view it in your bookings.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey, fontSize: 15),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      // backgroundColor: Colors.black,
+                      // foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    (_) => false,
-                  );
-                },
-                child: const Text("Okay!"),
-              ),
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BottomNavigationPage(initialIndex: 2),
+                        ),
+                        (_) => false,
+                      );
+                    },
+                    child: const Text("Awesome!", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
   }
-
 
   void _confirm(BookingDraft draft) {
     final request = CreateBookingRequestModel(
@@ -103,17 +113,13 @@ class _ConfirmBookingPageState
       startAt: draft.startAt!,
       note: draft.note,
     );
-
-    ref
-        .read(startBookingViewModelProvider.notifier)
-        .createBooking(request: request);
+    ref.read(startBookingViewModelProvider.notifier).createBooking(request: request);
   }
 
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(bookingDraftProvider);
-    final loading =
-        ref.watch(startBookingViewModelProvider).isLoading;
+    final loading = ref.watch(startBookingViewModelProvider).isLoading;
 
     if (draft.style == null ||
         draft.startAt == null ||
@@ -125,67 +131,109 @@ class _ConfirmBookingPageState
       );
     }
 
-
-    final canConfirm =
-      !loading &&
-      draft.salonServicePriceId != null &&
-      draft.startAt != null;
+    final canConfirm = !loading && draft.salonServicePriceId != null && draft.startAt != null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Confirm Booking')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      appBar: AppBar(
+        title: const Text('Review Booking', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _SummaryTile(
-              label: 'Salon',
-              value: draft.salonName!,
-            ),
-            _SummaryTile(
-              label: 'Service',
-              value: draft.style!.name,
-            ),
-            _SummaryTile(
-              label: 'Date & Time',
-              value: DateFormat('dd MMM • HH:mm')
-                  .format(draft.startAt!),
-            ),
-            _SummaryTile(
-              label: 'Price',
-              value:
-                  '${draft.currency} ${draft.price!.toStringAsFixed(0)}',
-            ),
+            const Text("Booking Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
+            
+            // SUMMARY CARD
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  )
+                ],
+              ),
+              child: Column(
+                children: [
+                  _SummaryTile(
+                    label: 'Salon', 
+                    value: draft.salonName!, 
+                    icon: Icons.storefront_outlined
+                  ),
+                  const Divider(height: 32, thickness: 0.8),
+                  _SummaryTile(label: 'Service', value: draft.style!.name, icon: Icons.content_cut_outlined),
+                  const Divider(height: 32, thickness: 0.8),
+                  _SummaryTile(
+                    label: 'Date & Time',
+                    value: DateFormat('EEEE, dd MMM • HH:mm').format(draft.startAt!),
+                    icon: Icons.calendar_today_outlined,
+                  ),
+                  const Divider(height: 32, thickness: 0.8),
+                  _SummaryTile(
+                    label: 'Total Price',
+                    value: '${draft.currency} ${draft.price!.toStringAsFixed(0)}',
+                    icon: Icons.payments_outlined,
+                    isPrice: true,
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+            const Text("Special Instructions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            
             TextField(
               controller: _noteController,
-              maxLines: 3,
+              maxLines: 4,
               decoration: InputDecoration(
-                hintText: 'Add a note for the salon (optional)',
+                hintText: 'Add a note for the salon...',
+                // hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.4),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide.none,
                 ),
+                contentPadding: const EdgeInsets.all(16),
               ),
-              onChanged: (v) {
-                ref
-                    .read(bookingDraftProvider.notifier)
-                    .setNote(v);
-              },
+              onChanged: (v) => ref.read(bookingDraftProvider.notifier).setNote(v),
             ),
-            const Spacer(),
-            
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: canConfirm ? () => _confirm(draft) : null,
-                child: loading
-                    ? const CircularProgressIndicator(
-                        color: Colors.white,
-                      )
-                    : const Text('Confirm Booking'),
-              ),
-            ),
+            const SizedBox(height: 100), // Space for bottom button
           ],
+        ),
+      ),
+      bottomSheet: Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05), 
+              blurRadius: 10, offset: const Offset(0, -4)
+           ),
+          ],
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: 60,
+          child: ElevatedButton(
+            onPressed: canConfirm ? () => _confirm(draft) : null,
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+            ),
+            child: loading
+                ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Text('Confirm Appointment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
         ),
       ),
     );
@@ -195,21 +243,59 @@ class _ConfirmBookingPageState
 class _SummaryTile extends StatelessWidget {
   final String label;
   final String value;
+  final IconData icon;
+  final bool isPrice;
 
   const _SummaryTile({
     required this.label,
     required this.value,
+    required this.icon,
+    this.isPrice = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(label),
-      trailing: Text(
-        value,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
+    final color = Theme.of(context).colorScheme.secondary;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 22,
+          color: color,
+        ),
+        const SizedBox(width: 12),
+
+        // Left side label
+        Expanded(
+          flex: 3,
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 15),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        // Right side value
+        Expanded(
+          flex: 4,
+          child: Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: isPrice ? 18 : 15,
+              color: Colors.black,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+          ),
+        ),
+      ],
     );
   }
 }

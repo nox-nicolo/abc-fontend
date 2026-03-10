@@ -1,4 +1,7 @@
+import 'package:africa_beuty/feature/profile/view/widget/three_dots/create_service.dart';
+import 'package:africa_beuty/feature/profile/view/widget/three_dots/stylist/stylist_management.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
 
 class ThreedotsSalon extends StatefulWidget {
   const ThreedotsSalon({super.key});
@@ -8,8 +11,11 @@ class ThreedotsSalon extends StatefulWidget {
 }
 
 class _ThreedotsSalonState extends State<ThreedotsSalon> {
+  
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16),
@@ -17,46 +23,60 @@ class _ThreedotsSalonState extends State<ThreedotsSalon> {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: Icon(Icons.post_add_rounded, color: Colors.blue.shade400,),
-            title: Text('Content Management'),
+            onTap: () {
+              // Navigate to the stylist management page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SalonStylistsPage()),
+              );
+            },
+            leading: Icon(Icons.face_2_rounded, color: theme.colorScheme.secondary),
+            title: Text('Stylists Management'),
             subtitle: Text('Add, Edit, Delete'),
           ),
           const SizedBox(height: 10,), 
           ListTile(
-            leading: Icon(Icons.edit, color: Colors.blue.shade400,),
+            onTap: () {
+              // Navigate to the service management page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SelectServicePage()),
+              );
+            },
+            leading: Icon(Icons.edit, color: theme.colorScheme.secondary),
             title: Text('Service Management'),
             subtitle: Text('Create service, custom service'),
           ),
           ListTile(
-            leading: Icon(Icons.sell_rounded, color: Colors.blue.shade400,),
+            leading: Icon(Icons.sell_rounded, color: theme.colorScheme.secondary),
             title: Text('Marketing & Promotion'),
             subtitle: Text('Create promotion, Setting loyalt programs'),
           ),
           const SizedBox(height: 10,), 
           ListTile(
-            leading: Icon(Icons.calendar_today_rounded, color: Colors.blue.shade400,),
+            leading: Icon(Icons.calendar_today_rounded, color: theme.colorScheme.secondary),
             title: Text('Appointment Management'),
             subtitle: Text('Schedule appointment'),
           ),
           ListTile(
-            leading: Icon(Icons.monetization_on, color: Colors.blue.shade400,),
+            leading: Icon(Icons.monetization_on, color: theme.colorScheme.secondary),
             title: Text('Payments'),
             subtitle: Text('Make payment, Programa'),
           ),
           const SizedBox(height: 10,), 
           ListTile(
-            leading: Icon(Icons.analytics_outlined, color: Colors.blue.shade400,),
+            leading: Icon(Icons.analytics_outlined, color: theme.colorScheme.secondary),
             title: Text('Report & Analytics'),
             subtitle: Text('Summary, Trends'),
           ),
           ListTile(
-            leading: Icon(Icons.mediation, color: Colors.blue.shade400,),
+            leading: Icon(Icons.mediation, color: theme.colorScheme.secondary),
             title: Text('Social & Availability'),
             subtitle: Text('Sync Social Account, Set Working time'),
           ),
           const SizedBox(height: 10,), 
           ListTile(
-            leading: Icon(Icons.bookmark_border, color: Colors.blue.shade400,),
+            leading: Icon(Icons.bookmark_border, color: theme.colorScheme.secondary),
             title: Text('Saved'),
           ),
         ],

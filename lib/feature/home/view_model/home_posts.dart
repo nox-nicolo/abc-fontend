@@ -27,6 +27,8 @@ class FeedViewModel extends _$FeedViewModel {
       cursor: _cursor,
     );
 
+    if (!ref.mounted) return;
+
     state = res.fold(
       (failure) =>
           AsyncError(failure.message, StackTrace.current),

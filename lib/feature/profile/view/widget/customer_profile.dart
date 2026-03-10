@@ -207,7 +207,7 @@ class _CustomerProfileSliverWidgetState extends State<CustomerProfileSliverWidge
               },
               children: [
                 Container(
-                  child: const GridWidget(),
+                  child: UniversalPostGrid(posts: const [], onPostTap: (post) => print(post)),
                 ),
                 Container(
                   padding: const EdgeInsets.all(1),
