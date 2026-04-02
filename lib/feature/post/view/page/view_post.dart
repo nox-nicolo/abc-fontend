@@ -64,54 +64,57 @@ class _PostViewBody extends StatelessWidget {
       slivers: [
         // ------------- User Details -------------
         SliverToBoxAdapter(
-          child: SizedBox(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.grey.shade300,
+                  child: ClipOval(
+                    child: post.author.displayPicture != null &&
+                            post.author.displayPicture!.isNotEmpty
+                        ? Image.network(
+                            post.author.displayPicture!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                          )
+                        : const Icon(Icons.person, size: 48),
+                  ),
+                ),
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircleAvatar(
-                        radius: 28,
-                        backgroundColor: Colors.grey.shade300,
-                        child: ClipOval(
-                          child: post.author.displayPicture!.isNotEmpty
-                              ? Image.network(
-                                  post.author.displayPicture.toString(),
-                                  width: 48,
-                                  height: 48,
-                                  fit: BoxFit.cover,
-                                )
-                              : const Icon(Icons.person, size: 48),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
                         children: [
-                          // show salon title
-                          Row(
-                            children: [
-                              Text(
-                                post.author.salonName,
-                                style: Theme.of(context).textTheme.labelLarge,
-                              ),
-                              const SizedBox(width: 5),
-                              Icon(
-                                OctIcons.verified,
-                                size: 12,
-                                color: Colors.blue.shade500,
-                              ),
-                            ],
+                          Expanded(
+                            child: Text(
+                              post.author.salonName,
+                              style: Theme.of(context).textTheme.labelLarge,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          const SizedBox(height: 5,),
-                          Text(
-                            post.author.username,
-                            style: Theme.of(context).textTheme.labelSmall,
+                          const SizedBox(width: 5),
+                          Icon(
+                            OctIcons.verified,
+                            size: 12,
+                            color: Colors.blue.shade500,
                           ),
                         ],
                       ),
-                      
+                      const SizedBox(height: 5),
+                      Text(
+                        post.author.username,
+                        style: Theme.of(context).textTheme.labelSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),

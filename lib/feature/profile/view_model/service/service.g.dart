@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'salon_configure_services.dart';
+part of 'service.dart';
 
 // **************************************************************************
 // RiverpodGenerator

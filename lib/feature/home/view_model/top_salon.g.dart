@@ -44,7 +44,7 @@ final class TopSalonViewModelProvider
   }
 }
 
-String _$topSalonViewModelHash() => r'4b171dea178a43e16c1bb50ca96566def1ee4f31';
+String _$topSalonViewModelHash() => r'98ed47adc3ddba08a72e4ef9d845e7e5d1d7770f';
 
 abstract class _$TopSalonViewModel
     extends $Notifier<AsyncValue<List<TopSalonModel>>> {

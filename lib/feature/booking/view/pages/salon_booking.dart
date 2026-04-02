@@ -61,7 +61,7 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         body: Stack(
           children: [
@@ -115,7 +115,7 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                         height: 140,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           itemCount: upcoming.length,
                           separatorBuilder: (_, __) => const SizedBox(width: 16),
                           itemBuilder: (_, i) => SizedBox(
@@ -153,7 +153,9 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                           ),
                         );
                       },
-                      child: const Text('Start New Booking'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: const Text('Start New Booking')),
                     ),
                   ),
                 ),
@@ -163,6 +165,7 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                   child: TabBar(
                     tabs: [
                       Tab(text: 'Pending'),
+                      Tab(text: 'Confirmed'),
                       Tab(text: 'Completed'),
                       Tab(text: 'Cancelled'),
                     ],
@@ -175,6 +178,11 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                       BookingTab(
                         state: pending,
                         empty: 'No pending bookings',
+                        actionLoading: actionLoading,
+                      ),
+                      BookingTab(
+                        state: confirmed,
+                        empty: 'No confirmed bookings',
                         actionLoading: actionLoading,
                       ),
                       BookingTab(
@@ -490,6 +498,8 @@ class BookingCard extends StatelessWidget {
     switch (booking.status) {
       case 'pending':
         return Icons.pending_actions;
+      case 'confirmed':
+        return Icons.check_circle_outline;
       case 'completed':
         return Icons.check_circle_outline;
       case 'cancelled':
@@ -503,6 +513,8 @@ class BookingCard extends StatelessWidget {
     switch (booking.status) {
       case 'pending':
         return Colors.orange;
+      case 'confirmed':
+        return Colors.grey;
       case 'completed':
         return Colors.green;
       case 'cancelled':

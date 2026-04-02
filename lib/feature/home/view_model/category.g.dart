@@ -47,7 +47,7 @@ final class HomeCategoriesViewModelProvider
 }
 
 String _$homeCategoriesViewModelHash() =>
-    r'd83977350cbc65ee35f1729d2a158dd0060b64f7';
+    r'6cd96a719aeeed8707e209cad2f8f4d533f44c0c';
 
 abstract class _$HomeCategoriesViewModel
     extends $Notifier<AsyncValue<List<SelectedServiceModel>>> {

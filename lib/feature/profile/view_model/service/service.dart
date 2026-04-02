@@ -1,11 +1,11 @@
 
-import 'package:africa_beuty/feature/profile/model/salon_configure_services.dart';
-import 'package:africa_beuty/feature/profile/providers/salon_configure_services.dart';
-import 'package:africa_beuty/feature/profile/repositories/salon_configure_services.dart';
+import 'package:africa_beuty/feature/profile/model/three_dots/services/service.dart';
+import 'package:africa_beuty/feature/profile/providers/service/services.dart';
+import 'package:africa_beuty/feature/profile/repositories/three_dots/services/service.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'salon_configure_services.g.dart';
+part 'service.g.dart';
 
 @riverpod
 class SalonServicesViewModel extends _$SalonServicesViewModel {

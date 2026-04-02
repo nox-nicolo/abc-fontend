@@ -1,30 +1,50 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-
+import 'package:africa_beuty/core/page/bottom_nav.dart';
+import 'package:africa_beuty/feature/auth/view/page/login.dart';
+import 'package:africa_beuty/feature/welcome/view/page/welcome.dart';
 import 'package:africa_beuty/main.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp(isFirstTime: false));
+  testWidgets('shows welcome page for first-time user', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MyApp(
+          isFirstTime: true,
+          isLoggedIn: false,
+        ),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpAndSettle();
+    expect(find.byType(WelcomePage), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('shows sign in page for returning logged out user', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MyApp(
+          isFirstTime: false,
+          isLoggedIn: false,
+        ),
+      ),
+    );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.byType(SignInPage), findsOneWidget);
+  });
+
+  testWidgets('shows app shell for logged in user', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MyApp(
+          isFirstTime: false,
+          isLoggedIn: true,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomNavigationPage), findsOneWidget);
   });
 }

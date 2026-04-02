@@ -1,4 +1,4 @@
-import 'package:africa_beuty/feature/profile/view/widget/three_dots/create_service.dart';
+import 'package:africa_beuty/feature/profile/view/widget/three_dots/service/salon_service.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots/stylist/stylist_management.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';

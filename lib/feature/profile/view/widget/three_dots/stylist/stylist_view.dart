@@ -1,8 +1,13 @@
+
+import 'package:africa_beuty/feature/profile/model/three_dots/stylists/view_single_stylists.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots/stylist/stylist_edit.dart';
+import 'package:africa_beuty/feature/profile/view_model/stylist/edit_stylist.dart';
+import 'package:africa_beuty/feature/profile/view_model/stylist/view_single_stylist.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 
-class StylistDetailPage extends StatefulWidget {
+class StylistDetailPage extends ConsumerWidget {
   const StylistDetailPage({
     super.key,
     required this.stylistId,
@@ -11,282 +16,180 @@ class StylistDetailPage extends StatefulWidget {
   final String stylistId;
 
   @override
-  State<StylistDetailPage> createState() => _StylistDetailPageState();
-}
-
-class _StylistDetailPageState extends State<StylistDetailPage> {
-  late Future<SalonStylist> _future;
-
-  @override
-  void initState() {
-    super.initState();
-    _future = _fetchStylist(widget.stylistId);
-  }
-
-  Future<SalonStylist> _fetchStylist(String stylistId) async {
-    // TODO: Replace with your real API call:
-    // final json = await api.get("/salon/stylists/$stylistId");
-    // return SalonStylist.fromMap(json);
-
-    await Future.delayed(const Duration(milliseconds: 420));
-
-    final mock = <String, dynamic>{
-      "id": stylistId,
-      "salon_id": "ddb4bb51-2dd2-4d59-bf44-7959ad07f46b",
-      "user_id": "27e25454-1430-437c-b6d4-2ecb16f180a7",
-      "title": "Senior Stylist",
-      "bio": "Specialized in braids, natural hair care & bridal looks.",
-      "is_owner": false,
-      "is_active": false,
-      "created_at": "2026-02-25T18:32:21.102236",
-      "user": {
-        "id": "27e25454-1430-437c-b6d4-2ecb16f180a7",
-        "username": "custom_pka0xu",
-        "name": "Customer",
-        "profile_picture_url":
-            "http://192.168.43.160:8000/assets/images/user_profile_picture//user.png"
-      }
-    };
-
-    return SalonStylist.fromMap(mock);
-  }
-
-  void _refresh() {
-    setState(() {
-      _future = _fetchStylist(widget.stylistId);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
+    final stylistState = ref.watch(salonStylistDetailViewModelProvider(stylistId));
 
-    return FutureBuilder<SalonStylist>(
-      future: _future,
-      builder: (context, snap) {
-        final isLoading = snap.connectionState == ConnectionState.waiting;
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text("Stylist"),
+        actions: [
+          stylistState.maybeWhen(
+            data: (stylist) => TextButton.icon(
+              onPressed: () async {
+                // final user = stylist.user;
 
-        return Scaffold(
-          extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: const Text("Stylist"),
-            actions: [
-              TextButton.icon(
-                onPressed: () async {
+                final result = await EditSalonStylistSheet.open(
+                  context,
+                  name: stylist.user?.name ?? '',
+                  username: stylist.user?.username ?? '',
+                  imageUrl: stylist.user?.profilePictureUrl ?? '',
+                  title: stylist.title,
+                  bio: stylist.bio,
+                  isOwner: stylist.isOwner,
+                  isActive: stylist.isActive,
+                  onSubmit: (req) async {
+                    final updated = await ref
+                        .read(editStylistViewModelProvider.notifier)
+                        .editStylist(
+                          stylistId: stylist.id,
+                          request: req,
+                        );
 
-                  final result = await EditSalonStylistSheet.open(
-                    context,
-                    name: "customer",
-                    username: "custom_pka0xu",
-                    imageUrl: "http://192.168.43.160:8000/assets/images/user_profile_picture//user.png",
-                    title: "Senior Stylist",
-                    bio: "Braids specialist",
-                    isOwner: true,
-                    isActive: true
-                  );
-
-                  if (result != null) {
-
-                    /// later call API
-                    print(result);
-
-                  }
-                },
-                icon: const Icon(Icons.edit_outlined),
-                label: const Text("Edit   "),
-              ),
-              PopupMenuButton<_MenuAction>(
-                tooltip: "More",
-                enabled: !isLoading,
-                onSelected: (action) async {
-                  if (action == _MenuAction.refresh) {
-                    _refresh();
-                  }
-                  if (action == _MenuAction.delete) {
-                    final ok = await _confirmDelete(context);
                     if (!context.mounted) return;
-                    if (ok == true) {
-                      // TODO: delete
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Delete (not implemented)")),
-                      );
-                    }
-                  }
-                },
-                itemBuilder: (_) => [
-                  const PopupMenuItem(
-                    value: _MenuAction.refresh,
-                    child: Row(
-                      children: [
-                        Icon(Icons.refresh),
-                        SizedBox(width: 10),
-                        Text("Refresh"),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: _MenuAction.delete,
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline, color: cs.error),
-                        const SizedBox(width: 10),
-                        Text("Delete stylist"),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          body: _buildBody(context, snap),
-        );
-      },
-    );
-  }
 
-  Widget _buildBody(BuildContext context, AsyncSnapshot<SalonStylist> snap) {
-    final cs = Theme.of(context).colorScheme;
+                    ref
+                        .read(salonStylistDetailViewModelProvider(stylist.id).notifier)
+                        .getSalonStylistDetail(stylist.id);
 
-    if (snap.connectionState == ConnectionState.waiting) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (snap.hasError) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.error_outline, size: 44, color: cs.error),
-              const SizedBox(height: 10),
-              Text(
-                "Failed to load stylist",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              FilledButton.tonalIcon(
-                onPressed: _refresh,
-                icon: const Icon(Icons.refresh),
-                label: const Text("Try again"),
-              )
-            ],
-          ),
-        ),
-      );
-    }
-
-    final stylist = snap.data!;
-    final user = stylist.user;
-
-    return Stack(
-      children: [
-        // Gradient backdrop (modern feel)
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  cs.primaryContainer.withOpacity(0.95),
-                  cs.surface.withOpacity(0.2),
-                  cs.secondaryContainer.withOpacity(0.55),
-                ],
-              ),
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            // Modern success icon with a soft background
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check_rounded,
+                                color: Colors.green,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Flexible to prevent text overflow
+                            Expanded(
+                              child: Text(
+                                updated.user?.name.isNotEmpty == true
+                                    ? '${updated.user!.name} updated successfully'
+                                    : 'Stylist updated successfully',
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        backgroundColor: Colors.white,
+                        behavior: SnackBarBehavior.floating,
+                        elevation: 8,
+                        // shadowColor: Colors.black.withOpacity(0.2),
+                        margin: const EdgeInsets.fromLTRB(20, 0, 20, 40), // Floats above the bottom
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+                        ),
+                        duration: const Duration(seconds: 3),
+                      ),
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text("Edit   "),
             ),
+            orElse: () => const SizedBox.shrink(),
           ),
-        ),
+          PopupMenuButton<_MenuAction>(
+            tooltip: "More",
+            onSelected: (action) async {
+              if (action == _MenuAction.refresh) {
+                await ref
+                    .read(salonStylistDetailViewModelProvider(stylistId).notifier)
+                    .getSalonStylistDetail(stylistId);
+              }
 
-        // Content
-        SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 42), // space under transparent appbar
+              if (action == _MenuAction.delete) {
+                final ok = await _confirmDelete(context);
+                if (!context.mounted) return;
 
-                      // Hero header card
-                      _HeroHeaderCard(stylist: stylist),
-
-                      const SizedBox(height: 14),
-
-                      // Quick stats / status row (compact & modern)
-                      _PillsRow(stylist: stylist),
-
-                      const SizedBox(height: 18),
-
-                      // Details Cards
-                      _GlassSection(
-                        title: "About",
-                        child: Column(
-                          children: [
-                            _InfoRow(
-                              icon: Icons.badge_outlined,
-                              label: "Title",
-                              value: _dashIfEmpty(stylist.title),
+                if (ok == true) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Colors.orangeAccent, size: 20),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Delete not implemented",
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
                             ),
-                            const SizedBox(height: 10),
-                            _InfoRow(
-                              icon: Icons.notes_outlined,
-                              label: "Bio",
-                              value: _dashIfEmpty(stylist.bio),
-                              maxLines: 4,
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-
-                      const SizedBox(height: 14),
-
-                      _GlassSection(
-                        title: "Account",
-                        child: Column(
-                          children: [
-                            _InfoRow(
-                              icon: Icons.alternate_email,
-                              label: "Username",
-                              value: user.username.startsWith("@")
-                                  ? user.username
-                                  : "@${user.username}",
-                            ),
-                            const SizedBox(height: 10),
-                            _InfoRow(
-                              icon: Icons.schedule_outlined,
-                              label: "Created",
-                              value: _formatDateTime(stylist.createdAt),
-                            ),
-                          ],
-                        ),
+                      backgroundColor: Colors.white,
+                      behavior: SnackBarBehavior.floating,
+                      elevation: 4,
+                      margin: const EdgeInsets.all(20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.grey.shade200, width: 1),
                       ),
-
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: _MenuAction.refresh,
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh),
+                    SizedBox(width: 10),
+                    Text("Refresh"),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: _MenuAction.delete,
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, color: cs.error),
+                    const SizedBox(width: 10),
+                    const Text("Delete stylist"),
+                  ],
                 ),
               ),
             ],
           ),
+        ],
+      ),
+      body: stylistState.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => _DetailErrorView(
+          message: error.toString(),
+          onRetry: () {
+            ref
+                .read(salonStylistDetailViewModelProvider(stylistId).notifier)
+                .getSalonStylistDetail(stylistId);
+          },
         ),
-      ],
+        data: (stylist) => _DetailBody(stylist: stylist),
+      ),
     );
-  }
-
-  String _dashIfEmpty(String v) => v.trim().isEmpty ? "—" : v.trim();
-
-  String _formatDateTime(DateTime dt) {
-    if (dt.millisecondsSinceEpoch == 0) return "—";
-    final y = dt.year.toString().padLeft(4, "0");
-    final m = dt.month.toString().padLeft(2, "0");
-    final d = dt.day.toString().padLeft(2, "0");
-    final hh = dt.hour.toString().padLeft(2, "0");
-    final mm = dt.minute.toString().padLeft(2, "0");
-    return "$y-$m-$d  $hh:$mm";
   }
 
   Future<bool?> _confirmDelete(BuildContext context) {
@@ -317,80 +220,169 @@ class _StylistDetailPageState extends State<StylistDetailPage> {
 
 enum _MenuAction { refresh, delete }
 
-/// ---------------------------
-/// DATA MODELS
-/// ---------------------------
+class _DetailBody extends StatelessWidget {
+  const _DetailBody({required this.stylist});
 
-class SalonStylist {
-  final String id;
-  final String salonId;
-  final String userId;
-  final String title;
-  final String bio;
-  final bool isOwner;
-  final bool isActive;
-  final DateTime createdAt;
-  final StylistUser user;
+  final SalonStylistDetail stylist;
 
-  const SalonStylist({
-    required this.id,
-    required this.salonId,
-    required this.userId,
-    required this.title,
-    required this.bio,
-    required this.isOwner,
-    required this.isActive,
-    required this.createdAt,
-    required this.user,
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final user = stylist.user;
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  cs.primaryContainer.withOpacity(0.95),
+                  cs.surface.withOpacity(0.2),
+                  cs.secondaryContainer.withOpacity(0.55),
+                ],
+              ),
+            ),
+          ),
+        ),
+        SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 42),
+                      _HeroHeaderCard(stylist: stylist),
+                      const SizedBox(height: 14),
+                      _PillsRow(stylist: stylist),
+                      const SizedBox(height: 18),
+                      _GlassSection(
+                        title: "About",
+                        child: Column(
+                          children: [
+                            _InfoRow(
+                              icon: Icons.badge_outlined,
+                              label: "Title",
+                              value: _dashIfEmpty(stylist.title),
+                            ),
+                            const SizedBox(height: 10),
+                            _InfoRow(
+                              icon: Icons.notes_outlined,
+                              label: "Bio",
+                              value: _dashIfEmpty(stylist.bio),
+                              maxLines: 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      _GlassSection(
+                        title: "Account",
+                        child: Column(
+                          children: [
+                            _InfoRow(
+                              icon: Icons.person_outline,
+                              label: "Name",
+                              value: _dashIfEmpty(user?.name ?? ''),
+                            ),
+                            const SizedBox(height: 10),
+                            _InfoRow(
+                              icon: Icons.alternate_email,
+                              label: "Username",
+                              value: _dashIfEmpty(
+                                (user?.username ?? '').startsWith("@")
+                                    ? (user?.username ?? '')
+                                    : "@${user?.username ?? ''}",
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _InfoRow(
+                              icon: Icons.schedule_outlined,
+                              label: "Created",
+                              value: _formatDateTime(stylist.createdAt),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _dashIfEmpty(String v) => v.trim().isEmpty ? "—" : v.trim();
+
+  String _formatDateTime(DateTime? dt) {
+    if (dt == null) return "—";
+    final y = dt.year.toString().padLeft(4, "0");
+    final m = dt.month.toString().padLeft(2, "0");
+    final d = dt.day.toString().padLeft(2, "0");
+    final hh = dt.hour.toString().padLeft(2, "0");
+    final mm = dt.minute.toString().padLeft(2, "0");
+    return "$y-$m-$d  $hh:$mm";
+  }
+}
+
+class _DetailErrorView extends StatelessWidget {
+  const _DetailErrorView({
+    required this.message,
+    required this.onRetry,
   });
 
-  factory SalonStylist.fromMap(Map<String, dynamic> json) {
-    return SalonStylist(
-      id: (json["id"] ?? "").toString(),
-      salonId: (json["salon_id"] ?? "").toString(),
-      userId: (json["user_id"] ?? "").toString(),
-      title: (json["title"] ?? "").toString(),
-      bio: (json["bio"] ?? "").toString(),
-      isOwner: (json["is_owner"] ?? false) == true,
-      isActive: (json["is_active"] ?? true) == true,
-      createdAt: DateTime.tryParse((json["created_at"] ?? "").toString()) ??
-          DateTime.fromMillisecondsSinceEpoch(0),
-      user:
-          StylistUser.fromMap((json["user"] ?? const {}) as Map<String, dynamic>),
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 44, color: cs.error),
+            const SizedBox(height: 10),
+            Text(
+              "Failed to load stylist",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            FilledButton.tonalIcon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text("Try again"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-class StylistUser {
-  final String id;
-  final String username;
-  final String name;
-  final String? profilePictureUrl;
-
-  const StylistUser({
-    required this.id,
-    required this.username,
-    required this.name,
-    required this.profilePictureUrl,
-  });
-
-  factory StylistUser.fromMap(Map<String, dynamic> json) {
-    return StylistUser(
-      id: (json["id"] ?? "").toString(),
-      username: (json["username"] ?? "").toString(),
-      name: (json["name"] ?? "").toString(),
-      profilePictureUrl: (json["profile_picture_url"] as String?),
-    );
-  }
-}
-
 /// ---------------------------
-/// MODERN UI WIDGETS
+/// UI WIDGETS
 /// ---------------------------
 
 class _HeroHeaderCard extends StatelessWidget {
   const _HeroHeaderCard({required this.stylist});
-  final SalonStylist stylist;
+  final SalonStylistDetail stylist;
 
   @override
   Widget build(BuildContext context) {
@@ -423,8 +415,8 @@ class _HeroHeaderCard extends StatelessWidget {
         child: Row(
           children: [
             _UserAvatar(
-              name: u.name,
-              imageUrl: u.profilePictureUrl,
+              name: u?.name ?? '',
+              imageUrl: u?.profilePictureUrl,
               radius: 30,
             ),
             const SizedBox(width: 14),
@@ -433,7 +425,7 @@ class _HeroHeaderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    u.name,
+                    u?.name.isNotEmpty == true ? u!.name : 'Unknown stylist',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -442,7 +434,9 @@ class _HeroHeaderCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    u.username.startsWith("@") ? u.username : "@${u.username}",
+                    (u?.username ?? '').startsWith("@")
+                        ? (u?.username ?? '')
+                        : "@${u?.username ?? ''}",
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: cs.onSurfaceVariant,
                         ),
@@ -470,18 +464,18 @@ class _HeroHeaderCard extends StatelessWidget {
 
 class _PillsRow extends StatelessWidget {
   const _PillsRow({required this.stylist});
-  final SalonStylist stylist;
+  final SalonStylistDetail stylist;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return Wrap(
       spacing: 10,
       runSpacing: 10,
       children: [
         _Pill(
-          icon: stylist.isActive ? Icons.check_circle_outline : Icons.pause_circle_outline,
+          icon: stylist.isActive
+              ? Icons.check_circle_outline
+              : Icons.pause_circle_outline,
           text: stylist.isActive ? "Active" : "Inactive",
         ),
         if (stylist.isOwner)
@@ -493,7 +487,7 @@ class _PillsRow extends StatelessWidget {
           icon: Icons.badge_outlined,
           text: stylist.title.trim().isEmpty ? "Stylist" : stylist.title.trim(),
         ),
-        _Pill(
+        const _Pill(
           icon: Icons.person_outline,
           text: "User linked",
         ),
@@ -690,7 +684,9 @@ class _UserAvatar extends StatelessWidget {
   String _initials(String v) {
     final parts = v.trim().split(RegExp(r"\s+"));
     if (parts.isEmpty) return "";
-    if (parts.length == 1) return parts.first.characters.take(2).toString().toUpperCase();
+    if (parts.length == 1) {
+      return parts.first.characters.take(2).toString().toUpperCase();
+    }
     final a = parts[0].characters.take(1).toString();
     final b = parts[1].characters.take(1).toString();
     return (a + b).toUpperCase();

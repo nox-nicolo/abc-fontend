@@ -1,6 +1,7 @@
 import 'package:africa_beuty/feature/post/view/page/hashtag_result.dart';
 import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
 import 'package:africa_beuty/feature/search/model/search.dart';
+import 'package:africa_beuty/feature/service/view/page/service_view_page.dart';
 import 'package:flutter/material.dart';
 
 class SearchResultItem extends StatelessWidget {
@@ -43,7 +44,7 @@ class _UserTile extends StatelessWidget {
       ),
       title: Text(user.username),
       subtitle: user.fullName != null ? Text(user.fullName!) : null,
-      trailing: const Icon(Icons.chevron_right),
+      // trailing: const Icon(Icons.chevron_right),  // Display later base on the user profile
       onTap: () {
         
         Navigator.of(context).push(
@@ -123,7 +124,11 @@ class _ServiceTile extends StatelessWidget {
       ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () {
-        // TODO: navigate to service detail
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ServiceDetailsPage(),
+          ),
+        );
       },
     );
   }

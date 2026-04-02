@@ -1,25 +1,5 @@
+import 'package:africa_beuty/feature/profile/model/three_dots/stylists/edit_stylist.dart';
 import 'package:flutter/material.dart';
-
-class EditSalonStylistRequest {
-  final String title;
-  final String bio;
-  final bool isOwner;
-  final bool isActive;
-
-  const EditSalonStylistRequest({
-    required this.title,
-    required this.bio,
-    required this.isOwner,
-    required this.isActive,
-  });
-
-  Map<String, dynamic> toMap() => {
-        "title": title.trim(),
-        "bio": bio.trim(),
-        "is_owner": isOwner,
-        "is_active": isActive,
-      };
-}
 
 class EditSalonStylistSheet extends StatefulWidget {
   const EditSalonStylistSheet({
@@ -31,6 +11,7 @@ class EditSalonStylistSheet extends StatefulWidget {
     required this.bio,
     required this.isOwner,
     required this.isActive,
+    this.onSubmit,
   });
 
   final String name;
@@ -42,7 +23,9 @@ class EditSalonStylistSheet extends StatefulWidget {
   final bool isOwner;
   final bool isActive;
 
-  static Future<Map<String, dynamic>?> open(
+  final Future<void> Function(EditSalonStylistRequest req)? onSubmit;
+
+  static Future<void> open(
     BuildContext context, {
     required String name,
     required String username,
@@ -51,8 +34,9 @@ class EditSalonStylistSheet extends StatefulWidget {
     required String bio,
     required bool isOwner,
     required bool isActive,
+    Future<void> Function(EditSalonStylistRequest req)? onSubmit,
   }) {
-    return showModalBottomSheet<Map<String, dynamic>>(
+    return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -64,6 +48,7 @@ class EditSalonStylistSheet extends StatefulWidget {
         bio: bio,
         isOwner: isOwner,
         isActive: isActive,
+        onSubmit: onSubmit,
       ),
     );
   }
@@ -80,6 +65,7 @@ class _EditSalonStylistSheetState extends State<EditSalonStylistSheet> {
 
   late bool _isOwner;
   late bool _isActive;
+  bool _submitting = false;
 
   @override
   void initState() {
@@ -99,7 +85,8 @@ class _EditSalonStylistSheetState extends State<EditSalonStylistSheet> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
+    if (_submitting) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final req = EditSalonStylistRequest(
@@ -109,7 +96,27 @@ class _EditSalonStylistSheetState extends State<EditSalonStylistSheet> {
       isActive: _isActive,
     );
 
-    Navigator.pop(context, req.toMap());
+    setState(() => _submitting = true);
+
+    try {
+      if (widget.onSubmit != null) {
+        await widget.onSubmit!(req);
+        if (!mounted) return;
+        Navigator.pop(context);
+      } else {
+        if (!mounted) return;
+        Navigator.pop(context);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update stylist")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
+    }
   }
 
   @override
@@ -130,10 +137,7 @@ class _EditSalonStylistSheetState extends State<EditSalonStylistSheet> {
                 "Edit Stylist",
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
-
               const SizedBox(height: 16),
-
-              /// USER PREVIEW
               Container(
                 decoration: BoxDecoration(
                   color: cs.surfaceContainerLow,
@@ -145,11 +149,13 @@ class _EditSalonStylistSheetState extends State<EditSalonStylistSheet> {
                     CircleAvatar(
                       radius: 24,
                       backgroundColor: cs.primaryContainer,
-                      backgroundImage: widget.imageUrl != null
+                      backgroundImage: widget.imageUrl != null &&
+                              widget.imageUrl!.trim().isNotEmpty
                           ? NetworkImage(widget.imageUrl!)
                           : null,
-                      child: widget.imageUrl == null
-                          ? Text(widget.name.characters.first)
+                      child: widget.imageUrl == null ||
+                              widget.imageUrl!.trim().isEmpty
+                          ? Text(widget.name.characters.take(1).toString())
                           : null,
                     ),
                     const SizedBox(width: 12),
@@ -162,7 +168,9 @@ class _EditSalonStylistSheetState extends State<EditSalonStylistSheet> {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           Text(
-                            "@${widget.username}",
+                            widget.username.startsWith("@")
+                                ? widget.username
+                                : "@${widget.username}",
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -174,10 +182,7 @@ class _EditSalonStylistSheetState extends State<EditSalonStylistSheet> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              /// FORM
               Form(
                 key: _formKey,
                 child: Column(
@@ -195,9 +200,7 @@ class _EditSalonStylistSheetState extends State<EditSalonStylistSheet> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 12),
-
                     TextFormField(
                       controller: _bioCtrl,
                       minLines: 3,
@@ -207,32 +210,36 @@ class _EditSalonStylistSheetState extends State<EditSalonStylistSheet> {
                         prefixIcon: Icon(Icons.notes_outlined),
                       ),
                     ),
-
                     const SizedBox(height: 14),
-
                     SwitchListTile(
                       value: _isOwner,
                       onChanged: (v) => setState(() => _isOwner = v),
                       title: const Text("Owner"),
                       subtitle: const Text("Mark stylist as salon owner"),
                     ),
-
                     SwitchListTile(
                       value: _isActive,
                       onChanged: (v) => setState(() => _isActive = v),
                       title: const Text("Active"),
                       subtitle: const Text(
-                          "Inactive stylists won't appear for booking"),
+                        "Inactive stylists won't appear for booking",
+                      ),
                     ),
-
                     const SizedBox(height: 16),
-
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: _save,
-                        icon: const Icon(Icons.save),
-                        label: const Text("Save changes"),
+                        onPressed: _submitting ? null : _save,
+                        icon: _submitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.save),
+                        label: Text(
+                          _submitting ? "Saving..." : "Save changes",
+                        ),
                       ),
                     ),
                   ],

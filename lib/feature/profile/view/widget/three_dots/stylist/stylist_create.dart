@@ -1,3 +1,4 @@
+import 'package:africa_beuty/feature/profile/model/three_dots/stylists/create_stylist.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 
@@ -15,30 +16,6 @@ class SelectedStylistUser {
   });
 }
 
-class CreateSalonStylistRequest {
-  final String title;
-  final String bio;
-  final bool isOwner;
-  final bool isActive;
-  final String userId;
-
-  const CreateSalonStylistRequest({
-    required this.title,
-    required this.bio,
-    required this.isOwner,
-    required this.isActive,
-    required this.userId,
-  });
-
-  Map<String, dynamic> toMap() => {
-        "title": title.trim(),
-        "bio": bio.trim(),
-        "is_owner": isOwner,
-        "is_active": isActive,
-        "user_id": userId,
-      };
-}
-
 class CreateSalonStylistSheet extends StatefulWidget {
   const CreateSalonStylistSheet({
     super.key,
@@ -47,9 +24,6 @@ class CreateSalonStylistSheet extends StatefulWidget {
   });
 
   final SelectedStylistUser user;
-
-  /// Called with the final request payload.
-  /// If you return a Future, you can show loading in the sheet.
   final Future<void> Function(CreateSalonStylistRequest req)? onSubmit;
 
   static Future<void> open(
@@ -61,12 +35,16 @@ class CreateSalonStylistSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => CreateSalonStylistSheet(user: user, onSubmit: onSubmit),
+      builder: (_) => CreateSalonStylistSheet(
+        user: user,
+        onSubmit: onSubmit,
+      ),
     );
   }
 
   @override
-  State<CreateSalonStylistSheet> createState() => _CreateSalonStylistSheetState();
+  State<CreateSalonStylistSheet> createState() =>
+      _CreateSalonStylistSheetState();
 }
 
 class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
@@ -82,7 +60,6 @@ class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
   @override
   void initState() {
     super.initState();
-    // Good defaults
     _titleCtrl.text = "Stylist";
   }
 
@@ -115,9 +92,8 @@ class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
         if (!mounted) return;
         Navigator.pop(context);
       } else {
-        // If no submit handler yet, return the payload to caller
         if (!mounted) return;
-        Navigator.pop(context, req.toMap());
+        Navigator.pop(context, req.toJson());
       }
     } catch (_) {
       if (!mounted) return;
@@ -125,7 +101,9 @@ class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
         const SnackBar(content: Text("Failed to create stylist")),
       );
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
   }
 
@@ -148,8 +126,6 @@ class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 12),
-
-              // Selected user preview
               Material(
                 color: cs.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(16),
@@ -186,16 +162,15 @@ class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Icon(Icons.verified_user_outlined,
-                          color: cs.onSurfaceVariant),
+                      Icon(
+                        Icons.verified_user_outlined,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ],
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // Form
               Form(
                 key: _formKey,
                 child: Column(
@@ -227,7 +202,6 @@ class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
                         prefixIcon: Icon(Icons.notes_outlined),
                       ),
                       validator: (v) {
-                        // bio is optional; keep it light
                         if (v != null && v.trim().length > 280) {
                           return "Bio is too long (max 280 characters)";
                         }
@@ -235,14 +209,12 @@ class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
                       },
                     ),
                     const SizedBox(height: 14),
-
-                    // Switches
                     _SwitchTile(
                       title: "Owner",
                       subtitle: "Mark this stylist as salon owner",
                       value: _isOwner,
                       onChanged: (v) => setState(() => _isOwner = v),
-                      icon: Bootstrap.person_badge, // person_badge is a good fit for "owner" role
+                      icon: Bootstrap.person_badge,
                     ),
                     const SizedBox(height: 8),
                     _SwitchTile(
@@ -252,10 +224,7 @@ class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
                       onChanged: (v) => setState(() => _isActive = v),
                       icon: Icons.toggle_on_outlined,
                     ),
-
                     const SizedBox(height: 16),
-
-                    // Submit
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
@@ -264,19 +233,20 @@ class _CreateSalonStylistSheetState extends State<CreateSalonStylistSheet> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.person_add_alt_1),
-                        label: Text(_submitting ? "Creating..." : "Create Stylist"),
+                        label: Text(
+                          _submitting ? "Creating..." : "Create Stylist",
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 8),
-
-              // API payload preview (optional but super useful during dev)
               Text(
                 "user_id will be: ${widget.user.id}",
                 style: Theme.of(context)
@@ -296,7 +266,10 @@ class _UserAvatar extends StatelessWidget {
   final String name;
   final String? imageUrl;
 
-  const _UserAvatar({required this.name, required this.imageUrl});
+  const _UserAvatar({
+    required this.name,
+    required this.imageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -308,7 +281,10 @@ class _UserAvatar extends StatelessWidget {
       backgroundColor: cs.primaryContainer,
       foregroundColor: cs.onPrimaryContainer,
       child: (imageUrl == null || imageUrl!.isEmpty)
-          ? Text(initials, style: const TextStyle(fontWeight: FontWeight.w700))
+          ? Text(
+              initials,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            )
           : ClipOval(
               child: Image.network(
                 imageUrl!,
@@ -329,7 +305,9 @@ class _UserAvatar extends StatelessWidget {
   String _initials(String v) {
     final parts = v.trim().split(RegExp(r"\s+"));
     if (parts.isEmpty) return "";
-    if (parts.length == 1) return parts.first.characters.take(2).toString();
+    if (parts.length == 1) {
+      return parts.first.characters.take(2).toString();
+    }
     return (parts[0].characters.take(1).toString() +
             parts[1].characters.take(1).toString())
         .toUpperCase();
@@ -369,7 +347,9 @@ class _SwitchTile extends StatelessWidget {
           ],
         ),
         subtitle: Text(subtitle),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
       ),
     );
   }

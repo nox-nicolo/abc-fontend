@@ -15,9 +15,9 @@ final salonServiceConfigDetailViewModelProvider =
 
 final class SalonServiceConfigDetailViewModelProvider
     extends
-        $NotifierProvider<
+        $AsyncNotifierProvider<
           SalonServiceConfigDetailViewModel,
-          AsyncValue<SalonServiceConfigModel>
+          SalonServiceConfigDetailResponseModel
         > {
   SalonServiceConfigDetailViewModelProvider._({
     required SalonServiceConfigDetailViewModelFamily super.from,
@@ -46,16 +46,6 @@ final class SalonServiceConfigDetailViewModelProvider
   SalonServiceConfigDetailViewModel create() =>
       SalonServiceConfigDetailViewModel();
 
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AsyncValue<SalonServiceConfigModel> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AsyncValue<SalonServiceConfigModel>>(
-        value,
-      ),
-    );
-  }
-
   @override
   bool operator ==(Object other) {
     return other is SalonServiceConfigDetailViewModelProvider &&
@@ -69,15 +59,15 @@ final class SalonServiceConfigDetailViewModelProvider
 }
 
 String _$salonServiceConfigDetailViewModelHash() =>
-    r'd0060adc104f9ee4de0879815327e942da7a29c5';
+    r'c448c41f712d9f17eaaf2fd36128d818e51082c8';
 
 final class SalonServiceConfigDetailViewModelFamily extends $Family
     with
         $ClassFamilyOverride<
           SalonServiceConfigDetailViewModel,
-          AsyncValue<SalonServiceConfigModel>,
-          AsyncValue<SalonServiceConfigModel>,
-          AsyncValue<SalonServiceConfigModel>,
+          AsyncValue<SalonServiceConfigDetailResponseModel>,
+          SalonServiceConfigDetailResponseModel,
+          FutureOr<SalonServiceConfigDetailResponseModel>,
           ({String serviceId, String subServiceId})
         > {
   SalonServiceConfigDetailViewModelFamily._()
@@ -102,12 +92,12 @@ final class SalonServiceConfigDetailViewModelFamily extends $Family
 }
 
 abstract class _$SalonServiceConfigDetailViewModel
-    extends $Notifier<AsyncValue<SalonServiceConfigModel>> {
+    extends $AsyncNotifier<SalonServiceConfigDetailResponseModel> {
   late final _$args = ref.$arg as ({String serviceId, String subServiceId});
   String get serviceId => _$args.serviceId;
   String get subServiceId => _$args.subServiceId;
 
-  AsyncValue<SalonServiceConfigModel> build({
+  FutureOr<SalonServiceConfigDetailResponseModel> build({
     required String serviceId,
     required String subServiceId,
   });
@@ -117,17 +107,17 @@ abstract class _$SalonServiceConfigDetailViewModel
     final ref =
         this.ref
             as $Ref<
-              AsyncValue<SalonServiceConfigModel>,
-              AsyncValue<SalonServiceConfigModel>
+              AsyncValue<SalonServiceConfigDetailResponseModel>,
+              SalonServiceConfigDetailResponseModel
             >;
     final element =
         ref.element
             as $ClassProviderElement<
               AnyNotifier<
-                AsyncValue<SalonServiceConfigModel>,
-                AsyncValue<SalonServiceConfigModel>
+                AsyncValue<SalonServiceConfigDetailResponseModel>,
+                SalonServiceConfigDetailResponseModel
               >,
-              AsyncValue<SalonServiceConfigModel>,
+              AsyncValue<SalonServiceConfigDetailResponseModel>,
               Object?,
               Object?
             >;

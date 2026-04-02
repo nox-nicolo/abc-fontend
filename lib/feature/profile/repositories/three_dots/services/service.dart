@@ -4,9 +4,9 @@ import 'dart:convert';
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
-import 'package:africa_beuty/feature/profile/model/config_service_salon.dart';
-import 'package:africa_beuty/feature/profile/model/config_service_update_create.dart';
-import 'package:africa_beuty/feature/profile/model/salon_configure_services.dart';
+import 'package:africa_beuty/feature/profile/model/three_dots/services/create.dart';
+import 'package:africa_beuty/feature/profile/model/three_dots/services/service.dart';
+import 'package:africa_beuty/feature/profile/model/three_dots/services/stylist.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 
@@ -93,7 +93,7 @@ class SalonServiceRepository {
   // --------------------------------------------------
   // Get single service config (Create / Update page)
   // --------------------------------------------------
-  Future<Either<AppFailure, SalonServiceConfigModel>>
+  Future<Either<AppFailure, SalonServiceConfigDetailResponseModel>>
       getServiceConfig({
     required String serviceId,
     required String subServiceId,
@@ -128,7 +128,7 @@ class SalonServiceRepository {
         }
 
         return Right(
-          SalonServiceConfigModel.fromMap(decoded),
+          SalonServiceConfigDetailResponseModel.fromJson(decoded),
         );
       }
 
@@ -147,7 +147,7 @@ class SalonServiceRepository {
   // --------------------------------------------------
   // Create salon service config
   // --------------------------------------------------
-  Future<Either<AppFailure, void>> createServiceConfig({
+  Future<Either<AppFailure, MessageResponseModel>> createServiceConfig({
     required SalonServiceConfigRequestModel payload,
   }) async {
     final token = await LocalStorageService.getAccessToken();
@@ -174,7 +174,8 @@ class SalonServiceRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        return const Right(null);
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        return Right(MessageResponseModel.fromJson(decoded));
       }
 
       return Left(_mapHttpError(response));
@@ -185,14 +186,14 @@ class SalonServiceRepository {
     } on FormatException {
       return Left(AppFailure('Invalid server response'));
     } catch (e) {
-      return Left(AppFailure('Mapping Error: ${e.toString()}'));
+      return Left(AppFailure('Unexpected error: ${e.toString()}'));
     }
   }
 
   // --------------------------------------------------
   // Update salon service config
   // --------------------------------------------------
-  Future<Either<AppFailure, void>> updateServiceConfig({
+  Future<Either<AppFailure, MessageResponseModel>> updateServiceConfig({
     required String salonServicePriceId,
     required SalonServiceConfigRequestModel payload,
   }) async {
@@ -220,7 +221,8 @@ class SalonServiceRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        return const Right(null);
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        return Right(MessageResponseModel.fromJson(decoded));
       }
 
       return Left(_mapHttpError(response));
@@ -231,10 +233,62 @@ class SalonServiceRepository {
     } on FormatException {
       return Left(AppFailure('Invalid server response'));
     } catch (e) {
-      return Left(AppFailure('Mapping Error: ${e.toString()}'));
+      return Left(AppFailure('Unexpected error: ${e.toString()}'));
     }
   }
 
+  Future<Either<AppFailure, List<SalonStylistModel>>> getSalonStylists({
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final token = await LocalStorageService.getAccessToken();
+
+    if (token == null || token.isEmpty) {
+      return Left(AppFailure('Authentication required'));
+    }
+
+    final uri = Uri.parse(
+      '${ServerConstants.serverUrl}/profile/stylists',
+    ).replace(
+      queryParameters: {
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      },
+    );
+
+    try {
+      final response = await _client
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+
+        if (decoded is! Map<String, dynamic>) {
+          return Left(AppFailure('Unexpected server response'));
+        }
+
+        final result = SalonStylistListResponseModel.fromJson(decoded);
+        return Right(result.items);
+      }
+
+      return Left(_mapHttpError(response));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on http.ClientException catch (e) {
+      return Left(AppFailure('Client error: ${e.message}'));
+    } on FormatException {
+      return Left(AppFailure('Invalid server response'));
+    } catch (e) {
+      return Left(AppFailure('Unexpected error: ${e.toString()}'));
+    }
+  }
 
 
 
@@ -249,7 +303,7 @@ class SalonServiceRepository {
       case 403:
         return AppFailure('Session expired. Please login again.');
       case 404:
-        return AppFailure('Salon services endpoint not found');
+        return AppFailure(_safeErrorMessage(response.body));
       case 500:
       case 502:
       case 503:
@@ -265,7 +319,10 @@ class SalonServiceRepository {
       if (decoded is Map && decoded['detail'] != null) {
         return decoded['detail'].toString();
       }
+      if (decoded is Map && decoded['message'] != null) {
+        return decoded['message'].toString();
+      }
     } catch (_) {}
-    return 'Failed to load salon services';
+    return 'Request failed';
   }
 }

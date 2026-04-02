@@ -60,7 +60,7 @@ final class ProfilePostsViewModelProvider
 }
 
 String _$profilePostsViewModelHash() =>
-    r'dd059a9aa73174e2862ab22eabe6ce7a5dff3768';
+    r'0d0be8fc993862cb1359e4b27d38ace56341c070';
 
 final class ProfilePostsViewModelFamily extends $Family
     with

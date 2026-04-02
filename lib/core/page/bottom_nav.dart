@@ -3,12 +3,11 @@ import 'package:africa_beuty/feature/booking/view/pages/booking.dart';
 import 'package:africa_beuty/feature/home/views/page/home_screen.dart';
 import 'package:africa_beuty/feature/profile/view/page/profile.dart';
 import 'package:africa_beuty/feature/search/view/page/search.dart';
-// import 'package:africa_beuty/feature/trends/view/pages/trending.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 
 class BottomNavigationPage extends StatefulWidget {
-  final int? initialIndex; // optional
+  final int? initialIndex;
 
   const BottomNavigationPage({
     super.key,
@@ -25,10 +24,9 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
 
   late int _index;
 
-  final appScreens =  [
+  final List<Widget> appScreens = const [
     HomeScreen(),
     SearchPage(),
-    // TrendingPage(),
     BookingPage(),
     ProfilePage(),
   ];
@@ -36,20 +34,25 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex ?? 0; // default Home
+    _index = (widget.initialIndex != null &&
+            widget.initialIndex! >= 0 &&
+            widget.initialIndex! < appScreens.length)
+        ? widget.initialIndex!
+        : 0;
     _loadProfileImage();
   }
 
   Future<void> _loadProfileImage() async {
     final user = await LocalStorageService.getuserData();
     if (!mounted) return;
+
     setState(() {
       profileImage = user?.profilePicture ?? '';
       _name = user?.username ?? '';
     });
   }
 
-  void _onTapedItem(int index) {
+  void _onTappedItem(int index) {
     setState(() {
       _index = index;
     });
@@ -58,8 +61,7 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: _index == 0, // Only pop when on Home
-
+      canPop: _index == 0,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
 
@@ -69,32 +71,29 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
           });
         }
       },
-
       child: Scaffold(
-        body: appScreens[_index],
+        body: IndexedStack(
+          index: _index,
+          children: appScreens,
+        ),
         bottomNavigationBar: BottomNavigationBar(
-          onTap: _onTapedItem,
           currentIndex: _index,
+          onTap: _onTappedItem,
           items: [
             BottomNavigationBarItem(
               activeIcon: Icon(FontAwesome.house_solid),
-              label: 'Home',
               icon: Icon(FontAwesome.house_solid),
+              label: 'Home',
             ),
             BottomNavigationBarItem(
               activeIcon: Icon(Bootstrap.search_heart),
-              label: 'Search',
               icon: Icon(Bootstrap.search),
+              label: 'Search',
             ),
-            // BottomNavigationBarItem(
-            //   activeIcon: Icon(FontAwesome.fire_flame_curved_solid),
-            //   label: 'Trending',
-            //   icon: Icon(FontAwesome.fire_flame_curved_solid),
-            // ),
             BottomNavigationBarItem(
               activeIcon: Icon(Bootstrap.calendar_event_fill),
-              label: 'Booking',
               icon: Icon(Bootstrap.calendar),
+              label: 'Booking',
             ),
             BottomNavigationBarItem(
               activeIcon: profileImage.isNotEmpty
@@ -107,7 +106,6 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
                       ),
                     )
                   : const Icon(Icons.person),
-              label: _name.isEmpty ? 'Profile' : _name,
               icon: profileImage.isNotEmpty
                   ? ClipOval(
                       child: Image.network(
@@ -118,6 +116,7 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
                       ),
                     )
                   : const Icon(Icons.person),
+              label: _name.isEmpty ? 'Profile' : _name,
             ),
           ],
         ),

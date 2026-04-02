@@ -1,7 +1,7 @@
 
-import 'package:africa_beuty/feature/profile/model/salon_configure_services.dart';
-import 'package:africa_beuty/feature/profile/view/widget/config_service_salon.dart';
-import 'package:africa_beuty/feature/profile/view_model/salon_configure_services.dart';
+import 'package:africa_beuty/feature/profile/model/three_dots/services/service.dart';
+import 'package:africa_beuty/feature/profile/view/widget/three_dots/service/salon_service_create.dart';
+import 'package:africa_beuty/feature/profile/view_model/service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -118,7 +118,11 @@ class _SelectServicePageState extends ConsumerState<SelectServicePage> {
         builder: (_) => ConfigureServicePage(
           // SAME mapping as before, just correct fields
           serviceId: service.serviceId,
-          subServiceId: service.subServiceId,
+          subServiceId: service.subServiceId, 
+          serviceName: service.serviceName, 
+          serviceImage: service.serviceImage, 
+          subServiceName: service.subServiceName, 
+          subServiceImage: service.serviceImage,
         ),
       ),
     );

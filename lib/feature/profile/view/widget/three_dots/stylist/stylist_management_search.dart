@@ -1,49 +1,8 @@
 import 'dart:async';
+
+import 'package:africa_beuty/feature/profile/model/three_dots/stylists/search_stylists.dart';
 import 'package:flutter/material.dart';
 
-/// Matches your API response shape:
-/// {
-///   "items": [ { id, username, name, profile_picture_url, ... } ],
-///   "query": "string",
-///   "count": 0
-/// }
-class StylistSearchResponse {
-  final List<StylistSearchItem> items;
-  final String query;
-  final int count;
-
-  const StylistSearchResponse({
-    required this.items,
-    required this.query,
-    required this.count,
-  });
-}
-
-class StylistSearchItem {
-  final String id;
-  final String username;
-  final String name;
-  final String? profilePictureUrl;
-
-  const StylistSearchItem({
-    required this.id,
-    required this.username,
-    required this.name,
-    required this.profilePictureUrl,
-  });
-
-  // Optional: if later you want json parsing quickly
-  factory StylistSearchItem.fromMap(Map<String, dynamic> json) {
-    return StylistSearchItem(
-      id: (json["id"] ?? "").toString(),
-      username: (json["username"] ?? "").toString(),
-      name: (json["name"] ?? "").toString(),
-      profilePictureUrl: (json["profile_picture_url"] as String?),
-    );
-  }
-}
-
-/// Signature your page/provider will implement later.
 typedef SearchStylistsFn = Future<StylistSearchResponse> Function(String query);
 
 class StylistSearchField extends StatefulWidget {
@@ -71,30 +30,11 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
   final _focusNode = FocusNode();
 
   Timer? _debounce;
+
   bool _loading = false;
   String _lastQuery = "";
   StylistSearchResponse? _resp;
   Object? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.addListener(() {
-      // when user taps out, close dropdown
-      if (!_focusNode.hasFocus) {
-        setState(() {
-          _resp = null;
-          _error = null;
-          _loading = false;
-        });
-      } else {
-        // if focused and already has query, keep dropdown behavior
-        if (_ctrl.text.trim().length >= widget.minChars) {
-          _triggerSearch(_ctrl.text.trim());
-        }
-      }
-    });
-  }
 
   @override
   void dispose() {
@@ -107,6 +47,8 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
   void _onChanged(String value) {
     final q = value.trim();
     _debounce?.cancel();
+
+    setState(() {});
 
     if (q.length < widget.minChars) {
       setState(() {
@@ -125,6 +67,7 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
 
   Future<void> _triggerSearch(String q) async {
     _lastQuery = q;
+
     setState(() {
       _loading = true;
       _error = null;
@@ -133,7 +76,6 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
     try {
       final res = await widget.searchFn(q);
 
-      // avoid showing stale results if user typed quickly
       if (!mounted) return;
       if (_lastQuery != q) return;
 
@@ -154,7 +96,9 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
   }
 
   void _clear() {
+    _debounce?.cancel();
     _ctrl.clear();
+
     setState(() {
       _resp = null;
       _error = null;
@@ -166,11 +110,16 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final query = _ctrl.text.trim();
 
-    final showDropdown = _focusNode.hasFocus &&
-        (_loading || _error != null || (_resp?.items.isNotEmpty ?? false));
+    final hasSearchState =
+        _loading || _error != null || _resp != null || query.isNotEmpty;
+
+    final showDropdown =
+        query.length >= widget.minChars && hasSearchState;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
           controller: _ctrl,
@@ -197,8 +146,6 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
-
-        // Dropdown results (below input)
         if (showDropdown) ...[
           const SizedBox(height: 8),
           Material(
@@ -252,7 +199,8 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
     }
 
     final items = _resp?.items ?? const <StylistSearchItem>[];
-    if (items.isEmpty) {
+
+    if (_lastQuery.length >= widget.minChars && items.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(12),
         child: Text("No results"),
@@ -269,53 +217,60 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
       ),
       itemBuilder: (context, i) {
         final it = items[i];
-        return InkWell(
-          onTap: () {
-            // you can choose behavior:
-            // 1) Keep query in field (current behavior)
-            // 2) Replace text with picked username/name
-            // _ctrl.text = it.username;
 
-            widget.onPick?.call(it);
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              widget.onPick?.call(it);
 
-            // close dropdown after pick
-            FocusScope.of(context).unfocus();
-          },
-          
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                _NetworkAvatar(
-                  url: it.profilePictureUrl,
-                  fallbackText: it.name,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        it.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        "@${it.username.replaceAll("@", "")}",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                    ],
+              _ctrl.clear();
+              _resp = null;
+              _error = null;
+              _loading = false;
+              _lastQuery = "";
+
+              FocusScope.of(context).unfocus();
+
+              if (mounted) {
+                setState(() {});
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  _NetworkAvatar(
+                    url: it.profilePictureUrl,
+                    fallbackText: it.name,
                   ),
-                ),
-                Icon(Icons.add, color: cs.primary),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          it.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "@${it.username.replaceAll("@", "")}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.add, color: cs.primary),
+                ],
+              ),
             ),
           ),
         );
@@ -336,7 +291,6 @@ class _NetworkAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
     final initials = _initials(fallbackText);
 
     return CircleAvatar(
@@ -367,8 +321,10 @@ class _NetworkAvatar extends StatelessWidget {
 
   String _initials(String name) {
     final parts = name.trim().split(RegExp(r"\s+"));
-    if (parts.isEmpty) return "";
-    if (parts.length == 1) return parts.first.characters.take(2).toString();
+    if (parts.isEmpty || parts.first.isEmpty) return "";
+    if (parts.length == 1) {
+      return parts.first.characters.take(2).toString().toUpperCase();
+    }
     return (parts[0].characters.take(1).toString() +
             parts[1].characters.take(1).toString())
         .toUpperCase();

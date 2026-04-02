@@ -48,7 +48,7 @@ final class SalonProfileViewModelProvider
 }
 
 String _$salonProfileViewModelHash() =>
-    r'782363a35e0ed6135a4caa26b9b2e4efe086e958';
+    r'c720293a352737e75b6216148b60e14dbcab8804';
 
 abstract class _$SalonProfileViewModel
     extends $Notifier<AsyncValue<SalonProfileModel>> {
