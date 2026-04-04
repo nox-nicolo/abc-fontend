@@ -33,6 +33,7 @@ class _ConfigureServicePageState extends ConsumerState<ConfigureServicePage> {
   int duration = 60;
   double minPrice = 0;
   double maxPrice = 0;
+  int concurrentCapacity = 1;
   bool isActive = true;
 
   final List<_Currency> currencies = const [
@@ -125,6 +126,7 @@ class _ConfigureServicePageState extends ConsumerState<ConfigureServicePage> {
         orElse: () => currencies.first,
       );
 
+      concurrentCapacity = cfg?.concurrentCapacity ?? 1;
       isActive = cfg?.status == SalonServiceStatus.active;
 
       selectedBenefits = (cfg?.benefits ?? [])
@@ -948,6 +950,52 @@ class _ConfigureServicePageState extends ConsumerState<ConfigureServicePage> {
                 ),
                 const SizedBox(height: 16),
                 _Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Concurrent Bookings",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Max bookings allowed at the same time for this service",
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          IconButton.filledTonal(
+                            icon: const Icon(Icons.remove),
+                            onPressed: concurrentCapacity > 1
+                                ? () => setState(() => concurrentCapacity--)
+                                : null,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text(
+                              '$concurrentCapacity',
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                          ),
+                          IconButton.filledTonal(
+                            icon: const Icon(Icons.add),
+                            onPressed: () => setState(() => concurrentCapacity++),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            concurrentCapacity == 1 ? 'slot' : 'slots',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _Card(
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text("Service Active"),
@@ -970,6 +1018,7 @@ class _ConfigureServicePageState extends ConsumerState<ConfigureServicePage> {
                             priceMax: maxPrice.toInt(),
                             currency: selectedCurrency.code,
                             durationMinutes: duration,
+                            concurrentCapacity: concurrentCapacity,
                             status: isActive
                                 ? SalonServiceStatus.active
                                 : SalonServiceStatus.inactive,

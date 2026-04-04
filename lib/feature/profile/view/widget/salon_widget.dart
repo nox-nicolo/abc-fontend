@@ -1,11 +1,14 @@
 import 'package:africa_beuty/core/widgets/activity_feed.dart';
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
+import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/profile/model/salon.dart';
+import 'package:africa_beuty/feature/profile/model/salon_posts.dart';
 import 'package:africa_beuty/feature/profile/view/widget/setting.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon.dart';
+import 'package:africa_beuty/feature/profile/view_model/salon_profile_post.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -480,34 +483,11 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
             ),
           ),
 
-          if (_selectedTabIndex == 0)
-            UniversalPostGrid(posts: const [], onPostTap: (post) => print(post))
-          else if (_selectedTabIndex == 1)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (_, i) => Post(
-                  postId: 'postId_$i',
-                  isLiked: false,
-                  aspectRatio: 1,
-                  username: salon.username,
-                  profileImage: salon.profilePicture,
-                  images: [salon.displayAds],
-                  likesCount: 100,
-                  sharesCount: 50,
-                  commentsCount: 20,
-                  description: 'Salon highlight',
-                  datePosted: 'Today',
-                ),
-                childCount: 3,
-              ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (_, i) => const ActivityFeed(),
-                childCount: 5,
-              ),
-            ),
+          _PostTabContent(
+            salonId: salon.id,
+            salon: salon,
+            selectedTabIndex: _selectedTabIndex,
+          ),
         ],
       ),
     );
@@ -551,4 +531,133 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _StickyTabBarDelegate old) => tabBar != old.tabBar;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab content — loads and displays real posts
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PostTabContent extends ConsumerStatefulWidget {
+  final String salonId;
+  final SalonProfileModel salon;
+  final int selectedTabIndex;
+
+  const _PostTabContent({
+    required this.salonId,
+    required this.salon,
+    required this.selectedTabIndex,
+  });
+
+  @override
+  ConsumerState<_PostTabContent> createState() => _PostTabContentState();
+}
+
+class _PostTabContentState extends ConsumerState<_PostTabContent> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref
+          .read(profilePostsViewModelProvider(widget.salonId).notifier)
+          .getInitialPosts();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final postsState =
+        ref.watch(profilePostsViewModelProvider(widget.salonId));
+
+    return postsState.when(
+      loading: () => const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      error: (e, _) => SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Center(child: Text(e.toString())),
+        ),
+      ),
+      data: (posts) {
+        if (posts.isEmpty) {
+          return SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.photo_library_outlined,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.outline),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No posts yet',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (widget.selectedTabIndex == 0) {
+          // ── Grid view ──
+          return UniversalPostGrid(
+            posts: posts,
+            onPostTap: (post) => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => PostViewPage(postId: post.id),
+              ),
+            ),
+          );
+        } else if (widget.selectedTabIndex == 1) {
+          // ── List view ──
+          return SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (_, i) {
+                final p = posts[i];
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => PostViewPage(postId: p.id),
+                    ),
+                  ),
+                  child: Post(
+                    postId: p.id,
+                    isLiked: p.viewerState.isLiked,
+                    images: p.media.map((e) => e.url).toList(),
+                    aspectRatio:
+                        p.media.isNotEmpty ? p.media.first.aspectRatio : 1.0,
+                    username: p.author.username,
+                    profileImage: p.author.profilePicture,
+                    likesCount: p.stats.likes,
+                    sharesCount: p.stats.shares,
+                    commentsCount: p.stats.comments,
+                    description: p.caption,
+                    datePosted: p.createdAt,
+                  ),
+                );
+              },
+              childCount: posts.length,
+            ),
+          );
+        } else {
+          // ── Activity feed ──
+          return SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (_, i) => const ActivityFeed(),
+              childCount: 20,
+            ),
+          );
+        }
+      },
+    );
+  }
 }

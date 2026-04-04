@@ -102,10 +102,10 @@ class LocationModel {
   final String city;
   final String street;
   final String region;
-  final double latitude;
-  final double longitude;
+  final double? latitude;
+  final double? longitude;
 
-  LocationModel({required this.country, required this.city, required this.street, required this.region, required this.latitude, required this.longitude});
+  LocationModel({required this.country, required this.city, required this.street, required this.region, this.latitude, this.longitude});
 
   Map<String, dynamic> toMap() => {'country': country, 'city': city, 'street': street, 'region': region, 'latitude': latitude, 'longitude': longitude};
 
@@ -115,8 +115,8 @@ class LocationModel {
       city: map['city']?.toString() ?? '',
       street: map['street']?.toString() ?? '',
       region: map['region']?.toString() ?? '',
-      latitude: (map['latitude'] as num?)?.toDouble() ?? 0.0,
-      longitude: (map['longitude'] as num?)?.toDouble() ?? 0.0,
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
     );
   }
 }

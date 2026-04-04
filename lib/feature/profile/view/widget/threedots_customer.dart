@@ -1,3 +1,4 @@
+import 'package:africa_beuty/feature/profile/view/page/following_page.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 
@@ -27,8 +28,16 @@ class _ThreedotsCustomerState extends State<ThreedotsCustomer> {
           ), 
           const SizedBox(height: 16,),
           ListTile(
-            leading: Icon(FontAwesome.face_smile_beam_solid, color: theme.colorScheme.secondary,),
-            title: Text('Following'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FollowingPage()),
+              );
+            },
+            leading: Icon(FontAwesome.face_smile_beam_solid, color: theme.colorScheme.secondary),
+            title: const Text('Following'),
+            subtitle: const Text('Salons you follow'),
           ),
           const SizedBox(height: 10,), 
           ListTile(

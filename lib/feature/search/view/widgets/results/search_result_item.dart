@@ -126,7 +126,7 @@ class _ServiceTile extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ServiceDetailsPage(),
+            builder: (_) => ServiceDetailsPage(serviceId: service.id),
           ),
         );
       },

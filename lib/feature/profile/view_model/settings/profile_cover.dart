@@ -74,8 +74,8 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
     required String city,
     required String street,
     required String address,
-    required double latitude,
-    required double longitude,
+    double? latitude,
+    double? longitude,
   }) async {
     state = const AsyncValue.loading();
     

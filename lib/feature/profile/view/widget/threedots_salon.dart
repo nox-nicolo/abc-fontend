@@ -1,7 +1,7 @@
+import 'package:africa_beuty/feature/post/view/page/post_management.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots/service/salon_service.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots/stylist/stylist_management.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 
 class ThreedotsSalon extends StatefulWidget {
   const ThreedotsSalon({super.key});
@@ -24,6 +24,18 @@ class _ThreedotsSalonState extends State<ThreedotsSalon> {
         children: [
           ListTile(
             onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PostManagementPage()),
+              );
+            },
+            leading: Icon(Icons.photo_library_outlined, color: theme.colorScheme.secondary),
+            title: const Text('Content Management'),
+            subtitle: const Text('View, delete your posts'),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            onTap: () {
               // Navigate to the stylist management page
               Navigator.push(
                 context,
@@ -31,8 +43,8 @@ class _ThreedotsSalonState extends State<ThreedotsSalon> {
               );
             },
             leading: Icon(Icons.face_2_rounded, color: theme.colorScheme.secondary),
-            title: Text('Stylists Management'),
-            subtitle: Text('Add, Edit, Delete'),
+            title: const Text('Stylists Management'),
+            subtitle: const Text('Add, Edit, Delete'),
           ),
           const SizedBox(height: 10,), 
           ListTile(

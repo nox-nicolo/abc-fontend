@@ -42,7 +42,7 @@ final class SalonUpdateViewModelProvider
 }
 
 String _$salonUpdateViewModelHash() =>
-    r'1517b55a9024c62c7fe6703bfc278c9e53d1aef2';
+    r'b668b7cec250fe4c7ed9d0162bffdda4627450f0';
 
 abstract class _$SalonUpdateViewModel
     extends $Notifier<AsyncValue<MediaUpdate?>> {

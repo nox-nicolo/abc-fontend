@@ -8,13 +8,12 @@ import 'dart:io';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
-import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
+import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/feature/home/model/categories.dart';
 import 'package:africa_beuty/feature/home/model/home_posts.dart';
 import 'package:africa_beuty/feature/home/model/post_like.dart';
 import 'package:africa_beuty/feature/home/model/top_salon.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:http/http.dart' as http;
 
 /* ------------------------------------------------------------
    Interface
@@ -48,21 +47,12 @@ class HomeRepositoryImpl implements HomeRepository {
     int limit = 10,
   }) async {
     try {
-      final token = await LocalStorageService.getAccessToken();
-      if (token == null) return Left(AppFailure('No access token'));
-
       final uri = Uri.parse(
         '${ServerConstants.serverUrl}/profile/top?limit=$limit',
       );
 
-      final response = await http
-          .get(
-            uri,
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Content-Type': 'application/json',
-            },
-          )
+      final response = await ApiClient.instance
+          .get(uri)
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
@@ -87,6 +77,8 @@ class HomeRepositoryImpl implements HomeRepository {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure('Top salons error: $e'));
     }
@@ -99,24 +91,14 @@ class HomeRepositoryImpl implements HomeRepository {
   @override
   Future<Either<AppFailure, List<SelectedServiceModel>>> getCategories() async {
     try {
-      final token = await LocalStorageService.getAccessToken();
-      if (token == null) return Left(AppFailure('No access token'));
-
       final uri = Uri.parse(
         '${ServerConstants.serverUrl}/users/user_select_services',
       );
 
-
-      final response = await http
-          .get(
-            uri,
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Content-Type': 'application/json',
-            },
-          )
+      final response = await ApiClient.instance
+          .get(uri)
           .timeout(const Duration(seconds: 15));
-          
+
       if (response.statusCode != 200) {
         Map<String, dynamic>? body;
         try {
@@ -143,6 +125,8 @@ class HomeRepositoryImpl implements HomeRepository {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure('Categories error: $e'));
     }
@@ -158,9 +142,6 @@ class HomeRepositoryImpl implements HomeRepository {
     String? cursor,
   }) async {
     try {
-      final token = await LocalStorageService.getAccessToken();
-      if (token == null) return Left(AppFailure('No access token'));
-
       final uri = Uri.parse(
         '${ServerConstants.serverUrl}/posts'
         '?option=explore'
@@ -168,14 +149,8 @@ class HomeRepositoryImpl implements HomeRepository {
         '${cursor != null ? '&cursor=$cursor' : ''}',
       );
 
-      final response = await http
-          .get(
-            uri,
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Content-Type': 'application/json',
-            },
-          )
+      final response = await ApiClient.instance
+          .get(uri)
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
@@ -207,6 +182,8 @@ class HomeRepositoryImpl implements HomeRepository {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure('Posts error: $e'));
     }
@@ -265,21 +242,12 @@ class HomeRepositoryImpl implements HomeRepository {
     required String postId,
   }) async {
     try {
-      final token = await LocalStorageService.getAccessToken();
-      if (token == null) return Left(AppFailure('No access token'));
-
       final uri = Uri.parse(
         '${ServerConstants.serverUrl}/posts/$postId/like',
       );
 
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Content-Type': 'application/json',
-            },
-          )
+      final response = await ApiClient.instance
+          .post(uri)
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
@@ -287,13 +255,13 @@ class HomeRepositoryImpl implements HomeRepository {
       }
 
       final Map<String, dynamic> decodedData = jsonDecode(response.body);
-      
-      // Pass the Map to fromMap instead of fromJson
       return Right(PostLikeModel.fromMap(decodedData));
     } on SocketException {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure('Like error: $e'));
     }

@@ -11,6 +11,9 @@ class FeedViewModel extends _$FeedViewModel {
   String? _cursor;
   bool _isLoadingMore = false;
 
+  bool get hasMore => _cursor != null;
+  bool get isLoadingMore => _isLoadingMore;
+
   @override
   AsyncValue<List<PostModel>> build() {
     _repository = ref.read(homeRepositoryImplProvider);

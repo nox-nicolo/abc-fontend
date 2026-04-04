@@ -1,64 +1,51 @@
-// booking_list_repository.dart
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
-import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
+import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/feature/booking/model/booking_status.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:http/http.dart' as http;
 
 class BookingListRepository {
-  final http.Client _client;
-
-  BookingListRepository({http.Client? client})
-      : _client = client ?? http.Client();
-
+  /// Fetches the **salon's** bookings from GET /booking/salon.
   Future<Either<AppFailure, List<BookingListItem>>> fetchBookings({
-    required String status,
+    String? status,
+    bool? upcoming,
+    String? date,
   }) async {
-    final token = await LocalStorageService.getAccessToken();
-    if (token == null || token.isEmpty) {
-      return Left(AppFailure('Authentication required'));
-    }
-
-    if (status == 'confirmed') {
-      status = 'confirmed&upcoming=true';
-    }
-
-    final uri = Uri.parse(
-      '${ServerConstants.serverUrl}/booking/salon?status=$status',
-    );
-
     try {
-      final response = await _client.get(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
+      final params = <String, String>{};
+      if (status != null) params['status'] = status;
+      if (upcoming != null) params['upcoming'] = upcoming.toString();
+      if (date != null) params['date'] = date;
 
-      if (response.statusCode >= 200 &&
-          response.statusCode < 300) {
+      final uri = Uri.parse(
+        '${ServerConstants.serverUrl}/booking/salon',
+      ).replace(queryParameters: params.isEmpty ? null : params);
+
+      final response = await ApiClient.instance
+          .get(uri)
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         final decoded = jsonDecode(response.body) as List;
-        return Right(
-          BookingListItem.listFromJson(decoded),
-        );
+        return Right(BookingListItem.listFromJson(decoded));
       }
 
-      return Left(_mapError(response));
+      return Left(_mapError(response.body));
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
   }
 
-  AppFailure _mapError(http.Response response) {
+  AppFailure _mapError(String body) {
     try {
-      final decoded = jsonDecode(response.body);
+      final decoded = jsonDecode(body);
       return AppFailure(decoded['detail'] ?? 'Failed to load bookings');
     } catch (_) {
       return AppFailure('Failed to load bookings');

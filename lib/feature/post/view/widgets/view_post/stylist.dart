@@ -65,10 +65,7 @@ class _SingleStylist extends StatelessWidget {
 
     return Row(
       children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundImage: NetworkImage(stylist.avatarUrl),
-        ),
+        _StylistAvatarImg(url: stylist.avatarUrl, name: stylist.name, radius: 22),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,8 +150,6 @@ class _AvatarStack extends StatelessWidget {
               backgroundColor: Theme.of(context).colorScheme.surface,
               child: CircleAvatar(
                 radius: (size / 2) - 1.5,
-                backgroundImage:
-                    isLast ? null : NetworkImage(stylists[index].avatarUrl),
                 child: isLast
                     ? Text(
                         '+$extraCount',
@@ -163,11 +158,52 @@ class _AvatarStack extends StatelessWidget {
                             .labelMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       )
-                    : null,
+                    : _StylistAvatarImg(
+                        url: stylists[index].avatarUrl,
+                        name: stylists[index].name,
+                        radius: (size / 2) - 1.5,
+                      ),
               ),
             ),
           );
         }),
+      ),
+    );
+  }
+}
+
+/* ---------------------------------------------------
+   AVATAR IMAGE (with fallback initials)
+--------------------------------------------------- */
+
+class _StylistAvatarImg extends StatelessWidget {
+  final String url;
+  final String name;
+  final double radius;
+
+  const _StylistAvatarImg({
+    required this.url,
+    required this.name,
+    required this.radius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final size = radius * 2;
+
+    if (url.trim().isEmpty) {
+      return CircleAvatar(radius: radius, child: Text(initial));
+    }
+
+    return ClipOval(
+      child: Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, _) =>
+            CircleAvatar(radius: radius, child: Text(initial)),
       ),
     );
   }

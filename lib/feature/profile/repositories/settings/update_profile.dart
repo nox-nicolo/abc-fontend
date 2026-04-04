@@ -102,8 +102,8 @@ class UpdateSalonRepository {
     required String city,
     required String street,
     required String address,
-    required double latitude,
-    required double longitude,
+    double? latitude,
+    double? longitude,
   }) async {
     final token = await LocalStorageService.getAccessToken();
     if (token == null) return Left(AppFailure('Authentication required'));
@@ -111,6 +111,17 @@ class UpdateSalonRepository {
     final uri = Uri.parse('${ServerConstants.serverUrl}/profile/contact');
 
     try {
+      final body = <String, dynamic>{
+        'phone_numbers': phoneNumbers,
+        'email': email,
+        'website': website,
+        'country': country,
+        'city': city,
+        'street': street,
+        'address': address,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+      };
       final response = await http.patch(
         uri,
         headers: {
@@ -118,17 +129,7 @@ class UpdateSalonRepository {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: jsonEncode({
-          'phone_numbers': phoneNumbers,
-          'email': email,
-          'website': website,
-          'country': country,
-          'city': city,
-          'street': street,
-          'address': address,
-          'latitude': latitude,
-          'longitude': longitude,
-        }),
+        body: jsonEncode(body),
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {

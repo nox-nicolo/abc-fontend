@@ -19,7 +19,7 @@ import 'package:image_picker/image_picker.dart';
 
 
 class CreatePostPage extends ConsumerStatefulWidget {
-  final VoidCallback? onPostSubmit; // callback to switch pages
+  final VoidCallback? onPostSubmit;
 
   const CreatePostPage({super.key, this.onPostSubmit});
 
@@ -33,206 +33,176 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
   List<ImageEditData> editedImages = [];
 
   final captionController = TextEditingController();
-  final displayController = TextEditingController();
 
-  String originalCaption = "";
   List<String> selectedHashtags = [];
   List<PostTagPeopleModel> taggedPeople = [];
 
-  @override
-  void initState() {
-    super.initState();
-
-    captionController.addListener(_onCaptionChanged);
-    displayController.addListener(_onDisplayChanged);
-  }
+  // Global aspect ratio for all images (shown in the picker chips)
+  double _aspectRatio = 1.0;
 
   @override
   void dispose() {
     captionController.dispose();
-    displayController.dispose();
     super.dispose();
   }
 
-  // --- TEXT INPUT HANDLING ---
-
-  void _onCaptionChanged() {
-    originalCaption = captionController.text;
-    _updateDisplayText();
-    setState(() {});
-  }
-
-  void _onDisplayChanged() {
-    captionController
-      ..removeListener(_onCaptionChanged)
-      ..text = displayController.text
-      ..addListener(_onCaptionChanged);
-
-    originalCaption = displayController.text;
-    setState(() {});
-  }
-
   List<String> _extractHashtags(String text) {
-    return RegExp(r"#\w+").allMatches(text).map((e) => e.group(0)!).toList();
-  }
-
-  void _updateDisplayText() {
-    final hashtagsInCaption = _extractHashtags(originalCaption);
-    final missing = selectedHashtags.where((h) => !hashtagsInCaption.contains(h));
-
-    final sep = originalCaption.trim().isEmpty ? "" : " ";
-    final newText = "$originalCaption$sep${missing.join(" ")}".trim();
-
-    displayController
-      ..removeListener(_onDisplayChanged)
-      ..text = newText
-      ..addListener(_onDisplayChanged);
+    return RegExp(r'#\w+').allMatches(text).map((e) => e.group(0)!).toList();
   }
 
   bool get isValidPost =>
-      originalCaption.trim().isNotEmpty || selectedImages.isNotEmpty;
+      captionController.text.trim().isNotEmpty || selectedImages.isNotEmpty;
 
-  // --- IMAGE HANDLING ---
-// --- PICK MULTIPLE IMAGES ---
-Future<void> pickImages() async {
-  try {
-    final images = await picker.pickMultiImage();
-    if (images.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No images selected.")),
-      );
-      return;
-    }
+  // ── Aspect ratio ────────────────────────────────────────────
+  void _onAspectRatioChanged(double ratio) {
+    setState(() {
+      _aspectRatio = ratio;
+      editedImages = editedImages
+          .map((e) => e.copyWith(aspectRatio: ratio))
+          .toList();
+    });
+  }
 
-    final remaining = 4 - selectedImages.length;
-    final take = images.take(remaining).toList();
-
-    final newSelected = <XFile>[];
-    final newEdited = <ImageEditData>[];
-    final missingFiles = <String>[];
-
-    for (var xfile in take) {
-      final file = File(xfile.path);
-      if (await file.exists()) {
-        newSelected.add(xfile);
-        newEdited.add(ImageEditData(image: file, aspectRatio: 1, type: "image"));
-      } else {
-        missingFiles.add(xfile.name);
+  // ── Image handling ───────────────────────────────────────────
+  Future<void> pickImages() async {
+    try {
+      final images = await picker.pickMultiImage();
+      if (images.isEmpty) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('No images selected.')));
+        return;
       }
-    }
 
-    if (missingFiles.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Cannot access files: ${missingFiles.join(', ')}")),
-      );
-    }
+      final remaining = 4 - selectedImages.length;
+      final take = images.take(remaining).toList();
 
-    if (newSelected.isEmpty) return;
+      final newSelected = <XFile>[];
+      final newEdited = <ImageEditData>[];
+      final missingFiles = <String>[];
 
-    setState(() {
-      selectedImages.addAll(newSelected);
-      editedImages.addAll(newEdited);
-    });
-  } on Exception catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Unable to access gallery: $e")),
-    );
-  }
-}
-
-// --- PICK IMAGE FROM CAMERA ---
-Future<void> pickFromCamera() async {
-  if (selectedImages.length >= 4) return;
-
-  try {
-    final image = await picker.pickImage(source: ImageSource.camera);
-    if (image == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No image captured.")),
-      );
-      return;
-    }
-
-    final file = File(image.path);
-    if (!await file.exists()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Cannot access captured image.")),
-      );
-      return;
-    }
-
-    setState(() {
-      selectedImages.add(image);
-      editedImages.add(ImageEditData(image: file, aspectRatio: 1, type: "image"));
-    });
-  } on Exception catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Unable to access camera: $e")),
-    );
-  }
-}
-
-// --- REMOVE IMAGE ---
-void removeImage(int index) {
-  if (index < 0 || index >= selectedImages.length) return;
-
-  setState(() {
-    selectedImages.removeAt(index);
-    editedImages.removeAt(index);
-  });
-}
-
-// --- EDIT IMAGE ---
-Future<void> editImage(int index) async {
-  try {
-    // Pass editedImages to preserve current edits
-    final result = await Navigator.push<List<ImageEditData>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ImageEditorPage(initialImages: editedImages.map((e) => XFile(e.image.path)).toList()),
-      ),
-    );
-
-    if (result == null || result.isEmpty) return;
-
-    final newSelected = <XFile>[];
-    final newEdited = <ImageEditData>[];
-    final missingFiles = <String>[];
-
-    for (var editData in result) {
-      final file = editData.image;
-      if (await file.exists()) {
-        newEdited.add(editData);
-        newSelected.add(XFile(file.path));
-      } else {
-        missingFiles.add(file.path);
+      for (final xfile in take) {
+        final file = File(xfile.path);
+        if (await file.exists()) {
+          newSelected.add(xfile);
+          newEdited.add(ImageEditData(
+              image: file, aspectRatio: _aspectRatio, type: 'image'));
+        } else {
+          missingFiles.add(xfile.name);
+        }
       }
-    }
 
-    if (missingFiles.isNotEmpty) {
+      if (missingFiles.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Cannot access files: ${missingFiles.join(', ')}')),
+        );
+      }
+
+      if (newSelected.isEmpty) return;
+
+      setState(() {
+        selectedImages.addAll(newSelected);
+        editedImages.addAll(newEdited);
+      });
+    } on Exception catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Cannot access edited files: ${missingFiles.join(', ')}")),
+        SnackBar(content: Text('Unable to access gallery: $e')),
       );
     }
-
-    if (newEdited.isEmpty) return;
-
-    setState(() {
-      editedImages = newEdited;
-      selectedImages
-        ..clear()
-        ..addAll(newSelected);
-    });
-  } on Exception catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Failed to edit image: $e")),
-    );
   }
-}
 
+  Future<void> pickFromCamera() async {
+    if (selectedImages.length >= 4) return;
 
-  // --- MODALS ---
+    try {
+      final image = await picker.pickImage(source: ImageSource.camera);
+      if (image == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No image captured.')));
+        return;
+      }
 
+      final file = File(image.path);
+      if (!await file.exists()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot access captured image.')));
+        return;
+      }
+
+      setState(() {
+        selectedImages.add(image);
+        editedImages.add(ImageEditData(
+            image: file, aspectRatio: _aspectRatio, type: 'image'));
+      });
+    } on Exception catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to access camera: $e')),
+      );
+    }
+  }
+
+  void removeImage(int index) {
+    if (index < 0 || index >= selectedImages.length) return;
+    setState(() {
+      selectedImages.removeAt(index);
+      editedImages.removeAt(index);
+    });
+  }
+
+  Future<void> editImage(int index) async {
+    try {
+      final result = await Navigator.push<List<ImageEditData>>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ImageEditorPage(
+            initialImages: editedImages.map((e) => XFile(e.image.path)).toList(),
+            initialAspectRatio: _aspectRatio,
+          ),
+        ),
+      );
+
+      if (result == null || result.isEmpty) return;
+
+      final newSelected = <XFile>[];
+      final newEdited = <ImageEditData>[];
+      final missingFiles = <String>[];
+
+      for (final editData in result) {
+        final file = editData.image;
+        if (await file.exists()) {
+          newEdited.add(editData);
+          newSelected.add(XFile(file.path));
+        } else {
+          missingFiles.add(file.path);
+        }
+      }
+
+      if (missingFiles.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Cannot access edited files: ${missingFiles.join(', ')}')),
+        );
+      }
+
+      if (newEdited.isEmpty) return;
+
+      setState(() {
+        editedImages = newEdited;
+        // Also update aspect ratio from editor result
+        if (newEdited.isNotEmpty) _aspectRatio = newEdited.first.aspectRatio;
+        selectedImages
+          ..clear()
+          ..addAll(newSelected);
+      });
+    } on Exception catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to edit image: $e')),
+      );
+    }
+  }
+
+  // ── Modals ───────────────────────────────────────────────────
   void openSettings() {
     showModalBottomSheet(
       context: context,
@@ -255,15 +225,11 @@ Future<void> editImage(int index) async {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => PostHashTagPage(initialSelectedHashtags: selectedHashtags),
+      builder: (_) =>
+          PostHashTagPage(initialSelectedHashtags: selectedHashtags),
     );
 
-    if (res != null) {
-      setState(() {
-        selectedHashtags = res;
-        _updateDisplayText();
-      });
-    }
+    if (res != null) setState(() => selectedHashtags = res);
   }
 
   void openTagging() async {
@@ -274,23 +240,22 @@ Future<void> editImage(int index) async {
       builder: (_) => PostTagPeople(initialSelected: taggedPeople),
     );
 
-    if (res != null) {
-      setState(() => taggedPeople = res);
-    }
+    if (res != null) setState(() => taggedPeople = res);
   }
 
-  // --- SUBMIT POST ---
+  // ── Submit ───────────────────────────────────────────────────
   Future<void> submit() async {
     if (!isValidPost) return;
 
     final viewModel = ref.read(createPostViewModelProvider.notifier);
     final selectedCategory = ref.read(selectedCategoryProvider);
 
-    viewModel.setCategory(selectedCategory?.id ?? "");
-    viewModel.setCaption(originalCaption);
+    viewModel.setCategory(selectedCategory?.id ?? '');
+    viewModel.setCaption(captionController.text);
 
+    // Merge inline hashtags from caption with those picked from the picker
     viewModel.setHashtags({
-      ..._extractHashtags(originalCaption),
+      ..._extractHashtags(captionController.text),
       ...selectedHashtags,
     }.toList());
 
@@ -298,25 +263,21 @@ Future<void> editImage(int index) async {
 
     viewModel.setMedia(
       editedImages
-          .map((e) => PostMediaState(path: e.image.path, aspectRatio: e.aspectRatio, type: e.type))
+          .map((e) => PostMediaState(
+              path: e.image.path, aspectRatio: e.aspectRatio, type: e.type))
           .toList(),
     );
 
-    // Submit to backend
     await viewModel.submit();
 
     final state = ref.read(createPostViewModelProvider);
 
     if (state.isSuccess) {
       if (!mounted) return;
-      // Use a callback to the parent instead of navigating here
       if (widget.onPostSubmit != null) {
         widget.onPostSubmit!();
       } else {
-        // fallback: show success dialog and pop the post page when done
-        showPostSuccessDialog(context, () {
-          Navigator.of(context).pop();
-        });
+        showPostSuccessDialog(context, () => Navigator.of(context).pop());
       }
     } else if (state.error != null) {
       if (!mounted) return;
@@ -326,11 +287,11 @@ Future<void> editImage(int index) async {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final category = ref.watch(selectedCategoryProvider);
     final viewState = ref.watch(createPostViewModelProvider);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -338,13 +299,11 @@ Future<void> editImage(int index) async {
           TextButton(
             onPressed: isValidPost ? submit : null,
             child: Text(
-              "Post",
+              'Post',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isValidPost
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.grey,
+                color: isValidPost ? scheme.primary : Colors.grey,
               ),
             ),
           ),
@@ -354,98 +313,125 @@ Future<void> editImage(int index) async {
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             UserInfoHeader(
-              username: viewState.author.isNotEmpty ? viewState.author : "username",
-              profileImagePath: viewState.picture.isNotEmpty ? viewState.picture : "assets/images/dp.jpg",
+              username: viewState.author.isNotEmpty
+                  ? viewState.author
+                  : 'username',
+              profileImagePath: viewState.picture.isNotEmpty
+                  ? viewState.picture
+                  : 'assets/images/dp.jpg',
               onSettingPressed: openSettings,
             ),
 
-            // --- CATEGORY PICKER ---
+            // ── Category picker (optional) ─────────────────────
             GestureDetector(
               onTap: openCategories,
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
+                  color: scheme.primaryContainer,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   children: [
-                    category?.fileName != null && category!.fileName.isNotEmpty
+                    category?.fileName != null &&
+                            category!.fileName.isNotEmpty
                         ? ClipRRect(
-                            borderRadius: BorderRadius.circular(4), // small rounding if needed
+                            borderRadius: BorderRadius.circular(4),
                             child: Image.network(
                               category.fileName,
                               width: 42,
                               height: 42,
                               fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      value: loadingProgress.expectedTotalBytes != null
-                                          ? loadingProgress.cumulativeBytesLoaded /
-                                            (loadingProgress.expectedTotalBytes ?? 1)
-                                          : null,
-                                    ),
-                                  ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(Icons.category, size: 28);
-                              },
+                              errorBuilder: (_, __, _) =>
+                                  const Icon(Icons.category, size: 28),
                             ),
                           )
-                        : Icon(Icons.category, size: 28),
+                        : const Icon(Icons.campaign_outlined, size: 28),
                     const SizedBox(width: 12),
-                    Text(
-                      category?.name ?? "Select Category",
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Expanded(
+                      child: Text(
+                        category?.name ?? 'Category  (optional)',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                          color: category == null
+                              ? scheme.onSurfaceVariant
+                              : null,
+                        ),
+                      ),
                     ),
-                    const Spacer(),
-                    Icon(Icons.arrow_drop_down),
+                    if (category != null)
+                      GestureDetector(
+                        onTap: () =>
+                            ref.read(selectedCategoryProvider.notifier).clear(),
+                        child: const Icon(Icons.close, size: 20),
+                      )
+                    else
+                      const Icon(Icons.arrow_drop_down),
                   ],
                 ),
-
               ),
             ),
 
-            // --- MAIN BOX ---
+            // ── Main text + media box ──────────────────────────
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: scheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade300),
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final screenHeight = MediaQuery.of(context).size.height;
+                  final screenHeight =
+                      MediaQuery.of(context).size.height;
                   final containerHeight = selectedImages.isNotEmpty
-                      ? screenHeight * 0.6 // 60% of screen height when images exist
-                      : screenHeight * 0.35; // 35% if no images
+                      ? screenHeight * 0.65
+                      : screenHeight * 0.35;
 
                   return SizedBox(
                     height: containerHeight,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         PostTextInput(
-                          controller: displayController,
+                          controller: captionController,
                           onChanged: () => setState(() {}),
                           hasImages: selectedImages.isNotEmpty,
                         ),
                         const SizedBox(height: 8),
+
+                        // Selected hashtag chips (separate from caption)
+                        if (selectedHashtags.isNotEmpty)
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: selectedHashtags.map((tag) {
+                              return Chip(
+                                label: Text(
+                                  tag,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                padding: EdgeInsets.zero,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                onDeleted: () => setState(
+                                    () => selectedHashtags.remove(tag)),
+                              );
+                            }).toList(),
+                          ),
+
+                        if (selectedHashtags.isNotEmpty)
+                          const SizedBox(height: 8),
+
                         if (selectedImages.isNotEmpty)
-                          SizedBox(
-                            height: containerHeight * 0.55, // leave space for text & buttons
+                          Expanded(
                             child: PostImagePicker(
                               selectedImages: selectedImages,
                               onPickFromCamera: pickFromCamera,
@@ -453,8 +439,11 @@ Future<void> editImage(int index) async {
                               onRemoveImage: removeImage,
                               onEditImage: editImage,
                               canAddMore: selectedImages.length < 4,
+                              aspectRatio: _aspectRatio,
+                              onAspectRatioChanged: _onAspectRatioChanged,
                             ),
                           ),
+
                         const SizedBox(height: 10),
                         PostActionButtons(
                           onCameraPressed: pickFromCamera,
@@ -470,8 +459,7 @@ Future<void> editImage(int index) async {
                   );
                 },
               ),
-            )
-
+            ),
           ],
         ),
       ),
@@ -480,30 +468,31 @@ Future<void> editImage(int index) async {
 }
 
 
-// Success Model
 void showPostSuccessDialog(BuildContext context, VoidCallback onDone) {
   showDialog(
     context: context,
     barrierDismissible: false,
     builder: (_) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle, size: 60, color: Colors.green),
+            const Icon(Icons.check_circle, size: 60, color: Colors.green),
             const SizedBox(height: 16),
-            Text("Post Submitted", style: Theme.of(context).textTheme.headlineSmall),
+            Text('Post Submitted',
+                style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // close dialog
-                  onDone();               // tell parent to switch page
+                  Navigator.pop(context);
+                  onDone();
                 },
-                child: const Text("Done"),
+                child: const Text('Done'),
               ),
             ),
           ],

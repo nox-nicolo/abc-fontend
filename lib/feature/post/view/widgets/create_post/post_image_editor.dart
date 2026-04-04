@@ -7,10 +7,12 @@ import 'image_edit_data.dart';
 
 class ImageEditorPage extends StatefulWidget {
   final List<XFile> initialImages;
+  final double initialAspectRatio;
 
   const ImageEditorPage({
     super.key,
     required this.initialImages,
+    this.initialAspectRatio = 1.0,
   });
 
   @override
@@ -20,12 +22,13 @@ class ImageEditorPage extends StatefulWidget {
 class _ImageEditorPageState extends State<ImageEditorPage> {
   List<ImageEditData> _imageEditDataList = [];
   int _currentImageIndex = 0;
-  double _globalAspectRatio = 1.0; // Default to 1:1 crop ratio
+  late double _globalAspectRatio;
   late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
+    _globalAspectRatio = widget.initialAspectRatio;
     _pageController = PageController(initialPage: _currentImageIndex);
     _imageEditDataList = widget.initialImages.map(
       (xfile) => ImageEditData(image: File(xfile.path), aspectRatio: _globalAspectRatio, type: 'image'),

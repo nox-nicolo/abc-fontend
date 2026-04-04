@@ -3,9 +3,13 @@
    POST STATS
 --------------------------------------------------- */
 
+import 'package:africa_beuty/feature/home/view_model/post_like.dart';
+import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class PostStatsRow extends StatefulWidget {
+class PostStatsRow extends ConsumerStatefulWidget {
+  final String postId;
   final int likes;
   final int comments;
   final int shares;
@@ -14,6 +18,7 @@ class PostStatsRow extends StatefulWidget {
 
   const PostStatsRow({
     super.key,
+    required this.postId,
     required this.likes,
     required this.comments,
     required this.shares,
@@ -22,31 +27,54 @@ class PostStatsRow extends StatefulWidget {
   });
 
   @override
-  State<PostStatsRow> createState() => _PostStatsRowState();
+  ConsumerState<PostStatsRow> createState() => _PostStatsRowState();
 }
 
-class _PostStatsRowState extends State<PostStatsRow> {
-  late int _likes;
+class _PostStatsRowState extends ConsumerState<PostStatsRow> {
   late bool _liked;
   late bool _saved;
 
   @override
   void initState() {
     super.initState();
-    _likes = widget.likes;
     _liked = widget.isLiked;
     _saved = widget.isSaved;
   }
 
   void _toggleLike() {
-    setState(() {
-      _liked = !_liked;
-      _likes += _liked ? 1 : -1;
-    });
+    setState(() => _liked = !_liked);
+    _likeAsync();
+  }
+
+  Future<void> _likeAsync() async {
+    await ref
+        .read(postLikeViewModelProvider.notifier)
+        .toggleLike(postId: widget.postId);
+    final result = ref.read(postLikeViewModelProvider);
+    if (result != null && mounted) {
+      result.whenOrNull(
+        data: (m) => setState(() => _liked = m.liked),
+        // revert optimistic update on error
+        error: (_, e) => setState(() => _liked = !_liked),
+      );
+    }
   }
 
   void _toggleSave() {
     setState(() => _saved = !_saved);
+    _saveAsync();
+  }
+
+  Future<void> _saveAsync() async {
+    final result = await ref
+        .read(postRemoteRepoProviderProvider)
+        .toggleBookmark(widget.postId);
+    if (mounted) {
+      result.fold(
+        (failure) => setState(() => _saved = !_saved), // revert on error
+        (saved) => setState(() => _saved = saved),
+      );
+    }
   }
 
   @override
@@ -57,27 +85,20 @@ class _PostStatsRowState extends State<PostStatsRow> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
-          _IconCount(
+          _IconBtn(
             icon: _liked ? Icons.favorite : Icons.favorite_border,
-            count: _likes,
             color: _liked ? Colors.red : scheme.onSurface,
             onTap: _toggleLike,
           ),
           const SizedBox(width: 16),
-          _IconCount(
+          _IconBtn(
             icon: Icons.chat_bubble_outline,
-            count: widget.comments,
-            onTap: () {
-              // open comments later
-            },
+            onTap: () {},
           ),
           const SizedBox(width: 16),
-          _IconCount(
+          _IconBtn(
             icon: Icons.send_outlined,
-            count: widget.shares,
-            onTap: () {
-              // share later
-            },
+            onTap: () {},
           ),
           const Spacer(),
           IconButton(
@@ -94,44 +115,29 @@ class _PostStatsRowState extends State<PostStatsRow> {
 }
 
 /* ---------------------------------------------------
-   ICON + COUNT
+   ICON BUTTON (no count)
 --------------------------------------------------- */
 
-class _IconCount extends StatelessWidget {
+class _IconBtn extends StatelessWidget {
   final IconData icon;
-  final int count;
   final VoidCallback onTap;
   final Color? color;
 
-  const _IconCount({
+  const _IconBtn({
     required this.icon,
-    required this.count,
     required this.onTap,
     this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 24,
-            color: color,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            count.toString(),
-            style: textTheme.labelLarge,
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Icon(icon, size: 26, color: color),
       ),
     );
   }
 }
-

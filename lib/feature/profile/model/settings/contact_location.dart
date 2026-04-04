@@ -8,8 +8,8 @@ class ContactLocationUpdate {
   final String city;
   final String street;
   final String address;
-  final double latitude;
-  final double longitude;
+  final double? latitude;
+  final double? longitude;
 
   ContactLocationUpdate({
     required this.phoneNumbers,
@@ -19,8 +19,8 @@ class ContactLocationUpdate {
     required this.city,
     required this.street,
     required this.address,
-    required this.latitude,
-    required this.longitude,
+    this.latitude,
+    this.longitude,
   });
 
   Map<String, dynamic> toMap() {
@@ -32,8 +32,8 @@ class ContactLocationUpdate {
       'city': city,
       'street': street,
       'address': address,
-      'latitude': latitude,
-      'longitude': longitude,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 
@@ -46,8 +46,8 @@ class ContactLocationUpdate {
       city: map['city'] ?? '',
       street: map['street'] ?? '',
       address: map['address'] ?? '',
-      latitude: (map['latitude'] as num?)?.toDouble() ?? 0.0,
-      longitude: (map['longitude'] as num?)?.toDouble() ?? 0.0,
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
     );
   }
 

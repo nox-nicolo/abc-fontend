@@ -1,3 +1,4 @@
+import 'package:africa_beuty/feature/profile/view/page/edit_customer_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 
@@ -29,9 +30,18 @@ class _CustomerSettingsState extends State<CustomerSettings> {
             ), 
             const SizedBox(height: 16,), 
             ListTile(
-              leading: Icon(Icons.edit, color: theme.colorScheme.secondary,),
-              title: Text('Edit'),
-              subtitle: Text('username, phone number ...'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const EditCustomerProfilePage(),
+                  ),
+                );
+              },
+              leading: Icon(Icons.edit, color: theme.colorScheme.secondary),
+              title: const Text('Edit'),
+              subtitle: const Text('Name, bio, city, country...'),
             ),
             const SizedBox(height: 10,), 
             ListTile(
@@ -74,7 +84,34 @@ class _CustomerSettingsState extends State<CustomerSettings> {
               leading: Icon(FontAwesome.globe_solid, color: theme.colorScheme.secondary,),
               title: Text('Language'),
               subtitle: Text('English, Device language'),
-            )
+            ),
+
+            const SizedBox(height: 18),
+            const Divider(),
+            const SizedBox(height: 8),
+
+            ListTile(
+              onTap: () {
+                Navigator.pushNamed(context, '/logout');
+              },
+              leading: Icon(
+                Icons.logout_rounded,
+                color: theme.colorScheme.error,
+              ),
+              title: Text(
+                'Logout',
+                style: TextStyle(
+                  color: theme.colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              subtitle: Text(
+                'Sign out from this account',
+                style: TextStyle(
+                  color: theme.colorScheme.error.withValues(alpha: 0.75),
+                ),
+              ),
+            ),
           ],
         ),
       ),

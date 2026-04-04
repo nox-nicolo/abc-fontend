@@ -81,6 +81,7 @@ class SalonServiceConfigRequestModel {
   final int? priceMax;
   final String currency;
   final int? durationMinutes;
+  final int concurrentCapacity;
   final SalonServiceStatus status;
   final List<String> stylistIds;
   final List<ServiceConfigBenefit> benefits;
@@ -93,6 +94,7 @@ class SalonServiceConfigRequestModel {
     required this.priceMax,
     required this.currency,
     required this.durationMinutes,
+    this.concurrentCapacity = 1,
     required this.status,
     required this.stylistIds,
     required this.benefits,
@@ -107,6 +109,7 @@ class SalonServiceConfigRequestModel {
       'price_max': priceMax,
       'currency': currency,
       'duration_minutes': durationMinutes,
+      'concurrent_capacity': concurrentCapacity,
       'status': status.toJson(),
       'stylist_ids': stylistIds,
       'benefits': benefits.map((e) => e.toMap()).toList(),
@@ -200,6 +203,7 @@ class SalonServiceConfigModel {
   final int? priceMax;
   final String currency;
   final int? durationMinutes;
+  final int concurrentCapacity;
   final SalonServiceStatus status;
   final List<SalonServiceConfigStylistModel> stylists;
   final List<SalonServiceBenefitModel> benefits;
@@ -211,6 +215,7 @@ class SalonServiceConfigModel {
     required this.priceMax,
     required this.currency,
     required this.durationMinutes,
+    this.concurrentCapacity = 1,
     required this.status,
     required this.stylists,
     required this.benefits,
@@ -224,6 +229,7 @@ class SalonServiceConfigModel {
       priceMax: json['price_max'] as int?,
       currency: json['currency'] as String,
       durationMinutes: json['duration_minutes'] as int?,
+      concurrentCapacity: (json['concurrent_capacity'] as int?) ?? 1,
       status: SalonServiceStatus.fromJson(json['status'] as String),
       stylists: (json['stylists'] as List<dynamic>? ?? [])
           .map(
@@ -256,6 +262,7 @@ class SalonServiceConfigModel {
       'price_max': priceMax,
       'currency': currency,
       'duration_minutes': durationMinutes,
+      'concurrent_capacity': concurrentCapacity,
       'status': status.toJson(),
       'stylists': stylists.map((e) => e.toJson()).toList(),
       'benefits': benefits.map((e) => e.toJson()).toList(),

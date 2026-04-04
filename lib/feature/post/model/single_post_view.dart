@@ -455,7 +455,7 @@ class SponsoredSalonModel {
       rating: map['rating'] != null
           ? (map['rating'] as num).toDouble()
           : null,
-      price: map['price'] ?? 0,
+      price: (map['price'] as num?)?.toDouble() ?? 0,
       currency: map['currency'] ?? 'TZS',
       planType: map['plan_type'] ?? '',
     );
@@ -484,7 +484,7 @@ class ServiceReviewModel {
       id: map['id'] ?? '',
       userName: map['user_name'] ?? '',
       userAvatar: map['user_avatar'],
-      rating: map['rating'] ?? 0,
+      rating: (map['rating'] as num?)?.toDouble() ?? 0,
       comment: map['comment'] ?? '',
       createdAt: DateTime.parse(map['created_at']),
     );

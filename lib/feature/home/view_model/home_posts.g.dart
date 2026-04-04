@@ -41,7 +41,7 @@ final class FeedViewModelProvider
   }
 }
 
-String _$feedViewModelHash() => r'aa97d307ce5b78d875985fd8bc45bc0719cd47e5';
+String _$feedViewModelHash() => r'cdbbc55d5924dbb9d6f11169553eef4069a9ee86';
 
 abstract class _$FeedViewModel extends $Notifier<AsyncValue<List<PostModel>>> {
   AsyncValue<List<PostModel>> build();

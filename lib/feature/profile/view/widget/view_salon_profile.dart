@@ -2,6 +2,7 @@
 
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
+import 'package:africa_beuty/feature/search/provider/discover.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/booking.dart';
 import 'package:africa_beuty/feature/profile/model/salon_view_profile.dart';
@@ -12,8 +13,10 @@ import 'package:africa_beuty/feature/profile/view_model/salon_view_profile.dart'
 import 'package:africa_beuty/feature/profile/view_model/salon_view_profile_followers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -164,13 +167,12 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
   // 
   Future<void> openMap(double lat, double lng) async {
-    // This works universally across Google Maps and Apple Maps
-    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
-
-    await launchUrl(
-      uri, 
-      mode: LaunchMode.externalApplication
+    // Opens Google Maps with turn-by-turn directions from the user's location.
+    // Fallback to Apple Maps on iOS via geo: scheme.
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
     );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   void _showFollowersBottomSheet(
@@ -1149,8 +1151,19 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         ),
                       ),
           
+                      if (salon.contacts.location != null &&
+                          (salon.contacts.location!.lat != 0 ||
+                              salon.contacts.location!.lng != 0)) ...[
+                        const SizedBox(height: 16),
+                        _SalonMapView(
+                          currentSalonId: salon.salon.id,
+                          lat: salon.contacts.location!.lat,
+                          lng: salon.contacts.location!.lng,
+                        ),
+                      ],
+
                       const SizedBox(height: 16),
-          
+
                       // SOFT CTA
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
@@ -1524,4 +1537,145 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _StickyTabBarDelegate old) => tabBar != old.tabBar;
+}
+
+// ── Embedded OpenStreetMap tile map ───────────────────────────────────────────
+
+class _SalonMapView extends ConsumerWidget {
+  /// The salon currently being viewed.
+  final String currentSalonId;
+  final double lat;
+  final double lng;
+
+  const _SalonMapView({
+    required this.currentSalonId,
+    required this.lat,
+    required this.lng,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final center = LatLng(lat, lng);
+    final nearbyAsync = ref.watch(
+      nearbySalonsAtProvider((lat: lat, lng: lng)),
+    );
+
+    // Build markers for nearby salons (excluding the one being viewed)
+    final nearbyMarkers = nearbyAsync.whenOrNull(
+      data: (items) => items
+          .where((s) => s.id != currentSalonId && s.lat != null && s.lng != null)
+          .map(
+            (s) => Marker(
+              point: LatLng(s.lat!, s.lng!),
+              width: 32,
+              height: 32,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ViewServiceProfilePage(salonId: s.id),
+                  ),
+                ),
+                child: const Icon(Icons.location_pin, color: Colors.orange, size: 32),
+              ),
+            ),
+          )
+          .toList(),
+    ) ?? [];
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        height: 200,
+        child: Stack(
+          children: [
+            FlutterMap(
+              options: MapOptions(
+                initialCenter: center,
+                initialZoom: 14,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
+                ),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.africa_beuty.app',
+                ),
+                MarkerLayer(
+                  markers: [
+                    // Other nearby salons (orange)
+                    ...nearbyMarkers,
+                    // Current salon (red, on top)
+                    Marker(
+                      point: center,
+                      width: 44,
+                      height: 44,
+                      child: const Icon(Icons.location_pin, color: Colors.red, size: 44),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            // "Get directions" button
+            Positioned(
+              bottom: 10,
+              right: 10,
+              child: GestureDetector(
+                onTap: () {
+                  final uri = Uri.parse(
+                    'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
+                  );
+                  launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.directions, color: Colors.white, size: 14),
+                      SizedBox(width: 5),
+                      Text(
+                        'Get directions',
+                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Legend: nearby count
+            if (nearbyMarkers.isNotEmpty)
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.location_pin, color: Colors.orange, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${nearbyMarkers.length} nearby salon${nearbyMarkers.length == 1 ? '' : 's'}',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

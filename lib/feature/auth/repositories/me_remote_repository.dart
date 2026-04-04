@@ -2,26 +2,15 @@ import 'dart:convert';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
+import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/feature/auth/model/me_model.dart';
-import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:http/http.dart' as http;
 
 class MeRemoteRepository {
   Future<Either<AppFailure, MeModel>> getMe() async {
     try {
-      final token = await LocalStorageService.getAccessToken();
-
-      if (token == null) {
-        return Left(AppFailure('No access token found'));
-      }
-
-      final response = await http.get(
+      final response = await ApiClient.instance.get(
         Uri.parse('${ServerConstants.serverUrl}/auth/me'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
       );
 
       final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
@@ -31,6 +20,8 @@ class MeRemoteRepository {
       }
 
       return Right(MeModel.fromMap(resBodyMap));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }

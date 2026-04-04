@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
+import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/core/model/services.dart';
 import 'package:africa_beuty/feature/auth/model/me_model.dart';
 import 'package:africa_beuty/feature/auth/model/signin_model.dart';
@@ -170,33 +171,19 @@ class AuthRemoteRepository {
 
   Future<Either<AppFailure, SetAccountModel>> setAccount() async {
     try {
-      // get user Id and access token 
-      final token = await LocalStorageService.getAccessToken();
-
-      if (token == null) {
-        return Left(AppFailure('No Access Token'));
-      }
-
-      final response = await http.get(
-        Uri.parse(
-          '${ServerConstants.serverUrl}/setup/setup_account',
-        ),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', 
-        }
+      final response = await ApiClient.instance.get(
+        Uri.parse('${ServerConstants.serverUrl}/setup/setup_account'),
       );
 
       final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-      
+
       if (response.statusCode != 200) {
         return Left(AppFailure(resBodyMap['detail']));
       }
 
-      return Right(
-        SetAccountModel.fromMap(resBodyMap),
-      );
-
+      return Right(SetAccountModel.fromMap(resBodyMap));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
@@ -259,107 +246,58 @@ class AuthRemoteRepository {
     }
   }
 
-  // Get all the Major services. 
+  // Get all the Major services.
   Future<Either<AppFailure, List<MajorServiceModel>>> getMajor() async {
     try {
-      final token = await LocalStorageService.getAccessToken();
-
-      if (token == null ) {
-        return Left(AppFailure('Access denied'));
-      }
-
-      final response = await http.get(
-        Uri.parse(
-          '${ServerConstants.serverUrl}/services/major',
-        ),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', 
-        }
+      final response = await ApiClient.instance.get(
+        Uri.parse('${ServerConstants.serverUrl}/services/major'),
       );
 
-    if (response.statusCode != 200) {
-      final errorMap = jsonDecode(response.body);
-      return Left(AppFailure(errorMap['detail'] ?? 'Unknown error'));
-    }
+      if (response.statusCode != 200) {
+        final errorMap = jsonDecode(response.body);
+        return Left(AppFailure(errorMap['detail'] ?? 'Unknown error'));
+      }
 
-    final List<dynamic> resList = jsonDecode(response.body);
+      final List<dynamic> resList = jsonDecode(response.body);
+      final services = resList
+          .map((item) => MajorServiceModel.fromMap(item as Map<String, dynamic>))
+          .toList();
 
-    final services = resList
-      .map(
-        (item) => MajorServiceModel.fromMap(item as Map<String, dynamic>)
-      )
-      .toList();
-
-    return Right(
-      services
-    );
-
+      return Right(services);
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
-
   }
 
-  Future<Either<AppFailure, UploadServiceModel>> uploadService(
-    {
-      required List<String> selected
-    }
-  ) async {
+  Future<Either<AppFailure, UploadServiceModel>> uploadService({
+    required List<String> selected,
+  }) async {
     try {
-      final token = await LocalStorageService.getAccessToken();
-
-      if (token == null ) {
-        return Left(AppFailure('Access denied'));
-      }
-
-      final response = await http.post(
-        Uri.parse(
-          '${ServerConstants.serverUrl}/setup/services_selected',
-        ), 
-        headers: {
-          'Content-Type': 'application/json', 
-          'Authorization': 'Bearer $token',
-        }, 
-        body: jsonEncode(
-          {
-            'service': selected,
-          }
-        ),
+      final response = await ApiClient.instance.post(
+        Uri.parse('${ServerConstants.serverUrl}/setup/services_selected'),
+        body: jsonEncode({'service': selected}),
       );
 
-
-      final resBodyMap = await jsonDecode(response.body) as Map<String, dynamic>;
+      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode != 200) {
         return Left(AppFailure(resBodyMap['detail'] ?? 'Unknown error'));
       }
 
-      return Right(
-        UploadServiceModel.fromMap(resBodyMap)
-      );
+      return Right(UploadServiceModel.fromMap(resBodyMap));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
   }
 
   Future<Either<AppFailure, MeModel>> me() async {
-    
     try {
-      final token = await LocalStorageService.getAccessToken();
-
-      if (token == null) {
-        return Left(AppFailure('No access token found'));
-      }
-      
-      final response = await http.get(
-        Uri.parse(
-          '${ServerConstants.serverUrl}/auth/me', 
-        ), 
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token'
-        }, 
+      final response = await ApiClient.instance.get(
+        Uri.parse('${ServerConstants.serverUrl}/auth/me'),
       );
 
       final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
@@ -368,14 +306,32 @@ class AuthRemoteRepository {
         return Left(AppFailure(resBodyMap['detail']));
       }
 
-      return Right(
-        MeModel.fromMap(resBodyMap),
-      );
-    }
-    
-    catch (e) {
+      return Right(MeModel.fromMap(resBodyMap));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
+    } catch (e) {
       return Left(AppFailure(e.toString()));
     }
+  }
+
+  /// Revokes the refresh token on the server, then clears local auth data.
+  /// Always clears locally — even if the network call fails.
+  Future<void> signOut() async {
+    try {
+      final refreshToken = await LocalStorageService.getRefreshToken();
+      if (refreshToken != null) {
+        await http
+            .post(
+              Uri.parse('${ServerConstants.serverUrl}/auth/logout'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'refresh_token': refreshToken}),
+            )
+            .timeout(const Duration(seconds: 10));
+      }
+    } catch (_) {
+      // Best-effort: always clear locally regardless of network errors.
+    }
+    await LocalStorageService.clearAuthData();
   }
 
 }

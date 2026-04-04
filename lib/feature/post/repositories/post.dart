@@ -8,6 +8,7 @@ import 'dart:io';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
+import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:africa_beuty/feature/post/model/create_post.dart';
 import 'package:africa_beuty/feature/post/model/post.dart';
@@ -32,6 +33,8 @@ abstract class PostRepository {
   Future<Either<AppFailure, bool>> repost(String postId);
 
   Future<Either<AppFailure, bool>> togglePin(String postId);
+
+  Future<Either<AppFailure, bool>> toggleBookmark(String postId);
 
   Future<Either<AppFailure, SinglePostViewModel>> getSinglePostView(
     String postId,
@@ -79,7 +82,12 @@ class PostRepositoryImpl implements PostRepository {
         ..fields['status'] = post.status
         ..fields['hashtags'] = jsonEncode(post.hashtags)
         ..fields['tagged'] = jsonEncode(post.tagged)
-        ..fields['settings'] = jsonEncode(post.settings.toJson());
+        ..fields['settings'] = jsonEncode(post.settings.toJson())
+        ..fields['media_metadata'] = jsonEncode(
+          post.media
+              .map((m) => {'aspect_ratio': m.aspectRatio})
+              .toList(),
+        );
 
       for (final media in post.media) {
         final file = File(media.path);
@@ -214,8 +222,96 @@ class PostRepositoryImpl implements PostRepository {
   ----------------------------------------------------------- */
 
   @override
-  Future<Either<AppFailure, bool>> deletePost(String postId) async =>
-      Left(AppFailure('Not implemented'));
+  Future<Either<AppFailure, bool>> deletePost(String postId) async {
+    try {
+      final response = await ApiClient.instance
+          .delete(Uri.parse('${ServerConstants.serverUrl}/posts/$postId'))
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) return const Right(true);
+      final body = _safeDecode(response.body);
+      return Left(AppFailure(body?['detail'] ?? 'Failed to delete post'));
+    } on SocketException {
+      return Left(AppFailure('No internet connection'));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
+    } catch (e) {
+      return Left(AppFailure('Delete post error: $e'));
+    }
+  }
+
+  @override
+  Future<Either<AppFailure, bool>> repost(String postId) async {
+    try {
+      final response = await ApiClient.instance
+          .post(Uri.parse('${ServerConstants.serverUrl}/posts/$postId/repost'))
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final body = _safeDecode(response.body);
+        final reposted = (body?['reposted'] as bool?) ?? true;
+        return Right(reposted);
+      }
+      final body = _safeDecode(response.body);
+      return Left(AppFailure(body?['detail'] ?? 'Failed to repost'));
+    } on SocketException {
+      return Left(AppFailure('No internet connection'));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
+    } catch (e) {
+      return Left(AppFailure('Repost error: $e'));
+    }
+  }
+
+  @override
+  Future<Either<AppFailure, bool>> toggleBookmark(String postId) async {
+    try {
+      final response = await ApiClient.instance
+          .post(Uri.parse('${ServerConstants.serverUrl}/posts/$postId/bookmark'))
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final body = _safeDecode(response.body);
+        final saved = (body?['saved'] as bool?) ?? false;
+        return Right(saved);
+      }
+      final body = _safeDecode(response.body);
+      return Left(AppFailure(body?['detail'] ?? 'Failed to bookmark post'));
+    } on SocketException {
+      return Left(AppFailure('No internet connection'));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
+    } catch (e) {
+      return Left(AppFailure('Bookmark error: $e'));
+    }
+  }
+
+  @override
+  Future<Either<AppFailure, bool>> togglePin(String postId) async {
+    try {
+      final response = await ApiClient.instance
+          .post(Uri.parse('${ServerConstants.serverUrl}/posts/$postId/pin'))
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final body = _safeDecode(response.body);
+        final pinned = (body?['pinned'] as bool?) ?? true;
+        return Right(pinned);
+      }
+      final body = _safeDecode(response.body);
+      return Left(AppFailure(body?['detail'] ?? 'Failed to pin post'));
+    } on SocketException {
+      return Left(AppFailure('No internet connection'));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
+    } catch (e) {
+      return Left(AppFailure('Pin post error: $e'));
+    }
+  }
 
   @override
   Future<Either<AppFailure, List<PostModel>>> getFeed(int page) async =>
@@ -226,14 +322,6 @@ class PostRepositoryImpl implements PostRepository {
     String userId,
     int page,
   ) async =>
-      Left(AppFailure('Not implemented'));
-
-  @override
-  Future<Either<AppFailure, bool>> repost(String postId) async =>
-      Left(AppFailure('Not implemented'));
-
-  @override
-  Future<Either<AppFailure, bool>> togglePin(String postId) async =>
       Left(AppFailure('Not implemented'));
 
   @override

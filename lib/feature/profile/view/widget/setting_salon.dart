@@ -84,7 +84,36 @@ class _SalonSettingState extends State<SalonSetting> {
                 leading: Icon(FontAwesome.earth_africa_solid, color: theme.colorScheme.secondary,),
                 title: Text('Language'),
                 subtitle: Text('English, Device language'),
-              )
+              ),
+
+              const SizedBox(height: 18),
+              const Divider(),
+              const SizedBox(height: 8),
+
+              ListTile(
+                onTap: () {
+                  Navigator.pushNamed(context, '/logout');
+                },
+                leading: Icon(
+                  Icons.logout_rounded,
+                  color: theme.colorScheme.error,
+                ),
+                title: Text(
+                  'Logout',
+                  style: TextStyle(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  'Sign out from this account',
+                  style: TextStyle(
+                    color: theme.colorScheme.error.withOpacity(0.75),
+                  ),
+                ),
+              ),
+
+              // And make su
             ],
           ),
       ),

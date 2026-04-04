@@ -48,18 +48,38 @@ class SelectAccount extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pushNamedAndRemoveUntil(
-                    context, 
-                    '/signup', 
-                    (route) => false, // This removes ALL previous routes
+                    context,
+                    '/signup',
+                    (route) => false,
                     arguments: {'isCustomer': false},
                   );
-                }, 
+                },
                 child: Text(
-                  'Salon', 
+                  'Salon Owner',
                   style: Theme.of(context).textTheme.bodyLarge,
                 )
               ),
-            )
+            ),
+            const SizedBox(height: 25),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/signin');
+              },
+              child: RichText(
+                text: TextSpan(
+                  text: 'Already have an account? ',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  children: [
+                    TextSpan(
+                      text: 'Sign In',
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Colors.pinkAccent[200],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

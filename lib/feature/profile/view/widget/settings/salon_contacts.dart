@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon.dart';
 import 'package:africa_beuty/feature/profile/view_model/settings/profile_cover.dart';
 
@@ -26,6 +28,10 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
   late final TextEditingController _streetController;
   late final TextEditingController _addressController;
 
+  double? _latitude;
+  double? _longitude;
+  bool _fetchingLocation = false;
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +55,8 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
     _cityController = TextEditingController(text: salon?.location?.city ?? "");
     _streetController = TextEditingController(text: salon?.location?.street ?? "");
     _addressController = TextEditingController(text: salon?.location?.region ?? "");
+    _latitude = salon?.location?.latitude;
+    _longitude = salon?.location?.longitude;
   }
 
   @override
@@ -63,6 +71,58 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
     _streetController.dispose();
     _addressController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchLocation() async {
+    setState(() => _fetchingLocation = true);
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) throw 'Location services are disabled.';
+
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+        if (perm == LocationPermission.denied) throw 'Location permission denied.';
+      }
+      if (perm == LocationPermission.deniedForever) {
+        throw 'Location permission permanently denied. Enable it in settings.';
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+      setState(() {
+        _latitude = pos.latitude;
+        _longitude = pos.longitude;
+      });
+
+      // Reverse-geocode to fill address fields
+      try {
+        final placemarks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+        if (placemarks.isNotEmpty && mounted) {
+          final p = placemarks.first;
+          setState(() {
+            if ((p.country ?? '').isNotEmpty) _countryController.text = p.country!;
+            if ((p.locality ?? '').isNotEmpty) _cityController.text = p.locality!;
+            if ((p.street ?? '').isNotEmpty) _streetController.text = p.street!;
+            final region = [p.subLocality, p.administrativeArea]
+                .where((s) => s != null && s.isNotEmpty)
+                .join(', ');
+            if (region.isNotEmpty) _addressController.text = region;
+          });
+        }
+      } catch (_) {
+        // Reverse geocoding failed silently — coordinates are still saved
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      setState(() => _fetchingLocation = false);
+    }
   }
 
   Future<void> _saveForm() async {
@@ -83,8 +143,8 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
         city: _cityController.text.trim(),
         street: _streetController.text.trim(),
         address: _addressController.text.trim(),
-        latitude: 0.0, // Placeholder
-        longitude: 0.0, // Placeholder
+        latitude: _latitude,
+        longitude: _longitude,
       );
 
       // Success feedback
@@ -211,6 +271,35 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
                 maxLines: 2,
               ),
               
+              const SizedBox(height: 24),
+
+              // GPS coordinates picker
+              _buildSectionTitle(theme, "GPS Coordinates"),
+              OutlinedButton.icon(
+                onPressed: _fetchingLocation ? null : _fetchLocation,
+                icon: _fetchingLocation
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.my_location),
+                label: Text(
+                  _latitude != null
+                      ? 'Lat ${_latitude!.toStringAsFixed(5)}, Lng ${_longitude!.toStringAsFixed(5)}'
+                      : 'Get my current location',
+                ),
+              ),
+              if (_latitude != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'Tap again to update coordinates.',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.primary),
+                  ),
+                ),
+
               const SizedBox(height: 32),
               _buildInfoNote(theme),
               const SizedBox(height: 40),

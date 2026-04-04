@@ -307,14 +307,14 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                   SizedBox(height: size.height * .1,),
               
                   Text(
-                    'SignUp Salon', 
+                    'Sign Up as Salon Owner',
                     style: Theme.of(context).textTheme.headlineLarge,
                   ),
               
                   const SizedBox(height: 50,), 
               
                   CustomeField(
-                    hintText: 'Salon Name', 
+                    hintText: 'Business Name',
                     leadingIcon: Icons.house_siding, 
                     keyboardType: TextInputType.text, 
                     action: TextInputAction.next, 

@@ -92,6 +92,7 @@ class BookingModel {
   BookingModel({
     required this.id,
     required this.customerId,
+    this.customerName,
     required this.salonId,
     required this.status,
     required this.startAt,
@@ -100,13 +101,15 @@ class BookingModel {
     required this.priceSnapshot,
     required this.currencySnapshot,
     required this.durationMinutesSnapshot,
-    required this.note,
+    this.note,
+    this.cancelReason,
     required this.createdAt,
     required this.updatedAt,
   });
 
   final String id;
   final String customerId;
+  final String? customerName;
   final String salonId;
   final String status;
 
@@ -118,7 +121,8 @@ class BookingModel {
   final String currencySnapshot;
   final int durationMinutesSnapshot;
 
-  final String note;
+  final String? note;
+  final String? cancelReason;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -129,6 +133,7 @@ class BookingModel {
   BookingModel copyWith({
     String? id,
     String? customerId,
+    String? customerName,
     String? salonId,
     String? status,
     DateTime? startAt,
@@ -138,24 +143,24 @@ class BookingModel {
     String? currencySnapshot,
     int? durationMinutesSnapshot,
     String? note,
+    String? cancelReason,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return BookingModel(
       id: id ?? this.id,
       customerId: customerId ?? this.customerId,
+      customerName: customerName ?? this.customerName,
       salonId: salonId ?? this.salonId,
       status: status ?? this.status,
       startAt: startAt ?? this.startAt,
       endAt: endAt ?? this.endAt,
-      serviceNameSnapshot:
-          serviceNameSnapshot ?? this.serviceNameSnapshot,
+      serviceNameSnapshot: serviceNameSnapshot ?? this.serviceNameSnapshot,
       priceSnapshot: priceSnapshot ?? this.priceSnapshot,
-      currencySnapshot:
-          currencySnapshot ?? this.currencySnapshot,
-      durationMinutesSnapshot:
-          durationMinutesSnapshot ?? this.durationMinutesSnapshot,
+      currencySnapshot: currencySnapshot ?? this.currencySnapshot,
+      durationMinutesSnapshot: durationMinutesSnapshot ?? this.durationMinutesSnapshot,
       note: note ?? this.note,
+      cancelReason: cancelReason ?? this.cancelReason,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -168,6 +173,7 @@ class BookingModel {
     return <String, dynamic>{
       'id': id,
       'customer_id': customerId,
+      'customer_name': customerName,
       'salon_id': salonId,
       'status': status,
       'start_at': startAt.toIso8601String(),
@@ -177,6 +183,7 @@ class BookingModel {
       'currency_snapshot': currencySnapshot,
       'duration_minutes_snapshot': durationMinutesSnapshot,
       'note': note,
+      'cancel_reason': cancelReason,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -189,42 +196,19 @@ class BookingModel {
     return BookingModel(
       id: map['id']?.toString() ?? '',
       customerId: map['customer_id']?.toString() ?? '',
+      customerName: map['customer_name']?.toString(),
       salonId: map['salon_id']?.toString() ?? '',
       status: map['status']?.toString() ?? 'pending',
-
-      startAt: DateTime.tryParse(
-            map['start_at']?.toString() ?? '',
-          ) ??
-          DateTime.now(),
-
-      endAt: DateTime.tryParse(
-            map['end_at']?.toString() ?? '',
-          ) ??
-          DateTime.now(),
-
-      serviceNameSnapshot:
-          map['service_name_snapshot']?.toString() ?? '',
-
-      priceSnapshot:
-          (map['price_snapshot'] as num?)?.toDouble() ?? 0.0,
-
-      currencySnapshot:
-          map['currency_snapshot']?.toString() ?? '',
-
-      durationMinutesSnapshot:
-          (map['duration_minutes_snapshot'] as num?)?.toInt() ?? 0,
-
-      note: map['note']?.toString() ?? '',
-
-      createdAt: DateTime.tryParse(
-            map['created_at']?.toString() ?? '',
-          ) ??
-          DateTime.now(),
-
-      updatedAt: DateTime.tryParse(
-            map['updated_at']?.toString() ?? '',
-          ) ??
-          DateTime.now(),
+      startAt: DateTime.tryParse(map['start_at']?.toString() ?? '') ?? DateTime.now(),
+      endAt: DateTime.tryParse(map['end_at']?.toString() ?? '') ?? DateTime.now(),
+      serviceNameSnapshot: map['service_name_snapshot']?.toString() ?? '',
+      priceSnapshot: (map['price_snapshot'] as num?)?.toDouble() ?? 0.0,
+      currencySnapshot: map['currency_snapshot']?.toString() ?? '',
+      durationMinutesSnapshot: (map['duration_minutes_snapshot'] as num?)?.toInt() ?? 0,
+      note: map['note']?.toString(),
+      cancelReason: map['cancel_reason']?.toString(),
+      createdAt: DateTime.tryParse(map['created_at']?.toString() ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(map['updated_at']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 
