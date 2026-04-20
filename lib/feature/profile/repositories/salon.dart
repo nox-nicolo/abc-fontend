@@ -4,6 +4,7 @@ import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:africa_beuty/feature/profile/model/salon.dart';
+import 'package:africa_beuty/feature/profile/model/salon_activity.dart';
 import 'package:africa_beuty/feature/profile/model/salon_posts.dart';
 import 'package:africa_beuty/feature/profile/repositories/local_salon.dart';// Your local storage
 import 'package:fpdart/fpdart.dart';
@@ -118,6 +119,63 @@ class SalonProfileRepository {
         final postResponse = PostResponseModel.fromMap(decoded);
         
         return Right(postResponse);
+      }
+
+      return Left(_mapHttpError(response));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on http.ClientException {
+      return Left(AppFailure('Network error. Check your internet connection.'));
+    } catch (e) {
+      return Left(AppFailure('An unexpected error occurred: ${e.toString()}'));
+    }
+  }
+
+  /// Fetches the salon activity feed (bookings, followers, reviews, likes).
+  ///
+  /// If [salonId] is provided, fetches the viewer-aware feed for that salon
+  /// (booking events are filtered out unless the caller is the owner).
+  /// Otherwise, hits the owner-only feed for the authenticated user's salon.
+  Future<Either<AppFailure, ActivityFeedResponse>> getActivityFeed({
+    String? salonId,
+    String? cursor,
+    int limit = 30,
+  }) async {
+    final token = await LocalStorageService.getAccessToken();
+
+    if (token == null || token.isEmpty) {
+      return Left(AppFailure('Authentication required'));
+    }
+
+    final queryParameters = {
+      if (cursor != null) 'cursor': cursor,
+      'limit': limit.toString(),
+    };
+
+    final path = salonId != null
+        ? '/profile/salon/$salonId/activity'
+        : '/profile/salon/activity';
+
+    final uri = Uri.parse('${ServerConstants.serverUrl}$path')
+        .replace(queryParameters: queryParameters);
+
+    try {
+      final response = await _client.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+
+        if (decoded is! Map<String, dynamic>) {
+          return Left(AppFailure('Unexpected server response format'));
+        }
+
+        return Right(ActivityFeedResponse.fromMap(decoded));
       }
 
       return Left(_mapHttpError(response));

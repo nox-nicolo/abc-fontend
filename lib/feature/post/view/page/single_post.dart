@@ -1,4 +1,6 @@
 import 'package:africa_beuty/feature/home/model/post_like.dart';
+import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
+import 'package:africa_beuty/feature/post/view/widgets/comments_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +21,7 @@ class Post extends ConsumerStatefulWidget {
     required this.commentsCount,
     required this.description,
     required this.datePosted,
+    this.isSaved = false,
   });
 
   final String postId;
@@ -32,6 +35,7 @@ class Post extends ConsumerStatefulWidget {
   final int commentsCount;
   final String description;
   final String datePosted;
+  final bool isSaved;
 
   @override
   ConsumerState<Post> createState() => _PostState();
@@ -41,6 +45,7 @@ class _PostState extends ConsumerState<Post> {
   bool isExpanded = false;
   late bool _isLiked;
   late int _likesCount;
+  late bool _isSaved;
 
   final PageController _pageController = PageController();
   int _currentPage = 0; // Track the active image index
@@ -53,6 +58,7 @@ class _PostState extends ConsumerState<Post> {
 
     _isLiked = widget.isLiked;
     _likesCount = widget.likesCount;
+    _isSaved = widget.isSaved;
 
     _likeSub = ref.listenManual(
       postLikeViewModelProvider,
@@ -74,9 +80,21 @@ class _PostState extends ConsumerState<Post> {
   // Impotant for cleanup
   @override
   void dispose() {
-    _likeSub.close(); 
+    _likeSub.close();
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleSave() async {
+    setState(() => _isSaved = !_isSaved);
+    final res = await ref
+        .read(postRemoteRepoProviderProvider)
+        .toggleBookmark(widget.postId);
+    if (!mounted) return;
+    res.fold(
+      (_) => setState(() => _isSaved = !_isSaved),
+      (saved) => setState(() => _isSaved = saved),
+    );
   }
 
 
@@ -265,18 +283,35 @@ class _PostState extends ConsumerState<Post> {
 
                     const SizedBox(width: 24),
 
-                    Icon(
-                      FontAwesome.comment,
-                      size: 24,
-                      color: Colors.blue.shade500,
+                    GestureDetector(
+                      onTap: () =>
+                          showCommentsSheet(context, widget.postId),
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        children: [
+                          Icon(
+                            FontAwesome.comment,
+                            size: 24,
+                            color: Colors.blue.shade500,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.commentsCount.toString(),
+                            style:
+                                Theme.of(context).textTheme.labelLarge,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: _toggleSave,
                 icon: Icon(
-                  Icons.bookmark_rounded,
+                  _isSaved
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
                   size: 32,
                   color: Colors.blue.shade500,
                 ),

@@ -243,6 +243,18 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
     if (res != null) setState(() => taggedPeople = res);
   }
 
+  void _clearForm() {
+    setState(() {
+      selectedImages.clear();
+      editedImages.clear();
+      selectedHashtags.clear();
+      taggedPeople.clear();
+      _aspectRatio = 1.0;
+    });
+    captionController.clear();
+    ref.read(selectedCategoryProvider.notifier).clear();
+  }
+
   // ── Submit ───────────────────────────────────────────────────
   Future<void> submit() async {
     if (!isValidPost) return;
@@ -269,20 +281,20 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
     );
 
     await viewModel.submit();
+    if (!mounted) return;
 
-    final state = ref.read(createPostViewModelProvider);
+    final postState = ref.read(createPostViewModelProvider);
 
-    if (state.isSuccess) {
-      if (!mounted) return;
+    if (postState.isSuccess) {
+      _clearForm();
       if (widget.onPostSubmit != null) {
         widget.onPostSubmit!();
       } else {
         showPostSuccessDialog(context, () => Navigator.of(context).pop());
       }
-    } else if (state.error != null) {
-      if (!mounted) return;
+    } else if (postState.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.error!), backgroundColor: Colors.red),
+        SnackBar(content: Text(postState.error!), backgroundColor: Colors.red),
       );
     }
   }
@@ -293,19 +305,27 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
     final viewState = ref.watch(createPostViewModelProvider);
     final scheme = Theme.of(context).colorScheme;
 
+    final canSubmit = isValidPost && !viewState.isSubmitting;
+
     return Scaffold(
       appBar: AppBar(
         actions: [
           TextButton(
-            onPressed: isValidPost ? submit : null,
-            child: Text(
-              'Post',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isValidPost ? scheme.primary : Colors.grey,
-              ),
-            ),
+            onPressed: canSubmit ? submit : null,
+            child: viewState.isSubmitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(
+                    'Post',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: canSubmit ? scheme.primary : Colors.grey,
+                    ),
+                  ),
           ),
           const SizedBox(width: 16),
         ],

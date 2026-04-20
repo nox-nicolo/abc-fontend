@@ -167,7 +167,7 @@ class _PickDateTimePageState
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: scheme.primary.withOpacity(.25),
+                            color: scheme.primary.withValues(alpha: .25),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           )

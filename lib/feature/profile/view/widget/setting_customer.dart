@@ -1,3 +1,4 @@
+import 'package:africa_beuty/feature/profile/view/page/appointment_settings.dart';
 import 'package:africa_beuty/feature/profile/view/page/edit_customer_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -51,10 +52,19 @@ class _CustomerSettingsState extends State<CustomerSettings> {
             ),
             const SizedBox(height: 10,), 
             ListTile(
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AppointmentSettingsPage(),
+                  ),
+                );
+              },
               leading: Icon(FontAwesome.calendar_check, color: theme.colorScheme.secondary,),
               title: Text('Appointment'),
-              subtitle: Text('Remeinder, Communication'),
-            ), 
+              subtitle: Text('Reminders'),
+            ),
             const SizedBox(height: 10,), 
             ListTile(
               leading: Icon(FontAwesome.shield_solid, color: theme.colorScheme.secondary,),

@@ -23,20 +23,14 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
   String _name = '';
 
   late int _index;
-
-  final List<Widget> appScreens = const [
-    HomeScreen(),
-    SearchPage(),
-    BookingPage(),
-    ProfilePage(),
-  ];
+  Key _bookingKey = UniqueKey();
 
   @override
   void initState() {
     super.initState();
     _index = (widget.initialIndex != null &&
             widget.initialIndex! >= 0 &&
-            widget.initialIndex! < appScreens.length)
+            widget.initialIndex! < 4)
         ? widget.initialIndex!
         : 0;
     _loadProfileImage();
@@ -53,6 +47,17 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
   }
 
   void _onTappedItem(int index) {
+    // Any time the user lands on the booking tab (switching in OR re-tapping
+    // it), give the BookingPage a fresh key so its state resets and the
+    // list re-fetches. IndexedStack keeps siblings alive, so changing the
+    // key here only rebuilds the booking subtree.
+    if (index == 2) {
+      setState(() {
+        _index = index;
+        _bookingKey = UniqueKey();
+      });
+      return;
+    }
     setState(() {
       _index = index;
     });
@@ -74,7 +79,12 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
       child: Scaffold(
         body: IndexedStack(
           index: _index,
-          children: appScreens,
+          children: [
+            const HomeScreen(),
+            const SearchPage(),
+            BookingPage(key: _bookingKey),
+            const ProfilePage(),
+          ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _index,

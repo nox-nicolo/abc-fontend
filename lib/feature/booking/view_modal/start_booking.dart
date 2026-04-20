@@ -1,4 +1,5 @@
 
+import 'package:africa_beuty/core/reminders/reminder_service.dart';
 import 'package:africa_beuty/feature/booking/model/start_booking.dart';
 import 'package:africa_beuty/feature/booking/provider/start_booking.dart';
 import 'package:fpdart/fpdart.dart';
@@ -38,6 +39,8 @@ class StartBookingViewModel extends _$StartBookingViewModel {
 
       case Right(value: final booking):
         state = AsyncValue.data(booking);
+        // Schedule local reminder for the new booking based on user prefs.
+        ReminderService.instance.syncFromServer();
     }
   }
 

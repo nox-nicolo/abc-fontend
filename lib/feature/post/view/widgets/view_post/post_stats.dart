@@ -5,6 +5,7 @@
 
 import 'package:africa_beuty/feature/home/view_model/post_like.dart';
 import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
+import 'package:africa_beuty/feature/post/view/widgets/comments_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -93,7 +94,7 @@ class _PostStatsRowState extends ConsumerState<PostStatsRow> {
           const SizedBox(width: 16),
           _IconBtn(
             icon: Icons.chat_bubble_outline,
-            onTap: () {},
+            onTap: () => showCommentsSheet(context, widget.postId),
           ),
           const SizedBox(width: 16),
           _IconBtn(

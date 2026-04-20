@@ -43,7 +43,7 @@ final class StartBookingViewModelProvider
 }
 
 String _$startBookingViewModelHash() =>
-    r'262cee3771af255a109ba2790e5527ac0f6079fd';
+    r'a3d89b6e17ff85e4682a84c6b16a3501686fd1f5';
 
 abstract class _$StartBookingViewModel
     extends $Notifier<AsyncValue<BookingModel?>> {

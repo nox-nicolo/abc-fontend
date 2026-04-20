@@ -39,7 +39,7 @@ class LogoutPage extends StatelessWidget {
                   BoxShadow(
                     blurRadius: 20,
                     offset: const Offset(0, 8),
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                   ),
                 ],
               ),
@@ -48,7 +48,7 @@ class LogoutPage extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 34,
-                    backgroundColor: theme.colorScheme.error.withOpacity(0.12),
+                    backgroundColor: theme.colorScheme.error.withValues(alpha: 0.12),
                     child: Icon(
                       Icons.logout_rounded,
                       size: 34,
@@ -68,7 +68,7 @@ class LogoutPage extends StatelessWidget {
                     'You will need to log in again to continue using the app.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 24),

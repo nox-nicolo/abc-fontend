@@ -15,19 +15,37 @@ class CustomerBookingPage extends ConsumerStatefulWidget {
 }
 
 class _CustomerBookingPageState extends ConsumerState<CustomerBookingPage> {
+  void _invalidateAll() {
+    ref.invalidate(myBookingsViewModelProvider(''));
+    ref.invalidate(myBookingsViewModelProvider('pending'));
+    ref.invalidate(myBookingsViewModelProvider('confirmed'));
+    ref.invalidate(myBookingsViewModelProvider('completed'));
+  }
+
   @override
   void initState() {
     super.initState();
+
+    // Refresh data every time this page is (re)shown
+    WidgetsBinding.instance.addPostFrameCallback((_) => _invalidateAll());
+
     ref.listenManual(
       customerBookingActionViewModelProvider,
       (_, next) {
         next.whenOrNull(
-          error: (err, _) => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(err.toString())),
-          ),
-          data: (_) => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Done')),
-          ),
+          error: (err, _) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(err.toString())),
+            );
+          },
+          data: (_) {
+            _invalidateAll();
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Done')),
+            );
+          },
         );
       },
     );
@@ -184,7 +202,7 @@ class CustomerBookingCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: color.withOpacity(.15),
+                color: color.withValues(alpha: .15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(_statusIcon(), color: color),
@@ -282,7 +300,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(.12),
+        color: color.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(99),
       ),
       child: Text(

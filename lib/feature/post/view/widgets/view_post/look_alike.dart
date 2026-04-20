@@ -1,8 +1,3 @@
-
-/* ---------------------------------------------------
-   LOOK ALIKE
---------------------------------------------------- */
-
 import 'package:flutter/material.dart';
 
 class SimilarResultsSection extends StatelessWidget {
@@ -22,32 +17,34 @@ class SimilarResultsSection extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.only(top: 20, bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// HEADER
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Similar Results',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Similar at salons you follow',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Women who booked this service achieved looks like these',
-                      style: theme.textTheme.labelMedium,
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        'Same service · different salons you already love',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
                 if (onViewAll != null)
                   TextButton(
                     onPressed: onViewAll,
@@ -56,21 +53,15 @@ class SimilarResultsSection extends StatelessWidget {
               ],
             ),
           ),
-
-          const SizedBox(height: 14),
-
-          /// HORIZONTAL LIST
+          const SizedBox(height: 12),
           SizedBox(
-            height: 240,
+            height: 220,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 14),
-              itemBuilder: (_, index) {
-                final item = items[index];
-                return _ResultCard(item: item);
-              },
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (_, index) => _ResultCard(item: items[index]),
             ),
           ),
         ],
@@ -78,10 +69,6 @@ class SimilarResultsSection extends StatelessWidget {
     );
   }
 }
-
-/* ---------------------------------------------------
-   RESULT CARD
---------------------------------------------------- */
 
 class _ResultCard extends StatelessWidget {
   final SimilarResultItem item;
@@ -94,75 +81,59 @@ class _ResultCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: item.onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: Stack(
-          children: [
-            /// IMAGE
-            AspectRatio(
-              aspectRatio: 3 / 4,
-              child: Image.network(
-                item.imageUrl,
-                fit: BoxFit.cover,
-              ),
-            ),
-
-            /// SOFT GRADIENT OVERLAY (bottom)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                height: 80,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black54,
-                      Colors.transparent,
+      child: SizedBox(
+        width: 160,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              item.imageUrl.isNotEmpty
+                  ? Image.network(item.imageUrl, fit: BoxFit.cover)
+                  : Container(color: theme.colorScheme.surfaceContainerHighest),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(10, 24, 10, 10),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [Colors.black87, Colors.transparent],
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (item.label != null)
+                        Text(
+                          item.label!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                     ],
                   ),
                 ),
               ),
-            ),
-
-            /// MICRO LABEL (optional)
-            if (item.label != null)
-              Positioned(
-                left: 10,
-                bottom: 10,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.55),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    item.label!,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/* ---------------------------------------------------
-   MODEL
---------------------------------------------------- */
-
 class SimilarResultItem {
   final String id;
   final String imageUrl;
-  final String? label; // e.g. "Same artist", "Similar style"
+  final String? label;
   final VoidCallback onTap;
 
   const SimilarResultItem({

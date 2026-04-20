@@ -161,17 +161,20 @@ class SalonViewerModel {
   final bool isFollowing;
   final bool notificationsEnabled;
   final bool isBlocked;
+  final bool isOwner;
 
   SalonViewerModel({
     required this.isFollowing,
     required this.notificationsEnabled,
     required this.isBlocked,
+    this.isOwner = false,
   });
 
   Map<String, dynamic> toMap() => {
         'is_following': isFollowing,
         'notifications_enabled': notificationsEnabled,
         'is_blocked': isBlocked,
+        'is_owner': isOwner,
       };
 
   factory SalonViewerModel.fromMap(Map<String, dynamic> map) {
@@ -179,6 +182,7 @@ class SalonViewerModel {
       isFollowing: map['is_following'] ?? false,
       notificationsEnabled: map['notifications_enabled'] ?? false,
       isBlocked: map['is_blocked'] ?? false,
+      isOwner: map['is_owner'] ?? false,
     );
   }
 }

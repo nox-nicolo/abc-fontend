@@ -1,12 +1,16 @@
 
 
+import 'package:africa_beuty/core/widgets/activity_feed.dart';
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
+import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
+import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/booking.dart';
 import 'package:africa_beuty/feature/profile/model/salon_view_profile.dart';
 import 'package:africa_beuty/feature/profile/view/widget/salon_profile_view_services.dart';
+import 'package:africa_beuty/feature/profile/view_model/salon_activity.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon_profile_post.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon_view_follow_action.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon_view_profile.dart';
@@ -49,7 +53,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
     _scrollController = ScrollController()..addListener(() => setState(() {}));
 
-    _tabController = TabController(length: 2, vsync: this)
+    _tabController = TabController(length: 3, vsync: this)
       ..addListener(() {
         if (_tabController.indexIsChanging) {
           setState(() {
@@ -572,7 +576,29 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (_) => SalonServicesSheet(salon: salon),
+      builder: (sheetCtx) => SalonServicesSheet(
+        salon: salon,
+        onBook: (service) {
+          // Close the sheet first
+          Navigator.of(sheetCtx).pop();
+
+          // Pre-fill the booking draft with what we know
+          ref.read(bookingDraftProvider.notifier)
+            ..reset()
+            ..selectSalonOffer(
+              salonServicePriceId: service.id,
+              salonName: salon.salon.name,
+              price: (service.priceMin ?? 0).toDouble(),
+              currency: service.currency,
+              durationMinutes: service.durationMinutes ?? 60,
+            );
+
+          // Jump straight to date/time picker — style & salon already chosen
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const PickDateTimePage()),
+          );
+        },
+      ),
     );
   }
 
@@ -615,10 +641,19 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
     final postsState = ref.watch(profilePostsViewModelProvider(salon.salon.id));
     final postsNotifier = ref.read(profilePostsViewModelProvider(salon.salon.id).notifier);
 
+    final activityState = ref.watch(salonActivityViewModelProvider(salon.salon.id));
+    final activityNotifier =
+        ref.read(salonActivityViewModelProvider(salon.salon.id).notifier);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Only call if still loading and no data
       if (postsState.isLoading && !postsState.hasValue) {
         postsNotifier.getInitialPosts();
+      }
+      if (_selectedTabIndex == 2 &&
+          activityState.isLoading &&
+          !activityState.hasValue) {
+        activityNotifier.getInitialActivity();
       }
     });
 
@@ -629,20 +664,17 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
         onRefresh: _handleRefresh,
         child: NotificationListener<ScrollNotification>(
           onNotification: (notification) {
-            // Only paginate when user is on the POSTS tab (list or grid)
-            if (_selectedTabIndex != 1 && _selectedTabIndex != 0) return false;
-
-            // Only react to scroll updates at the bottom
             final metrics = notification.metrics;
-
-            // If you want paginate for both grid and list tabs, keep it.
-            // If only for list, add: if (_selectedTabIndex != 1) return false;
-
             final threshold = 300.0; // px before bottom
-            final nearBottom = metrics.pixels >= (metrics.maxScrollExtent - threshold);
+            final nearBottom =
+                metrics.pixels >= (metrics.maxScrollExtent - threshold);
 
-            if (nearBottom) {
+            if (!nearBottom) return false;
+
+            if (_selectedTabIndex == 0 || _selectedTabIndex == 1) {
               postsNotifier.getMorePosts();
+            } else if (_selectedTabIndex == 2) {
+              activityNotifier.getMoreActivity();
             }
             return false;
           },
@@ -819,7 +851,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                              color: Colors.white.withOpacity(0.7),
+                                              color: Colors.white.withValues(alpha: 0.7),
                                               fontSize: 14,
                                             ),
                                           ),
@@ -873,7 +905,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                               padding:
                                                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                               decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(0.18),
+                                                color: Colors.white.withValues(alpha: 0.18),
                                                 borderRadius: BorderRadius.circular(18),
                                                 border: Border.all(color: Colors.white24),
                                               ),
@@ -905,7 +937,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                         /// ---------------- MORE ACTIONS ----------------
                                         if (isFollowing)
                                           Material(
-                                            color: Colors.white.withOpacity(0.12),
+                                            color: Colors.white.withValues(alpha: 0.12),
                                             shape: const CircleBorder(),
                                             clipBehavior: Clip.antiAlias,
                                             child: IconButton(
@@ -985,7 +1017,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(0.92),
+                                          color: Colors.white.withValues(alpha: 0.92),
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -1250,7 +1282,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
               SliverSpaceHeader(title: ''),
               SliverToBoxAdapter(
                 child: BookingNowGlowButton(
-                  onPressed: () {},
+                  onPressed: () => _showSalonServicesSheet(context, salon),
                 ),
               ),
           
@@ -1263,7 +1295,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                     indicatorSize: TabBarIndicatorSize.tab,
                     labelColor: Theme.of(context).colorScheme.primary,
                     unselectedLabelColor:
-                        Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     tabs: const [
                       Tab(
                         icon: Icon(Bootstrap.grid_3x3_gap_fill),
@@ -1272,6 +1304,10 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                       Tab(
                         icon: Icon(Bootstrap.view_stacked),
                         text: 'Posts',
+                      ),
+                      Tab(
+                        icon: Icon(Bootstrap.activity),
+                        text: 'Activity',
                       ),
                     ],
                   ),
@@ -1309,6 +1345,30 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
             //         ),
             //       ),
             // ],
+              if (_selectedTabIndex == 2)
+                activityState.when(
+                  loading: () => const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (e, _) => SliverToBoxAdapter(
+                    child: Center(child: Text('Error: $e')),
+                  ),
+                  data: (items) {
+                    if (items.isEmpty) {
+                      return const SliverFillRemaining(
+                        child: Center(child: Text('No recent activity')),
+                      );
+                    }
+                    return SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) =>
+                            ActivityFeedTile(item: items[index]),
+                        childCount: items.length,
+                      ),
+                    );
+                  },
+                )
+              else
               postsState.when(
                 loading: () => const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
@@ -1322,7 +1382,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                       child: Center(child: Text('No posts yet')),
                     );
                   }
-          
+
                   if (_selectedTabIndex == 0) {
                     // GRID TAB
                     return UniversalPostGrid(
@@ -1359,7 +1419,10 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
               ),
           
               // 3. PAGINATION SPINNER
-              if (postsState.isLoading && postsState.hasValue)
+              if ((_selectedTabIndex == 2 && activityNotifier.isLoadingMore) ||
+                  (_selectedTabIndex != 2 &&
+                      postsState.isLoading &&
+                      postsState.hasValue))
                 const SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),

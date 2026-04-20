@@ -459,6 +459,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: Post(
                                 postId: post.id,
                                 isLiked: post.viewerState.isLiked,
+                                isSaved: post.viewerState.isSaved,
                                 images: post.media.map((e) => e.url).toList(),
                                 aspectRatio:
                                     post.media.isNotEmpty ? post.media.first.aspectRatio : 1,

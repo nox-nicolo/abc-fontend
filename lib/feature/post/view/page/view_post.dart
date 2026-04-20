@@ -12,6 +12,7 @@ import 'package:africa_beuty/feature/post/view/widgets/view_post/service_review.
 import 'package:africa_beuty/feature/post/view/widgets/view_post/sponsored_salon.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/stylist.dart';
 import 'package:africa_beuty/feature/post/view_model/single_post_view.dart';
+import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,8 +44,7 @@ class PostViewPage extends ConsumerWidget {
         ],
       ),
       body: state.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const _PostViewSkeleton(),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (data) => _PostViewBody(data: data),
       ),
@@ -108,80 +108,94 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
       slivers: [
         // ─────────── Author header ───────────
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.grey.shade300,
-                  child: ClipOval(
-                    child: post.author.displayPicture != null &&
-                            post.author.displayPicture!.isNotEmpty
-                        ? Image.network(
-                            post.author.displayPicture!,
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.cover,
-                          )
-                        : const Icon(Icons.person, size: 48),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+                                
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: (context) =>  ViewProfilePage(isServiceProfile: true,
+                    userId: post.author.id,
+                    )
+                  )
+                );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Colors.grey.shade300,
+                    child: ClipOval(
+                      child: post.author.displayPicture != null &&
+                              post.author.displayPicture!.isNotEmpty
+                          ? Image.network(
+                              post.author.displayPicture!,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                            )
+                          : const Icon(Icons.person, size: 48),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Salon name + verified badge
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              post.author.salonName,
-                              style: Theme.of(context).textTheme.labelLarge,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Icon(
-                            OctIcons.verified,
-                            size: 12,
-                            color: Colors.blue.shade500,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      // Username
-                      Text(
-                        post.author.username,
-                        style: Theme.of(context).textTheme.labelSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      // FIX 1: location line
-                      if (post.author.location != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          _locationLabel(post.author.location!),
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+                  const SizedBox(width: 10),
+            
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Salon name + verified badge
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                post.author.salonName,
+                                style: Theme.of(context).textTheme.labelLarge,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
+                            ),
+                            const SizedBox(width: 5),
+                            Icon(
+                              OctIcons.verified,
+                              size: 12,
+                              color: Colors.blue.shade500,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        // Username
+                        Text(
+                          post.author.username,
+                          style: Theme.of(context).textTheme.labelSmall,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        // FIX 1: location line
+                        if (post.author.location != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            _locationLabel(post.author.location!),
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -193,9 +207,12 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
               behavior: HitTestBehavior.opaque,
               onDoubleTap: () => HapticFeedback.lightImpact(),
               onLongPress: () {},
-              child: PostImages(
-                imageUrls: post.images.map((e) => e.url).toList(),
+              child: AspectRatio(
                 aspectRatio: post.images.first.aspectRatio,
+                child: PostImages(
+                  imageUrls: post.images.map((e) => e.url).toList(),
+                  aspectRatio: post.images.first.aspectRatio,
+                ),
               ),
             ),
           ),
@@ -282,50 +299,24 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           ),
         ),
 
-        // ─────────── Similar (FIX 7: wire onTap) ───────────
-        if (data.similar.byService.isNotEmpty ||
-            data.similar.byStylist.isNotEmpty ||
-            data.similar.bySalon.isNotEmpty)
+        // ─────────── Similar ───────────
+        if (data.similar.items.isNotEmpty)
           SliverToBoxAdapter(
             child: SimilarResultsSection(
-              items: [
-                ...data.similar.byService.map(
-                  (e) => SimilarResultItem(
-                    id: e.id,
-                    imageUrl: e.coverImage,
-                    label: 'Similar service',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => PostViewPage(postId: e.id),
+              items: data.similar.items
+                  .map(
+                    (e) => SimilarResultItem(
+                      id: e.id,
+                      imageUrl: e.coverImage,
+                      label: e.salonName,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => PostViewPage(postId: e.id),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                ...data.similar.byStylist.map(
-                  (e) => SimilarResultItem(
-                    id: e.id,
-                    imageUrl: e.coverImage,
-                    label: 'Same stylist',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => PostViewPage(postId: e.id),
-                      ),
-                    ),
-                  ),
-                ),
-                ...data.similar.bySalon.map(
-                  (e) => SimilarResultItem(
-                    id: e.id,
-                    imageUrl: e.coverImage,
-                    label: 'Same salon',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => PostViewPage(postId: e.id),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                  )
+                  .toList(),
             ),
           ),
 
@@ -349,7 +340,32 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
             ),
           ),
 
-        // ─────────── Other posts (FIX 8: infinite scroll via _onScroll) ───────────
+        // ─────────── Other posts continuation ───────────
+        if (data.otherPosts.items.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'More for you',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'From salons you follow and salons near you',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         if (data.otherPosts.items.isNotEmpty)
           SliverList(
             delegate: SliverChildBuilderDelegate(
@@ -368,6 +384,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
                   child: Post(
                     postId: p.id,
                     isLiked: p.viewerState.isLiked,
+                    isSaved: p.viewerState.isSaved,
                     images: p.images.map((e) => e.url).toList(),
                     aspectRatio: p.images.isNotEmpty
                         ? p.images.first.aspectRatio
@@ -484,6 +501,81 @@ class _PostActionsMenuState extends ConsumerState<_PostActionsMenu> {
                 style:
                     TextStyle(color: Theme.of(context).colorScheme.error)),
             contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Skeleton loader shown while the post view is loading
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PostViewSkeleton extends StatelessWidget {
+  const _PostViewSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final base = Theme.of(context)
+        .colorScheme
+        .surfaceContainerHighest
+        .withValues(alpha: 0.6);
+
+    Widget box({
+      double? width,
+      double height = 12,
+      double radius = 8,
+    }) =>
+        Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: base,
+            borderRadius: BorderRadius.circular(radius),
+          ),
+        );
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(color: base, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    box(width: 140, height: 14),
+                    const SizedBox(height: 8),
+                    box(width: 90, height: 10),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        AspectRatio(aspectRatio: 1, child: Container(color: base)),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              box(width: double.infinity),
+              const SizedBox(height: 8),
+              box(width: 220),
+              const SizedBox(height: 8),
+              box(width: 160),
+            ],
           ),
         ),
       ],

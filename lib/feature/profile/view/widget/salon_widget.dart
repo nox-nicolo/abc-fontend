@@ -8,6 +8,7 @@ import 'package:africa_beuty/feature/profile/model/salon_posts.dart';
 import 'package:africa_beuty/feature/profile/view/widget/setting.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon.dart';
+import 'package:africa_beuty/feature/profile/view_model/salon_activity.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon_profile_post.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -560,6 +561,9 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
       ref
           .read(profilePostsViewModelProvider(widget.salonId).notifier)
           .getInitialPosts();
+      ref
+          .read(salonActivityViewModelProvider(widget.salonId).notifier)
+          .getInitialActivity();
     });
   }
 
@@ -650,11 +654,58 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
           );
         } else {
           // ── Activity feed ──
-          return SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (_, i) => const ActivityFeed(),
-              childCount: 20,
+          final activityState =
+              ref.watch(salonActivityViewModelProvider(widget.salonId));
+          return activityState.when(
+            loading: () => const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: CircularProgressIndicator()),
+              ),
             ),
+            error: (e, _) => SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Center(child: Text(e.toString())),
+              ),
+            ),
+            data: (activities) {
+              if (activities.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.notifications_none,
+                              size: 48,
+                              color: Theme.of(context).colorScheme.outline),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No activity yet',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyLarge
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) => ActivityFeedTile(item: activities[i]),
+                  childCount: activities.length,
+                ),
+              );
+            },
           );
         }
       },

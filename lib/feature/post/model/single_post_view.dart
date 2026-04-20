@@ -387,40 +387,34 @@ class OtherPostsSectionModel {
 class PostPreviewModel {
   final String id;
   final String coverImage;
+  final String? salonName;
+  final String? salonId;
 
   const PostPreviewModel({
     required this.id,
     required this.coverImage,
+    this.salonName,
+    this.salonId,
   });
 
   factory PostPreviewModel.fromMap(Map<String, dynamic> map) {
     return PostPreviewModel(
       id: map['id'],
       coverImage: map['cover_image'] ?? '',
+      salonName: map['salon_name'],
+      salonId: map['salon_id'],
     );
   }
 }
 
 class SimilarSectionModel {
-  final List<PostPreviewModel> byService;
-  final List<PostPreviewModel> byStylist;
-  final List<PostPreviewModel> bySalon;
+  final List<PostPreviewModel> items;
 
-  const SimilarSectionModel({
-    required this.byService,
-    required this.byStylist,
-    required this.bySalon,
-  });
+  const SimilarSectionModel({required this.items});
 
   factory SimilarSectionModel.fromMap(Map<String, dynamic> map) {
     return SimilarSectionModel(
-      byService: (map['by_service'] as List<dynamic>? ?? [])
-          .map((e) => PostPreviewModel.fromMap(e))
-          .toList(),
-      byStylist: (map['by_stylist'] as List<dynamic>? ?? [])
-          .map((e) => PostPreviewModel.fromMap(e))
-          .toList(),
-      bySalon: (map['by_salon'] as List<dynamic>? ?? [])
+      items: (map['items'] as List<dynamic>? ?? [])
           .map((e) => PostPreviewModel.fromMap(e))
           .toList(),
     );

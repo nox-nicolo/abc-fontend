@@ -18,9 +18,19 @@ class SalonBookingPage extends ConsumerStatefulWidget {
 }
 
 class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
+  void _invalidateAll() {
+    ref.invalidate(bookingListViewModelProvider('confirmed'));
+    ref.invalidate(bookingListViewModelProvider('pending'));
+    ref.invalidate(bookingListViewModelProvider('completed'));
+    ref.invalidate(bookingListViewModelProvider('cancelled'));
+  }
+
   @override
   void initState() {
     super.initState();
+
+    // Refresh data every time this page is (re)shown
+    WidgetsBinding.instance.addPostFrameCallback((_) => _invalidateAll());
 
     // Listen to accept/reject/complete results and refresh lists
     ref.listenManual(
@@ -28,17 +38,14 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
       (prev, next) {
         next.whenOrNull(
           error: (err, _) {
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(err.toString())),
             );
           },
           data: (_) {
-            // refresh all tabs + confirmed carousel
-            ref.invalidate(bookingListViewModelProvider('confirmed'));
-            ref.invalidate(bookingListViewModelProvider('pending'));
-            ref.invalidate(bookingListViewModelProvider('completed'));
-            ref.invalidate(bookingListViewModelProvider('cancelled'));
-
+            _invalidateAll();
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Updated')),
             );
@@ -207,7 +214,7 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                 child: IgnorePointer(
                   ignoring: false,
                   child: Container(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     alignment: Alignment.center,
                     child: const SizedBox(
                       width: 28,
@@ -243,7 +250,7 @@ class NextBookingCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color:
-              Theme.of(context).colorScheme.primaryContainer.withOpacity(.4),
+              Theme.of(context).colorScheme.primaryContainer.withValues(alpha: .4),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -321,7 +328,7 @@ class BookingTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: sorted.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (_, i) {
             final booking = sorted[i];
 
@@ -429,7 +436,7 @@ class BookingCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: _statusColor(context).withOpacity(.15),
+                  color: _statusColor(context).withValues(alpha: .15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(

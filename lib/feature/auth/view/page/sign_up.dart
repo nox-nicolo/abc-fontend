@@ -1,403 +1,297 @@
 import 'package:africa_beuty/core/widgets/loader.dart';
-import 'package:africa_beuty/feature/auth/view/widget/auth_button.dart';
-import 'package:africa_beuty/feature/auth/view/widget/custome_field.dart';
 import 'package:africa_beuty/feature/auth/view_model/singup_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 
 class SignUpPage extends ConsumerStatefulWidget {
-  const SignUpPage( 
-    {
-      super.key,
-    }
-  ); 
+  const SignUpPage({super.key});
 
-  @override 
+  @override
   ConsumerState<SignUpPage> createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends ConsumerState<SignUpPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
 
-  // Text input controllers, 
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final phoneController = TextEditingController();
-  final passwordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
-  final salonNameController = TextEditingController();
-  final salonEmailController = TextEditingController();
-  final salonPhoneController = TextEditingController();
-  final salonPasswordController = TextEditingController();
-
-  final formKey = GlobalKey<FormState>(); // form key state management
-
-  // Disposal of the states
   @override
   void dispose() {
-
-    // Customer controller disposal
-    nameController.dispose();
-    emailController.dispose();
-    phoneController.dispose();
-    passwordController.dispose();
-
-    // Salon controller disposal
-    salonNameController.dispose();
-    salonEmailController.dispose();
-    salonPhoneController.dispose();
-    salonPasswordController.dispose();
-
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
-
-    formKey.currentState?.validate();
   }
 
-  @override 
+  @override
   Widget build(BuildContext context) {
+    final isLoading =
+        ref.watch(signupViewModelProvider)?.isLoading == true;
 
-    final isLoading = ref.watch(signupViewModelProvider)?.isLoading == true; // loading indicatior watching
+    final args = ModalRoute.of(context)?.settings.arguments
+        as Map<String, dynamic>?;
+    final bool isCustomer = args?['isCustomer'] ?? true;
 
-    ref.listen(
-      signupViewModelProvider, 
-      (_, next) {
-        next?.when(
-          data: (data) {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Go to your email to verify account'
-                  )
-                )
-              );
-
-            Navigator.pushReplacementNamed(context, '/verify');
-          }, 
-          error: (error, str) {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                SnackBar(
-                  content: Text(
-                    error.toString()
-                  )
-                )
-              );
-          }, 
-          loading: () {}
-        );
-      }
-    );
-
-    final size = MediaQuery.of(context).size;
-
-    // Receive argument from route
-   // Use null-safe casting and default to true if arguments are missing
-    final arguments = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final bool isCustomer = arguments?['isCustomer'] ?? true;
-
-    return isCustomer ?  // show Customer Signup page
-
-      Scaffold(
-        
-        body: isLoading ? 
-        
-        const Loader()
-
-        : 
-        
-        SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: Form(
-              key: formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 50,), 
-
-                  Text(
-                    'SignUp Customer', 
-                    style: Theme.of(context).textTheme.headlineLarge,
-                  ),
-          
-                  const SizedBox(height: 50,), 
-              
-                  CustomeField(
-                    controller: nameController,
-                    hintText: 'Fullname', 
-                    leadingIcon: Icons.person, 
-                    keyboardType: TextInputType.text, 
-                    action: TextInputAction.next,
-                  ),
-              
-                  const SizedBox(height: 15,),
-              
-                  CustomeField(
-                    controller: emailController, 
-                    hintText: 'Email', 
-                    leadingIcon: Icons.mail_rounded, 
-                    keyboardType: TextInputType.emailAddress, 
-                    action: TextInputAction.next,
-                  ),
-              
-                  const SizedBox(height: 20,), 
-              
-                  CustomeField(
-                    controller: phoneController,
-                    hintText: 'Phone', 
-                    leadingIcon: Icons.phone, 
-                    keyboardType: TextInputType.phone, 
-                    action: TextInputAction.next,
-                  ),
-              
-                  const SizedBox(height: 15,),
-              
-                  CustomeField(
-                    controller: passwordController,
-                    hintText: 'Password', 
-                    leadingIcon: Icons.lock, 
-                    keyboardType: TextInputType.text, 
-                    action: TextInputAction.done,
-                    obscure: true,
-                  ),
-              
-                  const SizedBox(height: 20,),
-              
-                  SizedBox(
-                    width: size.width * .95,
-                    child: AuthButton(
-                      onTap: () async {
-                        if (formKey.currentState!.validate()) {
-                          await ref.read(signupViewModelProvider.notifier).signUpUser(
-                            name: nameController.text,
-                            email: emailController.text,
-                            phone: phoneController.text,
-                            password: passwordController.text,
-                            role: 'customer'
-                          );
-                        }
-                      },
-                      name: 'Signup'
-                    )
-                  ), 
-              
-                  const SizedBox(height: 25,),
-              
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacementNamed(context, '/signin');
-                    },
-                    child: RichText(
-                      text: TextSpan(
-                        text: 'Already have an account? ', 
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        children: [
-                          TextSpan(
-                            text: 'Sing In', 
-                            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                              color: Colors.pinkAccent[200]
-                            )
-                          )
-                        ]
-                      ),
-                    ),
-                  ), 
-          
-                  const SizedBox(height: 50,), 
-          
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          height: 5, 
-                        ),
-                      ),
-          
-                      const Text(
-                        ' Or Sign up With ',
-                      ),
-          
-                      Expanded(
-                        child: Divider(
-                          height: 2, 
-                        ),
-                      ),
-                    ],
-                  ),
-          
-                  const SizedBox(height: 20,), 
-          
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                        margin: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(10)
-                        ),
-                        child: Column(
-                          children: [
-                            Brand(
-                              Brands.google
-                            ),
-                            Text(
-                              'Google', 
-                              style: Theme.of(context).textTheme.titleMedium, 
-                            )
-                          ],
-                        ),
-                      ), 
-                      const SizedBox(width: 20,),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                        margin: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(10)
-                        ),
-                        child: Column(
-                          children: [
-                            Brand(
-                              Brands.apple_logo
-                            ),
-                            Text(
-                              'Apple', 
-                              style: Theme.of(context).textTheme.titleMedium,
-                            )
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ) 
-      
-      :   // return Service Signup page
-      
-      Scaffold(
-        
-        body: isLoading ? 
-
-        const Loader()
-        
-        :
-        
-        SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.all(18.0),
-            child: Form(
-              key: formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(height: size.height * .1,),
-              
-                  Text(
-                    'Sign Up as Salon Owner',
-                    style: Theme.of(context).textTheme.headlineLarge,
-                  ),
-              
-                  const SizedBox(height: 50,), 
-              
-                  CustomeField(
-                    hintText: 'Business Name',
-                    leadingIcon: Icons.house_siding, 
-                    keyboardType: TextInputType.text, 
-                    action: TextInputAction.next, 
-                    controller: salonNameController
-                  ), 
-              
-                  const SizedBox(height: 15,), 
-              
-                  CustomeField(
-                    hintText: 'Email', 
-                    leadingIcon: Icons.mail, 
-                    keyboardType: TextInputType.emailAddress, 
-                    action: TextInputAction.next, 
-                    controller: salonEmailController
-                  ), 
-              
-                  const SizedBox(height: 15,), 
-              
-                  CustomeField(
-                    hintText: 'Phone', 
-                    leadingIcon: Icons.phone, 
-                    keyboardType: TextInputType.phone, 
-                    action: TextInputAction.next, 
-                    controller: salonPhoneController 
-                  ),
-              
-                  const SizedBox(height: 15,), 
-              
-                  CustomeField(
-                    hintText: 'Password', 
-                    leadingIcon: Icons.lock, 
-                    keyboardType: TextInputType.text, 
-                    action: TextInputAction.done, 
-                    controller: salonPasswordController,
-                    obscure: true,
-                  ), 
-          
-                  const SizedBox(height: 20,), 
-          
-                  SizedBox(
-                    width: size.width * .95,
-                    child: AuthButton(
-                      onTap: () async {
-                        if (formKey.currentState!.validate()) {
-                          await ref.read(signupViewModelProvider.notifier).signUpUser(
-                            name: salonNameController.text,
-                            email: salonEmailController.text,
-                            phone: salonPhoneController.text,
-                            password: salonPasswordController.text,
-                            role: "service",
-                          );
-                        }
-                      },
-                      name: 'Signup'
-                    ),
-                  ), 
-          
-                  const SizedBox(height: 25,),
-                
-                  GestureDetector(
-                  onTap: () {
-                      Navigator.pushReplacementNamed(context, '/signin');
-                    },
-                    child: RichText(
-                      text: TextSpan(
-                        text: 'Already have an account? ', 
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        children: [
-                          TextSpan(
-                            text: 'Sing In', 
-                            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                              color: Colors.pinkAccent[200]
-                            )
-                          )
-                        ]
-                      ),
-                    ),
-                  ), 
-                ],
-              ),
-            ),
-          ),
-        ),
+    ref.listen(signupViewModelProvider, (_, next) {
+      next?.when(
+        data: (_) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(const SnackBar(
+              content: Text('Check your email to verify your account'),
+            ));
+          Navigator.pushReplacementNamed(context, '/verify');
+        },
+        error: (e, _) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(e.toString())));
+        },
+        loading: () {},
       );
+    });
+
+    final scheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      body: isLoading
+          ? const Loader()
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back),
+                        padding: EdgeInsets.zero,
+                      ),
+                      const SizedBox(height: 16),
+
+                      Text(
+                        isCustomer
+                            ? 'Create account'
+                            : 'Join as a Salon Owner',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        isCustomer
+                            ? 'Discover and book beauty services near you.'
+                            : 'Your personal details — salon info is set up after.',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 32),
+
+                      _Field(
+                        controller: _nameController,
+                        label: 'Full name',
+                        icon: Icons.person_outline,
+                        action: TextInputAction.next,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty)
+                                ? 'Enter your full name'
+                                : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      _Field(
+                        controller: _emailController,
+                        label: 'Email address',
+                        icon: Icons.mail_outline_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        action: TextInputAction.next,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Enter your email';
+                          }
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                              .hasMatch(v.trim())) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      _Field(
+                        controller: _phoneController,
+                        label: 'Phone number',
+                        icon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
+                        action: TextInputAction.next,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty)
+                                ? 'Enter your phone number'
+                                : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      _Field(
+                        controller: _passwordController,
+                        label: 'Password',
+                        icon: Icons.lock_outline,
+                        obscure: _obscurePassword,
+                        action: TextInputAction.next,
+                        suffix: IconButton(
+                          icon: Icon(_obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined),
+                          onPressed: () => setState(() =>
+                              _obscurePassword = !_obscurePassword),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) {
+                            return 'Enter a password';
+                          }
+                          if (v.length < 8) {
+                            return 'Password must be at least 8 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      _Field(
+                        controller: _confirmController,
+                        label: 'Confirm password',
+                        icon: Icons.lock_outline,
+                        obscure: _obscureConfirm,
+                        action: TextInputAction.done,
+                        suffix: IconButton(
+                          icon: Icon(_obscureConfirm
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined),
+                          onPressed: () => setState(
+                              () => _obscureConfirm = !_obscureConfirm),
+                        ),
+                        validator: (v) =>
+                            v != _passwordController.text
+                                ? 'Passwords do not match'
+                                : null,
+                      ),
+                      const SizedBox(height: 32),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: FilledButton(
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate()) {
+                              await ref
+                                  .read(signupViewModelProvider.notifier)
+                                  .signUpUser(
+                                    name: _nameController.text.trim(),
+                                    email: _emailController.text.trim(),
+                                    phone: _phoneController.text.trim(),
+                                    password: _passwordController.text,
+                                    role: isCustomer
+                                        ? 'customer'
+                                        : 'service',
+                                  );
+                            }
+                          },
+                          child: const Text(
+                            'Create account',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      Center(
+                        child: GestureDetector(
+                          onTap: () => Navigator.pushReplacementNamed(
+                              context, '/signin'),
+                          child: RichText(
+                            text: TextSpan(
+                              text: 'Already have an account?  ',
+                              style:
+                                  Theme.of(context).textTheme.bodyMedium,
+                              children: [
+                                TextSpan(
+                                  text: 'Sign in',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium!
+                                      .copyWith(
+                                        color: scheme.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+class _Field extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final TextInputType keyboardType;
+  final TextInputAction action;
+  final bool obscure;
+  final Widget? suffix;
+  final String? Function(String?)? validator;
+
+  const _Field({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.keyboardType = TextInputType.text,
+    this.action = TextInputAction.next,
+    this.obscure = false,
+    this.suffix,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textInputAction: action,
+      obscureText: obscure,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        suffixIcon: suffix,
+        border:
+            OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        filled: true,
+        fillColor: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest,
+      ),
+    );
   }
 }

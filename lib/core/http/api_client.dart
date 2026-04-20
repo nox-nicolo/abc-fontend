@@ -1,9 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:http/http.dart' as http;
+
+const _kTimeout = Duration(seconds: 15);
+
+class _TimeoutAppException implements Exception {
+  const _TimeoutAppException();
+  @override
+  String toString() => 'Request timed out. Please check your connection and try again.';
+}
+
+class _NetworkAppException implements Exception {
+  const _NetworkAppException();
+  @override
+  String toString() => 'No internet connection.';
+}
 
 /// Thrown when both the access-token AND the refresh-token are expired /
 /// invalid.  Repositories should convert this to a Left(AppFailure(...)).
@@ -37,7 +52,8 @@ class ApiClient {
   // ── Public HTTP methods ─────────────────────────────────────────
 
   Future<http.Response> get(Uri uri, {Map<String, String>? extra}) =>
-      _request(() async => http.get(uri, headers: await _headers(extra)));
+      _request(() async =>
+          http.get(uri, headers: await _headers(extra)).timeout(_kTimeout));
 
   Future<http.Response> post(
     Uri uri, {
@@ -46,12 +62,10 @@ class ApiClient {
     Encoding? encoding,
   }) =>
       _request(
-        () async => http.post(
-          uri,
-          headers: await _headers(extra),
-          body: body,
-          encoding: encoding,
-        ),
+        () async => http
+            .post(uri,
+                headers: await _headers(extra), body: body, encoding: encoding)
+            .timeout(_kTimeout),
       );
 
   Future<http.Response> patch(
@@ -60,8 +74,9 @@ class ApiClient {
     Object? body,
   }) =>
       _request(
-        () async =>
-            http.patch(uri, headers: await _headers(extra), body: body),
+        () async => http
+            .patch(uri, headers: await _headers(extra), body: body)
+            .timeout(_kTimeout),
       );
 
   Future<http.Response> put(
@@ -70,28 +85,37 @@ class ApiClient {
     Object? body,
   }) =>
       _request(
-        () async => http.put(uri, headers: await _headers(extra), body: body),
+        () async => http
+            .put(uri, headers: await _headers(extra), body: body)
+            .timeout(_kTimeout),
       );
 
   Future<http.Response> delete(Uri uri, {Map<String, String>? extra}) =>
-      _request(() async => http.delete(uri, headers: await _headers(extra)));
+      _request(() async =>
+          http.delete(uri, headers: await _headers(extra)).timeout(_kTimeout));
 
   // ── Internal ────────────────────────────────────────────────────
 
   Future<http.Response> _request(
     Future<http.Response> Function() call,
   ) async {
-    final response = await call();
-    if (response.statusCode != 401) return response;
+    try {
+      final response = await call();
+      if (response.statusCode != 401) return response;
 
-    final refreshed = await _refresh();
-    if (!refreshed) {
-      onSessionExpired?.call();
-      throw const SessionExpiredException();
+      final refreshed = await _refresh();
+      if (!refreshed) {
+        onSessionExpired?.call();
+        throw const SessionExpiredException();
+      }
+
+      // Retry with the freshly stored token.
+      return call();
+    } on TimeoutException {
+      throw const _TimeoutAppException();
+    } on SocketException {
+      throw const _NetworkAppException();
     }
-
-    // Retry with the freshly stored token.
-    return call();
   }
 
   /// Ensures only one refresh call happens even if multiple requests get 401
@@ -122,10 +146,12 @@ class ApiClient {
     try {
       // Backend endpoint has a typo: /auth/refersh (not /auth/refresh).
       // Token is passed in the Authorization header, not the request body.
-      final response = await http.post(
-        Uri.parse('${ServerConstants.serverUrl}/auth/refersh'),
-        headers: {'Authorization': 'Bearer $refreshToken'},
-      );
+      final response = await http
+          .post(
+            Uri.parse('${ServerConstants.serverUrl}/auth/refersh'),
+            headers: {'Authorization': 'Bearer $refreshToken'},
+          )
+          .timeout(_kTimeout);
 
       if (response.statusCode != 200) {
         await LocalStorageService.clearAuthData();

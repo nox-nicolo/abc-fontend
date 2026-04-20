@@ -1,5 +1,6 @@
 import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/core/page/bottom_nav.dart';
+import 'package:africa_beuty/core/reminders/reminder_service.dart';
 import 'package:africa_beuty/core/theme/dark_theme.dart';
 import 'package:africa_beuty/core/theme/light_theme.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
@@ -30,6 +31,13 @@ Future<void> main() async {
 
   final bool isFirstTime = await LocalStorageService.getIsFirstTime();
   final bool isLoggedIn = await LocalStorageService.isLoggedIn();
+
+  await ReminderService.instance.init();
+  if (isLoggedIn) {
+    // Fire-and-forget: refresh booking reminders in the background so app
+    // startup isn't blocked on network.
+    ReminderService.instance.syncFromServer();
+  }
 
   runApp(
     ProviderScope(

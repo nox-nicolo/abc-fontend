@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
+import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
+import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
 import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -76,6 +78,8 @@ class SalonServiceModel {
   final String? currency;
   final int? durationMinutes;
   final double? rating;
+  // Present only in minor-service mode — used for direct booking
+  final String? salonServicePriceId;
 
   const SalonServiceModel({
     required this.salonId,
@@ -87,6 +91,7 @@ class SalonServiceModel {
     this.currency,
     this.durationMinutes,
     this.rating,
+    this.salonServicePriceId,
   });
 
   factory SalonServiceModel.fromMap(Map<String, dynamic> m) => SalonServiceModel(
@@ -99,6 +104,7 @@ class SalonServiceModel {
         currency: m['currency'] as String?,
         durationMinutes: m['duration_minutes'] as int?,
         rating: (m['rating'] as num?)?.toDouble(),
+        salonServicePriceId: m['salon_service_price_id'] as String?,
       );
 }
 
@@ -271,7 +277,7 @@ class _ServiceDetailsBody extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: data.minorServices!.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 14),
+                        separatorBuilder: (_, __) => const SizedBox(width: 14),
                         itemBuilder: (context, i) {
                           final item = data.minorServices![i];
                           return MinorServiceHorizontalCard(
@@ -317,7 +323,7 @@ class _ServiceDetailsBody extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
             sliver: SliverList.separated(
               itemCount: data.salonDetails.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 14),
+              separatorBuilder: (_, __) => const SizedBox(height: 14),
               itemBuilder: (context, i) =>
                   SalonServiceCard(salon: data.salonDetails[i]),
             ),
@@ -346,7 +352,7 @@ class MajorServiceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.08),
+            color: Colors.black.withValues(alpha: .08),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -362,7 +368,7 @@ class MajorServiceCard extends StatelessWidget {
                     width: double.infinity,
                     height: double.infinity,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, _) => _imageFallback(),
+                    errorWidget: (ctx, url, err) => _imageFallback(),
                   )
                 : _imageFallback(),
           ),
@@ -373,8 +379,8 @@ class MajorServiceCard extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(.08),
-                  Colors.black.withOpacity(.58),
+                  Colors.black.withValues(alpha: .08),
+                  Colors.black.withValues(alpha: .58),
                 ],
               ),
             ),
@@ -387,10 +393,10 @@ class MajorServiceCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(.18),
+                  color: Colors.white.withValues(alpha: .18),
                   borderRadius: BorderRadius.circular(999),
                   border:
-                      Border.all(color: Colors.white.withOpacity(.18)),
+                      Border.all(color: Colors.white.withValues(alpha: .18)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -458,11 +464,11 @@ class MinorServiceHorizontalCard extends StatelessWidget {
     return Container(
       width: 150,
       decoration: BoxDecoration(
-        color: theme.colorScheme.secondary.withOpacity(.2),
+        color: theme.colorScheme.secondary.withValues(alpha: .2),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.05),
+            color: Colors.black.withValues(alpha: .05),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -484,7 +490,7 @@ class MinorServiceHorizontalCard extends StatelessWidget {
                         height: 98,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, _) => _imgFallback(),
+                        errorWidget: (ctx, url, err) => _imgFallback(),
                       )
                     : _imgFallback(),
               ),
@@ -535,11 +541,11 @@ class MinorServiceFocusedCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.secondary.withOpacity(.2),
+        color: theme.colorScheme.secondary.withValues(alpha: .2),
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.05),
+            color: Colors.black.withValues(alpha: .05),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -555,7 +561,7 @@ class MinorServiceFocusedCard extends StatelessWidget {
                     width: 98,
                     height: 98,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, _) => _imgFallback(),
+                    errorWidget: (ctx, url, err) => _imgFallback(),
                   )
                 : _imgFallback(),
           ),
@@ -618,7 +624,7 @@ class MinorServiceFocusedCard extends StatelessWidget {
       );
 }
 
-class SalonServiceCard extends StatelessWidget {
+class SalonServiceCard extends ConsumerWidget {
   final SalonServiceModel salon;
   const SalonServiceCard({super.key, required this.salon});
 
@@ -635,18 +641,36 @@ class SalonServiceCard extends StatelessWidget {
   String get _durationText =>
       salon.durationMinutes != null ? '${salon.durationMinutes} mins' : '–';
 
+  void _book(BuildContext context, WidgetRef ref) {
+    ref.read(bookingDraftProvider.notifier)
+      ..reset()
+      ..selectSalonOffer(
+        salonServicePriceId: salon.salonServicePriceId!,
+        salonName: salon.name,
+        price: (salon.priceMin ?? 0).toDouble(),
+        currency: salon.currency ?? '',
+        durationMinutes: salon.durationMinutes ?? 60,
+      );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PickDateTimePage()),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final canBook = salon.salonServicePriceId != null;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.secondary.withOpacity(.1),
+        color: scheme.secondary.withValues(alpha: .1),
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.05),
+            color: Colors.black.withValues(alpha: .05),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -663,7 +687,7 @@ class SalonServiceCard extends StatelessWidget {
                     width: 104,
                     height: 112,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, _) => _imgFallback(),
+                    errorWidget: (ctx, url, err) => _imgFallback(),
                   )
                 : _imgFallback(),
           ),
@@ -713,24 +737,63 @@ class SalonServiceCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  height: 40,
-                  child: FilledButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ViewProfilePage(
-                          isServiceProfile: true,
-                          userId: salon.salonId,
-                        ),
+                Row(
+                  children: [
+                    // View salon always available
+                    Expanded(
+                      child: SizedBox(
+                        height: 40,
+                        child: canBook
+                            ? FilledButton.tonal(
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ViewProfilePage(
+                                      isServiceProfile: true,
+                                      userId: salon.salonId,
+                                    ),
+                                  ),
+                                ),
+                                style: FilledButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14)),
+                                ),
+                                child: const Text('View salon'),
+                              )
+                            : FilledButton(
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ViewProfilePage(
+                                      isServiceProfile: true,
+                                      userId: salon.salonId,
+                                    ),
+                                  ),
+                                ),
+                                style: FilledButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14)),
+                                ),
+                                child: const Text('View salon'),
+                              ),
                       ),
                     ),
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: const Text('View salon'),
-                  ),
+                    // Book button — only when salonServicePriceId is known
+                    if (canBook) ...[
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        height: 40,
+                        child: FilledButton(
+                          onPressed: () => _book(context, ref),
+                          style: FilledButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: const Text('Book'),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -759,7 +822,7 @@ class _MetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.1),
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
