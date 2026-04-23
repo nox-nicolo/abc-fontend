@@ -9,8 +9,9 @@ Future<void> showCommentsSheet(BuildContext context, String postId) {
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
+    barrierColor: Colors.black.withOpacity(0.5),
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
     builder: (_) => _CommentsSheet(postId: postId),
   );
@@ -35,9 +36,7 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
     _scrollCtrl.addListener(() {
       final pos = _scrollCtrl.position;
       if (pos.pixels >= pos.maxScrollExtent - 200) {
-        ref
-            .read(commentsViewModelProvider(widget.postId).notifier)
-            .loadMore();
+        ref.read(commentsViewModelProvider(widget.postId).notifier).loadMore();
       }
     });
   }
@@ -59,7 +58,12 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
         .add(content: text);
     if (!mounted) return;
     setState(() => _sending = false);
-    if (ok) _controller.clear();
+    if (ok) {
+      _controller.clear();
+      // Scroll to bottom to see new comment
+      _scrollCtrl.animateTo(0,
+          duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    }
   }
 
   Future<void> _confirmDelete(CommentModel c) async {
@@ -93,86 +97,119 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
   Widget build(BuildContext context) {
     final state = ref.watch(commentsViewModelProvider(widget.postId));
     final theme = Theme.of(context);
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: FractionallySizedBox(
-        heightFactor: 0.85,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-              child: Row(
-                children: [
-                  Text(
-                    'Comments',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
+    return FractionallySizedBox(
+      heightFactor: 0.9,
+      child: Column(
+        children: [
+          // Drag Handle & Header
+          Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: _buildList(state, theme),
-            ),
-            const Divider(height: 1),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        minLines: 1,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          hintText: 'Add a comment…',
-                          filled: true,
-                          fillColor:
-                              theme.colorScheme.surfaceContainerHighest,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                        ),
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => _send(),
+                    Text(
+                      'Comments',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
                       ),
                     ),
+                    const Spacer(),
                     IconButton(
-                      icon: _sending
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Icon(
-                              Icons.send_rounded,
-                              color: theme.colorScheme.primary,
-                            ),
-                      onPressed: _send,
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
               ),
+            ],
+          ),
+          const Divider(height: 1, thickness: 0.5),
+
+          // Comments List
+          Expanded(
+            child: _buildList(state, theme),
+          ),
+
+          // Input Section
+          _buildInputArea(theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputArea(ThemeData theme) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              minLines: 1,
+              maxLines: 5,
+              style: theme.textTheme.bodyMedium,
+              decoration: InputDecoration(
+                hintText: 'Add a comment...',
+                hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7)),
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: _send,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: _sending
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.arrow_upward_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -181,42 +218,31 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
     if (state.isLoading && state.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.error != null && state.items.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            state.error!,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.error),
-          ),
-        ),
-      );
-    }
     if (state.items.isEmpty) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'Be the first to comment',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.chat_bubble_outline_rounded, 
+                 size: 48, color: theme.colorScheme.outlineVariant),
+            const SizedBox(height: 12),
+            Text('No comments yet', style: theme.textTheme.bodyLarge),
+            Text('Be the first to join the conversation.', 
+                 style: theme.textTheme.bodySmall),
+          ],
         ),
       );
     }
 
-    return ListView.separated(
+    return ListView.builder(
       controller: _scrollCtrl,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(top: 8, bottom: 20),
       itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: 4),
       itemBuilder: (_, i) {
         if (i >= state.items.length) {
           return const Padding(
-            padding: EdgeInsets.all(12),
-            child: Center(child: CircularProgressIndicator()),
+            padding: EdgeInsets.all(20),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           );
         }
         final c = state.items[i];
@@ -238,65 +264,95 @@ class _CommentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final avatar = comment.author.profilePicture;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-            child: ClipOval(
-              child: avatar != null && avatar.isNotEmpty
-                  ? Image.network(avatar, width: 36, height: 36,
-                      fit: BoxFit.cover)
-                  : const Icon(Icons.person, size: 20),
+          // Avatar with subtle border
+          Container(
+            padding: const EdgeInsets.all(1.5),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
+            ),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              backgroundImage: (comment.author.profilePicture != null && comment.author.profilePicture!.isNotEmpty)
+                  ? NetworkImage(comment.author.profilePicture!)
+                  : null,
+              child: (comment.author.profilePicture == null || comment.author.profilePicture!.isEmpty)
+                  ? Icon(Icons.person, size: 18, color: theme.colorScheme.primary)
+                  : null,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
+          // Content Bubble
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLow,
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(18),
+                      bottomLeft: Radius.circular(18),
+                      bottomRight: Radius.circular(18),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         comment.author.username,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: theme.colorScheme.primary,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    Text(
-                      _relative(comment.createdAt),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    if (onDelete != null) ...[
-                      const SizedBox(width: 4),
-                      InkWell(
-                        onTap: onDelete,
-                        borderRadius: BorderRadius.circular(16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: theme.colorScheme.error,
-                          ),
+                      const SizedBox(height: 4),
+                      Text(
+                        comment.content,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.3,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 2),
-                Text(comment.content, style: theme.textTheme.bodyMedium),
+                // Timestamp and Actions
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, left: 4),
+                  child: Row(
+                    children: [
+                      Text(
+                        _relative(comment.createdAt),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      if (onDelete != null) ...[
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: onDelete,
+                          child: Text(
+                            'Delete',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.error,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -306,12 +362,13 @@ class _CommentTile extends StatelessWidget {
   }
 
   String _relative(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inSeconds < 60) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    if (diff.inDays < 7) return '${diff.inDays}d';
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+    final now = DateTime.now().toUtc();
+    final diff = now.difference(dt.toUtc());
+
+    if (diff.inSeconds < 60) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${dt.day}/${dt.month}/${dt.year}';
   }
 }

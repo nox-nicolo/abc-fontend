@@ -1,5 +1,5 @@
 import 'package:africa_beuty/core/page/bottom_nav.dart';
-import 'package:africa_beuty/core/page/chats.dart';
+import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
 import 'package:africa_beuty/feature/home/view_model/post_like.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
@@ -530,7 +530,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
 
             // Chats Screen (Placeholder)
-            ChatsPage(),
+            Navigator(
+              onGenerateRoute: (settings) {
+                return MaterialPageRoute(
+                  builder: (context) => const ChatsPage(),
+                );
+              },
+            ),
           ],
         ),
       ),
