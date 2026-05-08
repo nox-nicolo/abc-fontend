@@ -27,7 +27,7 @@ class ScreenPageTwo extends StatelessWidget {
                 stops: const [0.5, 1.0],
                 colors: [
                   Colors.transparent,
-                  Colors.black.withOpacity(0.9),
+                  Colors.black.withValues(alpha: 0.9),
                 ],
               ),
             ),
@@ -45,7 +45,7 @@ class ScreenPageTwo extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.pink.withOpacity(0.8),
+                    color: Colors.pink.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -86,7 +86,7 @@ class ScreenPageTwo extends StatelessWidget {
                 Text(
                   'Finding a reliable stylist shouldn’t be a full-time job. We eliminate the wait and the uncertainty of walk-ins.',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 16,
                     height: 1.5,
                   ),

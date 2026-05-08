@@ -124,7 +124,7 @@ class _PostTagPeopleState extends ConsumerState<PostTagPeople> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Wrap(
@@ -210,7 +210,7 @@ class _PostTagPeopleState extends ConsumerState<PostTagPeople> {
       subtitle: Text(user.name),
       trailing: Icon(
         isSelected ? Icons.check_circle : Icons.circle_outlined,
-        color: isSelected ? Colors.green : Colors.grey,
+        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       onTap: () => vm.toggleSelect(user),
     );

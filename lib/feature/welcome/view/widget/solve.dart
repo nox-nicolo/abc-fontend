@@ -26,8 +26,8 @@ class ScreenPageThree extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Colors.pink.withOpacity(0.2), // Subtle brand tint
-                  Colors.black.withOpacity(0.9),
+                  Colors.pink.withValues(alpha: 0.2), // Subtle brand tint
+                  Colors.black.withValues(alpha: 0.9),
                 ],
                 stops: const [0.5, 0.8, 1.0],
               ),
@@ -47,7 +47,7 @@ class ScreenPageThree extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(color: Colors.white30),
                   ),
@@ -91,7 +91,7 @@ class ScreenPageThree extends StatelessWidget {
                   'Instant booking, verified reviews, and top-tier stylists right at your fingertips. Welcome to a stress-free glow up.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 16,
                     height: 1.5,
                   ),

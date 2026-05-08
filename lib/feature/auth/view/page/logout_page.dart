@@ -9,11 +9,7 @@ class LogoutPage extends StatelessWidget {
 
     if (!context.mounted) return;
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/signin',
-      (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/signin', (route) => false);
   }
 
   @override
@@ -21,10 +17,7 @@ class LogoutPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Logout'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Logout'), centerTitle: true),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -39,7 +32,7 @@ class LogoutPage extends StatelessWidget {
                   BoxShadow(
                     blurRadius: 20,
                     offset: const Offset(0, 8),
-                    color: Colors.black.withValues(alpha: 0.06),
+                    color: theme.colorScheme.shadow.withValues(alpha: 0.08),
                   ),
                 ],
               ),
@@ -48,7 +41,9 @@ class LogoutPage extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 34,
-                    backgroundColor: theme.colorScheme.error.withValues(alpha: 0.12),
+                    backgroundColor: theme.colorScheme.error.withValues(
+                      alpha: 0.12,
+                    ),
                     child: Icon(
                       Icons.logout_rounded,
                       size: 34,

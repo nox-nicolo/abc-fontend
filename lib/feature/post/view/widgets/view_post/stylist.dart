@@ -202,7 +202,7 @@ class _StylistAvatarImg extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, _) =>
+        errorBuilder: (_, _, _) =>
             CircleAvatar(radius: radius, child: Text(initial)),
       ),
     );

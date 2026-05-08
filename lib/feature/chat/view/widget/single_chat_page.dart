@@ -1,4 +1,3 @@
-import 'package:africa_beuty/core/theme/colors_pallete.dart';
 import 'package:flutter/material.dart';
 
 class SingleChatPage extends StatefulWidget {
@@ -56,17 +55,18 @@ class _SingleChatPageState extends State<SingleChatPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final scheme = theme.colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F3EE),
+      backgroundColor: scheme.surface,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: <Color>[
-              widget.accentColor.withOpacity(0.22),
-              const Color(0xFFF8F3EE),
-              Colors.white,
+              widget.accentColor.withValues(alpha: 0.22),
+              scheme.surface,
+              scheme.surface,
             ],
           ),
         ),
@@ -81,9 +81,9 @@ class _SingleChatPageState extends State<SingleChatPage> {
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.82),
+                    color: scheme.surface.withValues(alpha: 0.82),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withOpacity(0.8)),
+                    border: Border.all(color: scheme.outline.withValues(alpha: 0.3)),
                     boxShadow: const <BoxShadow>[
                       BoxShadow(
                         color: Color(0x12000000),
@@ -154,7 +154,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                                       ? 'Online now'
                                       : 'Replies within 15 mins',
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: AppColors.lightOnSurfaceVariant,
+                                    color: scheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -178,13 +178,13 @@ class _SingleChatPageState extends State<SingleChatPage> {
                     borderRadius: BorderRadius.circular(24),
                     gradient: LinearGradient(
                       colors: <Color>[
-                        Colors.white,
-                        widget.accentColor.withOpacity(0.08),
+                        scheme.surface,
+                        widget.accentColor.withValues(alpha: 0.08),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    border: Border.all(color: const Color(0xFFF1E7DE)),
+                    border: Border.all(color: scheme.outlineVariant),
                   ),
                   child: Row(
                     children: <Widget>[
@@ -195,7 +195,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                             Text(
                               'Next appointment',
                               style: theme.textTheme.labelLarge?.copyWith(
-                                color: AppColors.lightOnSurfaceVariant,
+                                color: scheme.onSurfaceVariant,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -209,7 +209,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                             Text(
                               'Bridal prep and glow finish session',
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: AppColors.lightOnSurfaceVariant,
+                                color: scheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -222,7 +222,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: scheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(Icons.event_available_rounded),
@@ -246,13 +246,13 @@ class _SingleChatPageState extends State<SingleChatPage> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
+                            color: scheme.surfaceContainerHighest.withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
                             'Today',
                             style: theme.textTheme.labelLarge?.copyWith(
-                              color: AppColors.lightOnSurfaceVariant,
+                              color: scheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -264,8 +264,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
                         ? Alignment.centerRight
                         : Alignment.centerLeft;
                     final bubbleColor = message.isMine
-                        ? const Color(0xFF2D221C)
-                        : Colors.white;
+                        ? scheme.onSurface
+                        : scheme.surfaceContainerHighest;
 
                     return Align(
                       alignment: alignment,
@@ -305,8 +305,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
                               message.text,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: message.isMine
-                                    ? Colors.white
-                                    : AppColors.lightOnSurface,
+                                    ? scheme.surface
+                                    : scheme.onSurface,
                                 height: 1.5,
                               ),
                             ),
@@ -315,8 +315,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
                               message.time,
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: message.isMine
-                                    ? Colors.white70
-                                    : AppColors.lightOnSurfaceVariant,
+                                    ? scheme.surface.withValues(alpha: 0.7)
+                                    : scheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -331,7 +331,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.96),
+                    color: scheme.surface.withValues(alpha: 0.96),
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: const <BoxShadow>[
                       BoxShadow(

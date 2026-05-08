@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
+import 'package:africa_beuty/core/http/paginated_response.dart';
 import 'package:africa_beuty/feature/profile/model/notification_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -32,16 +33,15 @@ class ReminderService {
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    const settings = InitializationSettings(
-      android: androidInit,
-      iOS: iosInit,
-    );
+    const settings = InitializationSettings(android: androidInit, iOS: iosInit);
 
     await _plugin.initialize(settings);
 
     // Android 13+ runtime permission for POST_NOTIFICATIONS.
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await android?.requestNotificationsPermission();
 
     _initialized = true;
@@ -133,7 +133,8 @@ class ReminderService {
   Future<NotificationPreferences?> _fetchPreferences() async {
     try {
       final uri = Uri.parse(
-          '${ServerConstants.serverUrl}/users/me/notification-preferences');
+        '${ServerConstants.serverUrl}/users/me/notification-preferences',
+      );
       final res = await ApiClient.instance.get(uri);
       if (res.statusCode >= 200 && res.statusCode < 300) {
         final decoded = jsonDecode(res.body) as Map<String, dynamic>;
@@ -146,17 +147,20 @@ class ReminderService {
   Future<List<(String, DateTime, String?)>> _fetchCustomerBookings() async {
     try {
       final uri = Uri.parse(
-          '${ServerConstants.serverUrl}/booking/my?upcoming=true');
+        '${ServerConstants.serverUrl}/booking/my?upcoming=true',
+      );
       final res = await ApiClient.instance.get(uri);
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        final decoded = jsonDecode(res.body) as List<dynamic>;
+        final decoded = listFromPaginatedBody(jsonDecode(res.body));
         return decoded
             .whereType<Map<String, dynamic>>()
-            .map((m) => (
-                  m['id'] as String,
-                  DateTime.parse(m['start_at'] as String).toLocal(),
-                  m['service_name_snapshot'] as String?,
-                ))
+            .map(
+              (m) => (
+                m['id'] as String,
+                DateTime.parse(m['start_at'] as String).toLocal(),
+                m['service_name_snapshot'] as String?,
+              ),
+            )
             .toList();
       }
     } catch (_) {}
@@ -166,17 +170,20 @@ class ReminderService {
   Future<List<(String, DateTime, String?)>> _fetchSalonBookings() async {
     try {
       final uri = Uri.parse(
-          '${ServerConstants.serverUrl}/booking/salon?upcoming=true');
+        '${ServerConstants.serverUrl}/booking/salon?upcoming=true',
+      );
       final res = await ApiClient.instance.get(uri);
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        final decoded = jsonDecode(res.body) as List<dynamic>;
+        final decoded = listFromPaginatedBody(jsonDecode(res.body));
         return decoded
             .whereType<Map<String, dynamic>>()
-            .map((m) => (
-                  m['id'] as String,
-                  DateTime.parse(m['start_at'] as String).toLocal(),
-                  _salonLabel(m),
-                ))
+            .map(
+              (m) => (
+                m['id'] as String,
+                DateTime.parse(m['start_at'] as String).toLocal(),
+                _salonLabel(m),
+              ),
+            )
             .toList();
       }
     } catch (_) {}

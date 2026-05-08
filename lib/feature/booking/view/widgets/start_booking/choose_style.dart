@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/model/services.dart';
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/core/view_model/getminor_viewmodel.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/choose_salon.dart';
@@ -9,12 +10,10 @@ class DiscoverStylePage extends ConsumerStatefulWidget {
   const DiscoverStylePage({super.key});
 
   @override
-  ConsumerState<DiscoverStylePage> createState() =>
-      _DiscoverStylePageState();
+  ConsumerState<DiscoverStylePage> createState() => _DiscoverStylePageState();
 }
 
-class _DiscoverStylePageState
-    extends ConsumerState<DiscoverStylePage> {
+class _DiscoverStylePageState extends ConsumerState<DiscoverStylePage> {
   String _query = '';
 
   @override
@@ -43,21 +42,16 @@ class _DiscoverStylePageState
           // Styles Grid
           Expanded(
             child: stylesState.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (err, _) =>
-                  Center(child: Text(err.toString())),
+              loading: () => const _StyleGridSkeleton(),
+              error: (err, _) => Center(child: Text(err.toString())),
               data: (styles) {
                 final filtered = styles.where((s) {
-                  return s.name
-                      .toLowerCase()
-                      .contains(_query.toLowerCase());
+                  return s.name.toLowerCase().contains(_query.toLowerCase());
                 }).toList();
 
                 return GridView.builder(
                   padding: const EdgeInsets.all(16),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
@@ -71,18 +65,15 @@ class _DiscoverStylePageState
                       onTap: () {
                         // Save selected style to draft
                         ref
-                            .read(
-                              bookingDraftProvider.notifier,
-                            )
+                            .read(bookingDraftProvider.notifier)
                             .selectStyle(style);
 
                         //  Go to choose salon
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => ChooseSalonPage(
-                              subServiceId: style.id,
-                            ),
+                            builder: (_) =>
+                                ChooseSalonPage(subServiceId: style.id),
                           ),
                         );
                       },
@@ -98,15 +89,34 @@ class _DiscoverStylePageState
   }
 }
 
+class _StyleGridSkeleton extends StatelessWidget {
+  const _StyleGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.9,
+      ),
+      itemCount: 6,
+      itemBuilder: (_, _) => const SkeletonCard(
+        width: double.infinity,
+        height: double.infinity,
+        radius: 16,
+      ),
+    );
+  }
+}
 
 class _StyleCard extends StatelessWidget {
   final PostMinorCategoriesModel style;
   final VoidCallback onTap;
 
-  const _StyleCard({
-    required this.style,
-    required this.onTap,
-  });
+  const _StyleCard({required this.style, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +128,7 @@ class _StyleCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Theme.of(context).colorScheme.surfaceVariant,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -135,7 +145,7 @@ class _StyleCard extends StatelessWidget {
                   child: Image.network(
                     style.fileName,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) {
+                    errorBuilder: (_, _, _) {
                       // Fail silently → show nothing
                       return const SizedBox.shrink();
                     },
@@ -153,9 +163,7 @@ class _StyleCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -164,4 +172,3 @@ class _StyleCard extends StatelessWidget {
     );
   }
 }
-

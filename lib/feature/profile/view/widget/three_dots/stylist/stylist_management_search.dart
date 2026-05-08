@@ -210,7 +210,7 @@ class _StylistSearchFieldState extends State<StylistSearchField> {
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: items.length,
-      separatorBuilder: (_, __) => Divider(
+      separatorBuilder: (_, _) => Divider(
         height: 1,
         thickness: 1,
         color: cs.surfaceContainerHighest,
@@ -308,7 +308,7 @@ class _NetworkAvatar extends StatelessWidget {
                 width: 40,
                 height: 40,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Center(
+                errorBuilder: (_, _, _) => Center(
                   child: Text(
                     initials,
                     style: const TextStyle(fontWeight: FontWeight.w700),

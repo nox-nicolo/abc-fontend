@@ -29,7 +29,7 @@ class PostTextInput extends StatelessWidget {
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           hintStyle: TextStyle(
-            color: Colors.grey,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 16,
           ),
         ),

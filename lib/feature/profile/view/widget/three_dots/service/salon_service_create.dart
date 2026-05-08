@@ -428,7 +428,7 @@ class _ConfigureServicePageState extends ConsumerState<ConfigureServicePage> {
                               return ListView.separated(
                                 shrinkWrap: true,
                                 itemCount: stylists.length,
-                                separatorBuilder: (_, __) =>
+                                separatorBuilder: (_, _) =>
                                     const SizedBox(height: 8),
                                 itemBuilder: (context, index) {
                                   final stylist = stylists[index];
@@ -687,7 +687,7 @@ class _ConfigureServicePageState extends ConsumerState<ConfigureServicePage> {
                       const Text("Price"),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<_Currency>(
-                        value: selectedCurrency,
+                        initialValue: selectedCurrency,
                         items: currencies.map((currency) {
                           return DropdownMenuItem<_Currency>(
                             value: currency,

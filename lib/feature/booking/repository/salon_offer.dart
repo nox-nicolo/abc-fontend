@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
+import 'package:africa_beuty/core/http/paginated_response.dart';
 import 'package:africa_beuty/feature/booking/model/salon_offer.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -23,7 +24,7 @@ class SalonOfferRepository {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final decoded = jsonDecode(response.body);
-        final results = decoded['results'] as List<dynamic>;
+        final results = listFromPaginatedBody(decoded, key: 'results');
         return Right(SalonOfferModel.listFromJson(results));
       }
 

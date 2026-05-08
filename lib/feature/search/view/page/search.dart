@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/search/model/search.dart';
 import 'package:africa_beuty/feature/search/view/widgets/nearby_salons_section.dart';
 import 'package:africa_beuty/feature/search/view/widgets/results/search_result_list.dart';
@@ -37,10 +38,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              Text(
-                'Search',
-                style: Theme.of(context).textTheme.headlineLarge,
-              ),
+              Text('Search', style: Theme.of(context).textTheme.headlineLarge),
               const SizedBox(height: 16),
               SearchInput(
                 controller: _searchController,
@@ -51,9 +49,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 },
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: _buildBody(context, searchAsync, searchVm.query),
-              ),
+              Expanded(child: _buildBody(context, searchAsync, searchVm.query)),
             ],
           ),
         ),
@@ -71,9 +67,12 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     }
 
     return searchAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const _SearchResultsSkeleton(),
       error: (e, _) => Center(
-        child: Text(e.toString(), style: Theme.of(context).textTheme.bodyMedium),
+        child: Text(
+          e.toString(),
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
       ),
       data: (results) {
         if (results.isEmpty) {
@@ -81,6 +80,23 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         }
         return SearchResultList(results: results);
       },
+    );
+  }
+}
+
+class _SearchResultsSkeleton extends StatelessWidget {
+  const _SearchResultsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      itemCount: 8,
+      separatorBuilder: (_, _) => const SizedBox(height: 4),
+      itemBuilder: (_, _) => const SkeletonListTile(
+        roundLeading: false,
+        trailingWidth: 42,
+        padding: EdgeInsets.symmetric(vertical: 10),
+      ),
     );
   }
 }

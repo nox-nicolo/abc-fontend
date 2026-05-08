@@ -14,7 +14,7 @@ class RecommendationTile extends StatelessWidget {
             width: 56,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: Colors.grey.shade300,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
             child: const Icon(Icons.star),
           ),

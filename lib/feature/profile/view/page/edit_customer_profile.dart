@@ -118,7 +118,7 @@ class _EditCustomerProfilePageState
             _field(controller: _country, label: 'Country'),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _genders.contains(_gender) ? _gender : null,
+              initialValue: _genders.contains(_gender) ? _gender : null,
               decoration: const InputDecoration(
                 labelText: 'Gender',
                 border: OutlineInputBorder(),

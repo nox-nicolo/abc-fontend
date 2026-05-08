@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
 import 'package:africa_beuty/feature/search/view/widgets/salon_card.dart';
 import 'package:africa_beuty/feature/search/view/widgets/section_header.dart';
@@ -19,15 +20,19 @@ class TopSalonsSection extends ConsumerWidget {
         SizedBox(
           height: 180,
           child: state.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const _SalonCardsSkeleton(),
             error: (e, _) => Center(
-              child: Text(e.toString(),
-                  style: Theme.of(context).textTheme.bodySmall),
+              child: Text(
+                e.toString(),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
             data: (salons) => salons.isEmpty
                 ? Center(
-                    child: Text('No data yet',
-                        style: Theme.of(context).textTheme.bodySmall),
+                    child: Text(
+                      'No data yet',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   )
                 : ListView.separated(
                     scrollDirection: Axis.horizontal,
@@ -45,6 +50,21 @@ class TopSalonsSection extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SalonCardsSkeleton extends StatelessWidget {
+  const _SalonCardsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: 3,
+      separatorBuilder: (_, _) => const SizedBox(width: 12),
+      itemBuilder: (_, _) =>
+          const SkeletonCard(width: 150, height: 180, radius: 16),
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'package:africa_beuty/core/theme/colors_pallete.dart';
 import 'package:africa_beuty/feature/chat/view/widget/single_chat_page.dart';
 import 'package:flutter/material.dart';
 
@@ -108,16 +107,16 @@ class _ChatsPageState extends State<ChatsPage> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F3EE),
+      backgroundColor: colorScheme.surface,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: <Color>[
-              Color(0xFFF4E8DE),
-              Color(0xFFF7F3EE),
-              Color(0xFFFFFFFF),
+              colorScheme.surfaceContainerHighest,
+              colorScheme.surface,
+              colorScheme.surface,
             ],
           ),
         ),
@@ -145,7 +144,7 @@ class _ChatsPageState extends State<ChatsPage> {
                                 Text(
                                   'Keep bookings, style notes, and salon updates in one premium inbox.',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.lightOnSurfaceVariant,
+                                    color: colorScheme.onSurfaceVariant,
                                     height: 1.5,
                                   ),
                                 ),
@@ -156,7 +155,7 @@ class _ChatsPageState extends State<ChatsPage> {
                             height: 48,
                             width: 48,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.82),
+                              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.82),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: const <BoxShadow>[
                                 BoxShadow(
@@ -222,10 +221,10 @@ class _ChatsPageState extends State<ChatsPage> {
                                 vertical: 12,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
+                                color: Colors.white.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.12),
+                                  color: Colors.white.withValues(alpha: 0.12),
                                 ),
                               ),
                               child: Column(
@@ -258,7 +257,7 @@ class _ChatsPageState extends State<ChatsPage> {
                           suffixIcon: Container(
                             margin: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: colorScheme.primary.withOpacity(0.12),
+                              color: colorScheme.primary.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(
@@ -267,11 +266,11 @@ class _ChatsPageState extends State<ChatsPage> {
                             ),
                           ),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.92),
+                          fillColor: colorScheme.surface.withValues(alpha: 0.92),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(22),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFE9DDD1),
+                            borderSide: BorderSide(
+                              color: colorScheme.outlineVariant,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -307,18 +306,18 @@ class _ChatsPageState extends State<ChatsPage> {
                         labelStyle: theme.textTheme.labelLarge?.copyWith(
                           color: isSelected
                               ? colorScheme.onPrimary
-                              : AppColors.lightOnSurface,
+                              : colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                         selectedColor: colorScheme.primary,
-                        backgroundColor: Colors.white,
+                        backgroundColor: colorScheme.surface,
                         surfaceTintColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                           side: BorderSide(
                             color: isSelected
                                 ? colorScheme.primary
-                                : const Color(0xFFE8DED4),
+                                : colorScheme.outlineVariant,
                           ),
                         ),
                         showCheckmark: false,
@@ -328,7 +327,7 @@ class _ChatsPageState extends State<ChatsPage> {
                         ),
                       );
                     },
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    separatorBuilder: (_, _) => const SizedBox(width: 10),
                     itemCount: _filters.length,
                   ),
                 ),
@@ -369,7 +368,7 @@ class _ChatsPageState extends State<ChatsPage> {
                             height: 84,
                             width: 84,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surface,
                               shape: BoxShape.circle,
                               boxShadow: const <BoxShadow>[
                                 BoxShadow(
@@ -396,7 +395,7 @@ class _ChatsPageState extends State<ChatsPage> {
                             'Try a different filter or search term to find your latest conversation.',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: AppColors.lightOnSurfaceVariant,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               height: 1.5,
                             ),
                           ),
@@ -460,7 +459,7 @@ class _SectionLabel extends StatelessWidget {
           Text(
             actionText,
             style: theme.textTheme.labelLarge?.copyWith(
-              color: AppColors.lightOnSurfaceVariant,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -488,9 +487,9 @@ class _ChatCard extends StatelessWidget {
           child: Ink(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.92),
+              color: theme.colorScheme.surface.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFF0E7DE)),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
               boxShadow: const <BoxShadow>[
                 BoxShadow(
                   color: Color(0x12000000),
@@ -511,7 +510,7 @@ class _ChatCard extends StatelessWidget {
                         gradient: LinearGradient(
                           colors: <Color>[
                             chat.accentColor,
-                            chat.accentColor.withOpacity(0.72),
+                            chat.accentColor.withValues(alpha: 0.72),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -566,7 +565,7 @@ class _ChatCard extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: chat.accentColor.withOpacity(0.12),
+                                color: chat.accentColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
@@ -585,7 +584,7 @@ class _ChatCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.lightOnSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant,
                           height: 1.45,
                         ),
                       ),
@@ -599,7 +598,7 @@ class _ChatCard extends StatelessWidget {
                     Text(
                       chat.time,
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: AppColors.lightOnSurfaceVariant,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 14),

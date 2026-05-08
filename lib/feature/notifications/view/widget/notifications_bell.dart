@@ -27,7 +27,7 @@ class NotificationsBell extends ConsumerWidget {
           Icon(Bootstrap.bell, size: iconSize),
           unread.when(
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
             data: (count) {
               if (count <= 0) return const SizedBox.shrink();
               final label = count > 99 ? '99+' : '$count';
@@ -41,15 +41,15 @@ class NotificationsBell extends ConsumerWidget {
                   ),
                   constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                   decoration: BoxDecoration(
-                    color: Colors.red,
+                    color: Theme.of(context).colorScheme.error,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white, width: 1.2),
+                    border: Border.all(color: Theme.of(context).colorScheme.surface, width: 1.2),
                   ),
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onError,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       height: 1.1,

@@ -28,9 +28,9 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
     // We use microtask to ensure the provider is read after the first frame
     Future.microtask(() {
       final salon = ref.read(salonProfileViewModelProvider).value;
-      if (salon != null && salon.gallery != null) {
+      if (salon != null) {
         setState(() {
-          _currentServerGallery = List.from(salon.gallery!);
+          _currentServerGallery = List.from(salon.gallery);
         });
       }
     });
@@ -193,7 +193,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                 imageChild: CachedNetworkImage(
                   imageUrl: item.imageUrl, // Assuming your model uses .image for URL
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: theme.colorScheme.surfaceVariant),
+                  placeholder: (context, url) => Container(color: theme.colorScheme.surfaceContainerHighest),
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
                 onDelete: () => _removeExistingImage(index),

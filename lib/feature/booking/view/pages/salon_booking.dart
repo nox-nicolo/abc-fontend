@@ -1,5 +1,6 @@
 
 
+import 'package:africa_beuty/core/theme/colors_pallete.dart';
 import 'package:africa_beuty/feature/booking/model/booking_status.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/choose_style.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/view_booking.dart';
@@ -124,7 +125,7 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           itemCount: upcoming.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 16),
+                          separatorBuilder: (_, _) => const SizedBox(width: 16),
                           itemBuilder: (_, i) => SizedBox(
                             width: screenWidth * .9,
                             child: NextBookingCard(
@@ -328,7 +329,7 @@ class BookingTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: sorted.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (_, i) {
             final booking = sorted[i];
 
@@ -391,8 +392,8 @@ class BookingCard extends StatelessWidget {
               children: [
                 SlidableAction(
                   onPressed: (_) => onAccept?.call(),
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.successLight,
+                  foregroundColor: AppColors.lightOnSecondary,
                   icon: Icons.check,
                   label: 'Accept',
                   borderRadius: BorderRadius.circular(12),
@@ -400,8 +401,8 @@ class BookingCard extends StatelessWidget {
                 ),
                 SlidableAction(
                   onPressed: (_) => onReject?.call(),
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.errorLight,
+                  foregroundColor: AppColors.lightOnPrimary,
                   icon: Icons.close,
                   label: 'Reject',
                   borderRadius: BorderRadius.circular(12),
@@ -468,9 +469,9 @@ class BookingCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         'Reason: ${booking.cancelReason}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Colors.redAccent,
+                          color: Theme.of(context).colorScheme.error,
                         ),
                       ),
                     ],
@@ -517,17 +518,19 @@ class BookingCard extends StatelessWidget {
   }
 
   Color _statusColor(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isLight = scheme.brightness == Brightness.light;
     switch (booking.status) {
       case 'pending':
-        return Colors.orange;
+        return isLight ? AppColors.warningLight : AppColors.warningDark;
       case 'confirmed':
-        return Colors.grey;
+        return scheme.primary;
       case 'completed':
-        return Colors.green;
+        return isLight ? AppColors.successLight : AppColors.successDark;
       case 'cancelled':
-        return Colors.red;
+        return scheme.error;
       default:
-        return Theme.of(context).colorScheme.primary;
+        return scheme.primary;
     }
   }
 }

@@ -4,7 +4,6 @@ import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/profile/model/salon.dart';
-import 'package:africa_beuty/feature/profile/model/salon_posts.dart';
 import 'package:africa_beuty/feature/profile/view/widget/setting.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon.dart';
@@ -128,7 +127,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black,
+                                color: Colors.black.withValues(alpha: 0.6),
                                 blurRadius: 50,
                                 spreadRadius: 2,
                                 offset: const Offset(0, 3), // Moves shadow down slightly
@@ -137,7 +136,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                           ),
                           child: CircleAvatar(
                             radius: 24,
-                            backgroundColor: Colors.grey[200],
+                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                             child: ClipOval(
                               child: CachedNetworkImage(
                                 imageUrl: salon.profilePicture,
@@ -186,7 +185,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                     if (salon.displayAds.isNotEmpty)
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.2), // Adjust darkness here
+                          color: Colors.black.withValues(alpha: 0.2), // Adjust darkness here
                         ),
                       ),
 
@@ -228,7 +227,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                           Shadow(
                                             offset: const Offset(0, 1),
                                             blurRadius: 6.0,
-                                            color: Colors.black.withOpacity(0.6),
+                                            color: Colors.black.withValues(alpha: 0.6),
                                           ),
                                         ],
                                       ),
@@ -257,7 +256,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                               Shadow(
                                                 offset: const Offset(0, 1),
                                                 blurRadius: 6.0,
-                                                color: Colors.black.withOpacity(0.6),
+                                                color: Colors.black.withValues(alpha: 0.6),
                                               ),
                                             ],
                                           ),
@@ -365,7 +364,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                           color: todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: (todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent).withOpacity(0.5),
+                                              color: (todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent).withValues(alpha: 0.5),
                                               blurRadius: 4,
                                               spreadRadius: 1,
                                             ),
@@ -455,12 +454,12 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                             imageUrl: salon.gallery[i].imageUrl,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
-                              color: Colors.grey[200],
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
                               child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                             ),
                             errorWidget: (context, url, error) => Container(
-                              color: Colors.grey[300],
-                              child: const Icon(Icons.broken_image, color: Colors.grey),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              child: Icon(Icons.broken_image, color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ),
                         ),

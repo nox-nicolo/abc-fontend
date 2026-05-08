@@ -1,13 +1,12 @@
-
 /* ---------------------------------------------------
    POST IMAGES
 --------------------------------------------------- */
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
 
 // Corretcions ++++++=============###############@@@@@@@@@@@@@@@@@@@
 // Single Image not shown good
-
 
 class PostImages extends StatefulWidget {
   final List<String> imageUrls;
@@ -76,9 +75,7 @@ class _PostImagesState extends State<PostImages> {
               Positioned(
                 top: 12,
                 right: 12,
-                child: _CounterPill(
-                  text: '${_index + 1}/${urls.length}',
-                ),
+                child: _CounterPill(text: '${_index + 1}/${urls.length}'),
               ),
 
             // BOTTOM DOTS (only if carousel)
@@ -87,10 +84,7 @@ class _PostImagesState extends State<PostImages> {
                 bottom: 12,
                 left: 0,
                 right: 0,
-                child: _Dots(
-                  count: urls.length,
-                  index: _index,
-                ),
+                child: _Dots(count: urls.length, index: _index),
               ),
           ],
         ),
@@ -112,8 +106,8 @@ class _CachedImage extends StatelessWidget {
       imageUrl: url,
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 150),
-      placeholder: (_, __) => const _MediaLoading(),
-      errorWidget: (_, __, ___) => const _MediaError(),
+      placeholder: (_, _) => const _MediaLoading(),
+      errorWidget: (_, _, _) => const _MediaError(),
     );
   }
 }
@@ -123,15 +117,10 @@ class _MediaLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      color: scheme.surfaceContainerHighest,
-      alignment: Alignment.center,
-      child: const SizedBox(
-        height: 22,
-        width: 22,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+    return const SkeletonCard(
+      width: double.infinity,
+      height: double.infinity,
+      radius: 0,
     );
   }
 }
@@ -173,16 +162,18 @@ class _CounterPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.55),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: scheme.outlineVariant.withOpacity(0.25)),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.25),
+        ),
       ),
       child: Text(
         text,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -210,7 +201,7 @@ class _Dots extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected
                 ? scheme.primary
-                : scheme.onSurface.withOpacity(0.25),
+                : scheme.onSurface.withValues(alpha: 0.25),
             borderRadius: BorderRadius.circular(999),
           ),
         );
@@ -218,4 +209,3 @@ class _Dots extends StatelessWidget {
     );
   }
 }
-

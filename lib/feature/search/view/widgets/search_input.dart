@@ -27,7 +27,7 @@ class SearchInput extends StatelessWidget {
               )
             : null,
         filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceVariant,
+        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

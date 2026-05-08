@@ -12,10 +12,7 @@ class FollowingPage extends ConsumerWidget {
     final state = ref.watch(myFollowingViewModelProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Following'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Following'), centerTitle: true),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
@@ -63,12 +60,13 @@ class _SalonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return ListTile(
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       leading: CircleAvatar(
         radius: 26,
-        backgroundColor: Colors.grey[200],
+        backgroundColor: scheme.surfaceContainerHighest,
         child: ClipOval(
           child: salon.profilePicture != null
               ? CachedNetworkImage(
@@ -84,23 +82,20 @@ class _SalonTile extends StatelessWidget {
       ),
       title: Text(
         salon.title,
-        style: Theme.of(context)
-            .textTheme
-            .titleSmall
-            ?.copyWith(fontWeight: FontWeight.w600),
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
         '@${salon.username}',
-        style: Theme.of(context)
-            .textTheme
-            .bodySmall
-            ?.copyWith(color: Colors.grey),
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
       ),
       trailing: OutlinedButton(
         onPressed: () => _confirmUnfollow(context),
         style: OutlinedButton.styleFrom(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
         child: const Text('Unfollow'),
@@ -119,7 +114,9 @@ class _SalonTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 34,
-              backgroundColor: Colors.grey[200],
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest,
               child: ClipOval(
                 child: salon.profilePicture != null
                     ? CachedNetworkImage(
@@ -143,10 +140,8 @@ class _SalonTile extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      Theme.of(context).colorScheme.error,
-                  foregroundColor:
-                      Theme.of(context).colorScheme.onError,
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
                 ),
                 onPressed: () {
                   Navigator.pop(context);
@@ -177,26 +172,26 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.store_outlined, size: 64, color: Colors.grey[400]),
+          Icon(Icons.store_outlined, size: 64, color: scheme.onSurfaceVariant),
           const SizedBox(height: 16),
           Text(
             'Not following anyone yet',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(color: Colors.grey),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           Text(
             'Salons you follow will appear here.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: Colors.grey),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
       ),

@@ -291,7 +291,7 @@ class _UserAvatar extends StatelessWidget {
                 width: 44,
                 height: 44,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Center(
+                errorBuilder: (_, _, _) => Center(
                   child: Text(
                     initials,
                     style: const TextStyle(fontWeight: FontWeight.w700),

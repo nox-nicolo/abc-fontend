@@ -28,7 +28,7 @@ class ScreenPageOne extends StatelessWidget {
                 stops: const [0.6, 1.0], // Starts the darkening at 60% of the screen
                 colors: [
                   Colors.transparent,
-                  Colors.black.withOpacity(0.8),
+                  Colors.black.withValues(alpha: 0.8),
                 ],
               ),
             ),
@@ -82,7 +82,7 @@ class ScreenPageOne extends StatelessWidget {
                   'Discover top-rated stylists and book your next transformation in seconds.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 16,
                   ),
                 ),

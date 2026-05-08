@@ -66,8 +66,8 @@ class _CoverProfileSection extends StatelessWidget {
               ? CachedNetworkImage(
                   imageUrl: salon.displayAds,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(color: colorScheme.surfaceVariant),
-                  errorWidget: (_, __, ___) => Container(color: Colors.brown.shade400),
+                  placeholder: (_, _) => Container(color: colorScheme.surfaceContainerHighest),
+                  errorWidget: (_, _, _) => Container(color: Colors.brown.shade400),
                 )
               : Container(color: Colors.brown.shade400),
         ),
@@ -97,14 +97,14 @@ class _CoverProfileSection extends StatelessWidget {
               ),
               child: CircleAvatar(
                 radius: 60,
-                backgroundColor: colorScheme.surfaceVariant,
+                backgroundColor: colorScheme.surfaceContainerHighest,
                 child: ClipOval(
                   child: CachedNetworkImage(
                     imageUrl: salon.profilePicture,
                     width: 120,
                     height: 120,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => const Icon(Icons.person, size: 48),
+                    errorWidget: (_, _, _) => const Icon(Icons.person, size: 48),
                   ),
                 ),
               ),

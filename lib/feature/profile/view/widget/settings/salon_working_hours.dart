@@ -88,7 +88,7 @@ class _WorkingHoursPageState extends ConsumerState<WorkingHoursPage> {
     ref.listen<AsyncValue>(salonUpdateViewModelProvider, (prev, next) {
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(next.error.toString()), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     });
@@ -144,9 +144,9 @@ class _WorkingHoursPageState extends ConsumerState<WorkingHoursPage> {
                           theme: theme,
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Icon(Icons.arrow_forward, size: 16, color: theme.colorScheme.onSurfaceVariant),
                       ),
                       Expanded(
                         child: _timeTile(
@@ -173,7 +173,7 @@ class _WorkingHoursPageState extends ConsumerState<WorkingHoursPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: theme.colorScheme.outlineVariant),
         ),

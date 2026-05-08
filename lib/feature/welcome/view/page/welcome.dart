@@ -63,10 +63,10 @@ class _WelcomePageState extends State<WelcomePage> {
             child: !isLastPage
                 ? TextButton(
                     onPressed: _skipToLastPage,
-                    child: const Text(
+                    child: Text(
                       'Skip',
                       style: TextStyle(
-                        color: Colors.pink,
+                        color: Theme.of(context).colorScheme.primary,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -85,13 +85,13 @@ class _WelcomePageState extends State<WelcomePage> {
                 SmoothPageIndicator(
                   controller: _controller,
                   count: 3,
-                  effect: const ExpandingDotsEffect(
+                  effect: ExpandingDotsEffect(
                     dotHeight: 8,
                     dotWidth: 8,
                     expansionFactor: 4,
                     spacing: 8,
-                    dotColor: Colors.purple,
-                    activeDotColor: Colors.pink,
+                    dotColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    activeDotColor: Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 ElevatedButton(
@@ -106,8 +106,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 12,

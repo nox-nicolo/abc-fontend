@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
 import 'package:africa_beuty/feature/booking/view_modal/salon_offer.dart';
@@ -7,26 +8,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ChooseSalonPage extends ConsumerWidget {
   final String subServiceId;
 
-  const ChooseSalonPage({
-    super.key,
-    required this.subServiceId,
-  });
+  const ChooseSalonPage({super.key, required this.subServiceId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state =
-        ref.watch(salonOfferViewModelProvider(subServiceId));
+    final state = ref.watch(salonOfferViewModelProvider(subServiceId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Choose a Salon'),
-      ),
+      appBar: AppBar(title: const Text('Choose a Salon')),
       body: state.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const _SalonOfferSkeletonList(),
 
-        error: (e, _) =>
-            Center(child: Text(e.toString())),
+        error: (e, _) => Center(child: Text(e.toString())),
 
         data: (salons) => ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -49,9 +42,7 @@ class ChooseSalonPage extends ConsumerWidget {
 
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const PickDateTimePage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const PickDateTimePage()),
                 );
               },
               child: Card(
@@ -67,10 +58,9 @@ class ChooseSalonPage extends ConsumerWidget {
                       // Salon image
                       // -----------------------
                       ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(12),
-                        child: s.salonImage.isNotEmpty &&
-                                s.salonImage != 'Not Set'
+                        borderRadius: BorderRadius.circular(12),
+                        child:
+                            s.salonImage.isNotEmpty && s.salonImage != 'Not Set'
                             ? Image.network(
                                 s.salonImage,
                                 width: 72,
@@ -81,10 +71,7 @@ class ChooseSalonPage extends ConsumerWidget {
                                 width: 72,
                                 height: 72,
                                 color: Colors.grey.shade300,
-                                child: const Icon(
-                                  Icons.store,
-                                  size: 32,
-                                ),
+                                child: const Icon(Icons.store, size: 32),
                               ),
                       ),
 
@@ -95,8 +82,7 @@ class ChooseSalonPage extends ConsumerWidget {
                       // -----------------------
                       Expanded(
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               s.salonName,
@@ -108,26 +94,16 @@ class ChooseSalonPage extends ConsumerWidget {
                             const SizedBox(height: 4),
                             Text(
                               s.salonCity,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                              ),
+                              style: const TextStyle(color: Colors.grey),
                             ),
                             const SizedBox(height: 8),
                             Row(
                               children: [
-                                const Icon(
-                                  Icons.schedule,
-                                  size: 16,
-                                ),
+                                const Icon(Icons.schedule, size: 16),
                                 const SizedBox(width: 4),
-                                Text(
-                                  '${s.durationMinutes} mins',
-                                ),
+                                Text('${s.durationMinutes} mins'),
                                 const SizedBox(width: 12),
-                                const Icon(
-                                  Icons.payments_outlined,
-                                  size: 16,
-                                ),
+                                const Icon(Icons.payments_outlined, size: 16),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${s.currency} ${s.price.toStringAsFixed(0)}',
@@ -150,6 +126,25 @@ class ChooseSalonPage extends ConsumerWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _SalonOfferSkeletonList extends StatelessWidget {
+  const _SalonOfferSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: 5,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (_, _) => const SkeletonListTile(
+        roundLeading: false,
+        leadingSize: 72,
+        trailingWidth: 54,
+        padding: EdgeInsets.all(12),
       ),
     );
   }

@@ -150,7 +150,7 @@ class _ProfileCoverPhotoState extends ConsumerState<ProfileCoverPhoto> {
                 networkUrl: salon.displayAds,
                 isSquare: false,
                 outlineColor: theme.colorScheme.outlineVariant,
-                surfaceColor: theme.colorScheme.surfaceVariant,
+                surfaceColor: theme.colorScheme.surfaceContainerHighest,
               ),
             ],
           ),

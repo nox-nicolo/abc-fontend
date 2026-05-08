@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon.dart';
@@ -66,13 +67,13 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
     setState(() => _deleting = false);
 
     result.fold(
-      (failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
       (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Post deleted')));
         if (_salonId != null) {
           ref
               .read(profilePostsViewModelProvider(_salonId!).notifier)
@@ -88,9 +89,7 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
     final scheme = theme.colorScheme;
 
     if (_salonId == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: _ManagedPostsSkeletonList());
     }
 
     final postsState = ref.watch(profilePostsViewModelProvider(_salonId!));
@@ -100,7 +99,7 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
       body: Stack(
         children: [
           postsState.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const _ManagedPostsSkeletonList(),
             error: (e, _) => Center(child: Text(e.toString())),
             data: (posts) {
               if (posts.isEmpty) {
@@ -108,12 +107,18 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.photo_library_outlined,
-                          size: 56, color: scheme.outline),
+                      Icon(
+                        Icons.photo_library_outlined,
+                        size: 56,
+                        color: scheme.outline,
+                      ),
                       const SizedBox(height: 12),
-                      Text('No posts yet',
-                          style: theme.textTheme.bodyLarge
-                              ?.copyWith(color: scheme.onSurfaceVariant)),
+                      Text(
+                        'No posts yet',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -162,16 +167,20 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
                                         width: 80,
                                         height: 80,
                                         color: scheme.surfaceContainerHigh,
-                                        child: Icon(Icons.broken_image,
-                                            color: scheme.outline),
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          color: scheme.outline,
+                                        ),
                                       ),
                                     )
                                   : Container(
                                       width: 80,
                                       height: 80,
                                       color: scheme.surfaceContainerHigh,
-                                      child: Icon(Icons.image_outlined,
-                                          color: scheme.outline),
+                                      child: Icon(
+                                        Icons.image_outlined,
+                                        color: scheme.outline,
+                                      ),
                                     ),
                             ),
 
@@ -179,7 +188,9 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -195,22 +206,33 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
                                       _formatDate(p.createdAt),
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
-                                              color: scheme.onSurfaceVariant),
+                                            color: scheme.onSurfaceVariant,
+                                          ),
                                     ),
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
-                                        Icon(Icons.favorite_border,
-                                            size: 14, color: scheme.outline),
+                                        Icon(
+                                          Icons.favorite_border,
+                                          size: 14,
+                                          color: scheme.outline,
+                                        ),
                                         const SizedBox(width: 4),
-                                        Text('${p.stats.likes}',
-                                            style: theme.textTheme.labelSmall),
+                                        Text(
+                                          '${p.stats.likes}',
+                                          style: theme.textTheme.labelSmall,
+                                        ),
                                         const SizedBox(width: 12),
-                                        Icon(Icons.chat_bubble_outline,
-                                            size: 14, color: scheme.outline),
+                                        Icon(
+                                          Icons.chat_bubble_outline,
+                                          size: 14,
+                                          color: scheme.outline,
+                                        ),
                                         const SizedBox(width: 4),
-                                        Text('${p.stats.comments}',
-                                            style: theme.textTheme.labelSmall),
+                                        Text(
+                                          '${p.stats.comments}',
+                                          style: theme.textTheme.labelSmall,
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -245,11 +267,14 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
                                 PopupMenuItem(
                                   value: 'delete',
                                   child: ListTile(
-                                    leading: Icon(Icons.delete_outline,
-                                        color: scheme.error),
-                                    title: Text('Delete',
-                                        style:
-                                            TextStyle(color: scheme.error)),
+                                    leading: Icon(
+                                      Icons.delete_outline,
+                                      color: scheme.error,
+                                    ),
+                                    title: Text(
+                                      'Delete',
+                                      style: TextStyle(color: scheme.error),
+                                    ),
                                     contentPadding: EdgeInsets.zero,
                                   ),
                                 ),
@@ -283,5 +308,24 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
     } catch (_) {
       return raw;
     }
+  }
+}
+
+class _ManagedPostsSkeletonList extends StatelessWidget {
+  const _ManagedPostsSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: 5,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (_, _) => const SkeletonListTile(
+        roundLeading: false,
+        leadingSize: 80,
+        trailingWidth: 24,
+        padding: EdgeInsets.all(12),
+      ),
+    );
   }
 }

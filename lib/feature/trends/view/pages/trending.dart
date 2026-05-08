@@ -54,11 +54,13 @@ class _TrendingPageState extends State<TrendingPage> {
           },
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(2),
             ),
             child: Image.asset(
-              (index % 3 == 0 && index != 0) ? 'assets/images/nails.jpeg' : 'assets/images/dp.jpg',
+              (index % 3 == 0 && index != 0)
+                  ? 'assets/images/nails.jpeg'
+                  : 'assets/images/dp.jpg',
               fit: BoxFit.cover,
             ),
           ),
@@ -69,13 +71,13 @@ class _TrendingPageState extends State<TrendingPage> {
 
   // List View
   Widget _buildListView(String trend) {
-    return Scaffold( 
+    return Scaffold(
       appBar: AppBar(
-        leading: IconButton( 
+        leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             setState(() {
-              selectedTrend = null; 
+              selectedTrend = null;
             });
           },
         ),
@@ -90,11 +92,16 @@ class _TrendingPageState extends State<TrendingPage> {
             aspectRatio: (index % 3 == 0 && index != 0) ? 1 : .5,
             username: 'user123',
             profileImage: 'assets/images/dp1.jpg',
-            images: [(index % 3 == 0 && index != 0) ? 'assets/images/nails.jpeg' : 'assets/images/dp.jpg'],
+            images: [
+              (index % 3 == 0 && index != 0)
+                  ? 'assets/images/nails.jpeg'
+                  : 'assets/images/dp.jpg',
+            ],
             likesCount: 1400,
             sharesCount: 1200,
             commentsCount: 450,
-            description: 'This is a sample post description, showcasing how to pass dynamic data to the Post widget. The description is quite long to show the "Read More" functionality.',
+            description:
+                'This is a sample post description, showcasing how to pass dynamic data to the Post widget. The description is quite long to show the "Read More" functionality.',
             datePosted: '12/02/2025 18:12:32',
           );
         },

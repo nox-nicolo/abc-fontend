@@ -294,7 +294,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
       }
     } else if (postState.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(postState.error!), backgroundColor: Colors.red),
+        SnackBar(content: Text(postState.error!), backgroundColor: Theme.of(context).colorScheme.error),
       );
     }
   }
@@ -323,7 +323,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: canSubmit ? scheme.primary : Colors.grey,
+                      color: canSubmit ? scheme.primary : scheme.onSurface.withValues(alpha: 0.38),
                     ),
                   ),
           ),
@@ -367,7 +367,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
                               width: 42,
                               height: 42,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, _) =>
+                              errorBuilder: (_, _, _) =>
                                   const Icon(Icons.category, size: 28),
                             ),
                           )
@@ -405,7 +405,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
               decoration: BoxDecoration(
                 color: scheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: scheme.outlineVariant),
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -500,7 +500,7 @@ void showPostSuccessDialog(BuildContext context, VoidCallback onDone) {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle, size: 60, color: Colors.green),
+            Icon(Icons.check_circle, size: 60, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 16),
             Text('Post Submitted',
                 style: Theme.of(context).textTheme.headlineSmall),

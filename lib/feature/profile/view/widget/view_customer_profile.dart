@@ -49,7 +49,7 @@ class ViewCustomerProfilePage extends StatelessWidget {
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium
-                              ?.copyWith(color: Colors.grey),
+                              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -106,7 +106,7 @@ class _CustomerPostsGrid extends StatelessWidget {
           (context, index) {
             return Container(
               margin: const EdgeInsets.all(4),
-              color: Colors.grey.shade300,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               child: Center(
                 child: Text('Post $index'),
               ),

@@ -11,7 +11,7 @@ class UserResultTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: _buildAvatar(),
+      leading: _buildAvatar(context),
       title: Text(data['username'] ?? 'Unknown user'),
       subtitle: Text(data['full_name'] ?? ''),
       trailing: data['verified'] == true
@@ -23,15 +23,16 @@ class UserResultTile extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar() {
+  Widget _buildAvatar(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final imageUrl = data['profile_image'];
 
     if (imageUrl != null && imageUrl.toString().isNotEmpty) {
       return CircleAvatar(
         radius: 22,
-        backgroundColor: Colors.grey.shade200,
+        backgroundColor: scheme.surfaceContainerHighest,
         backgroundImage: NetworkImage(imageUrl),
-        onBackgroundImageError: (_, __) {},
+        onBackgroundImageError: (_, _) {},
       );
     }
 

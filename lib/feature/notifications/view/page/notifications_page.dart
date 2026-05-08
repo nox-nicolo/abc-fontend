@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/page/bottom_nav.dart';
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/notifications/model/notification.dart';
 import 'package:africa_beuty/feature/notifications/view_model/notification.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
@@ -63,7 +64,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     NotificationsViewModel vm,
   ) {
     if (state.isLoading && state.items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const _NotificationsSkeletonList();
     }
 
     if (state.error != null && state.items.isEmpty) {
@@ -75,10 +76,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
               children: [
                 Text(state.error!),
                 const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: vm.load,
-                  child: const Text('Retry'),
-                ),
+                OutlinedButton(onPressed: vm.load, child: const Text('Retry')),
               ],
             ),
           ),
@@ -98,12 +96,12 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     return ListView.separated(
       controller: _scrollController,
       itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         if (index >= state.items.length) {
           return const Padding(
             padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
+            child: SkeletonListTile(trailingWidth: 36),
           );
         }
         return _NotificationTile(
@@ -135,11 +133,22 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     if (item.postId != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => PostViewPage(postId: item.postId!),
-        ),
+        MaterialPageRoute(builder: (_) => PostViewPage(postId: item.postId!)),
       );
     }
+  }
+}
+
+class _NotificationsSkeletonList extends StatelessWidget {
+  const _NotificationsSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      itemCount: 8,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (_, _) => const SkeletonListTile(trailingWidth: 32),
+    );
   }
 }
 
@@ -196,24 +205,24 @@ class _NotificationTile extends StatelessWidget {
     }
   }
 
-  Color _leadingColor(String type) {
+  Color _leadingColor(String type, ColorScheme scheme) {
     switch (type) {
       case 'like':
-        return Colors.redAccent;
+        return scheme.error;
       case 'comment':
       case 'reply':
-        return Colors.blueAccent;
+        return scheme.primary;
       case 'booking_new':
       case 'booking_rescheduled':
-        return Colors.deepPurpleAccent;
+        return scheme.tertiary;
       case 'booking_confirmed':
       case 'booking_completed':
-        return Colors.green;
+        return scheme.secondary;
       case 'booking_rejected':
       case 'booking_cancelled':
-        return Colors.orange;
+        return scheme.error;
       default:
-        return Colors.grey;
+        return scheme.onSurfaceVariant;
     }
   }
 
@@ -230,6 +239,7 @@ class _NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final avatar = item.actor.profilePicture;
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
     return InkWell(
       onTap: onTap,
@@ -246,9 +256,7 @@ class _NotificationTile extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundImage: avatar != null
-                      ? NetworkImage(avatar)
-                      : null,
+                  backgroundImage: avatar != null ? NetworkImage(avatar) : null,
                   child: avatar == null
                       ? Text(
                           item.actor.username.isNotEmpty
@@ -263,13 +271,13 @@ class _NotificationTile extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      color: _leadingColor(item.type),
+                      color: _leadingColor(item.type, scheme),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
+                      border: Border.all(color: scheme.surface, width: 1.5),
                     ),
                     child: Icon(
                       _leadingIcon(item.type),
-                      color: Colors.white,
+                      color: scheme.surface,
                       size: 12,
                     ),
                   ),
@@ -301,7 +309,9 @@ class _NotificationTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                   ],

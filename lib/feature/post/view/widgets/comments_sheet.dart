@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/post/model/comment.dart';
 import 'package:africa_beuty/feature/post/view_model/comment.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,7 @@ Future<void> showCommentsSheet(BuildContext context, String postId) {
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
-    barrierColor: Colors.black.withOpacity(0.5),
+    barrierColor: Colors.black.withValues(alpha: 0.5),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
@@ -61,8 +62,11 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
     if (ok) {
       _controller.clear();
       // Scroll to bottom to see new comment
-      _scrollCtrl.animateTo(0,
-          duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      _scrollCtrl.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     }
   }
 
@@ -138,9 +142,7 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
           const Divider(height: 1, thickness: 0.5),
 
           // Comments List
-          Expanded(
-            child: _buildList(state, theme),
-          ),
+          Expanded(child: _buildList(state, theme)),
 
           // Input Section
           _buildInputArea(theme),
@@ -159,7 +161,9 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5)),
+        border: Border(
+          top: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -172,14 +176,23 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
               style: theme.textTheme.bodyMedium,
               decoration: InputDecoration(
                 hintText: 'Add a comment...',
-                hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7)),
+                hintStyle: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.7,
+                  ),
+                ),
                 filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.4,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
               ),
             ),
           ),
@@ -216,19 +229,24 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
 
   Widget _buildList(CommentsState state, ThemeData theme) {
     if (state.isLoading && state.items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const _CommentsSkeletonList();
     }
     if (state.items.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.chat_bubble_outline_rounded, 
-                 size: 48, color: theme.colorScheme.outlineVariant),
+            Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 48,
+              color: theme.colorScheme.outlineVariant,
+            ),
             const SizedBox(height: 12),
             Text('No comments yet', style: theme.textTheme.bodyLarge),
-            Text('Be the first to join the conversation.', 
-                 style: theme.textTheme.bodySmall),
+            Text(
+              'Be the first to join the conversation.',
+              style: theme.textTheme.bodySmall,
+            ),
           ],
         ),
       );
@@ -242,7 +260,7 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
         if (i >= state.items.length) {
           return const Padding(
             padding: EdgeInsets.all(20),
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            child: SkeletonListTile(),
           );
         }
         final c = state.items[i];
@@ -251,6 +269,21 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
           onDelete: c.isMine ? () => _confirmDelete(c) : null,
         );
       },
+    );
+  }
+}
+
+class _CommentsSkeletonList extends StatelessWidget {
+  const _CommentsSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 8, bottom: 20),
+      itemCount: 7,
+      itemBuilder: (_, i) => SkeletonListTile(
+        padding: EdgeInsets.fromLTRB(16, i == 0 ? 8 : 12, 16, 12),
+      ),
     );
   }
 }
@@ -275,16 +308,26 @@ class _CommentTile extends StatelessWidget {
             padding: const EdgeInsets.all(1.5),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              ),
             ),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              backgroundImage: (comment.author.profilePicture != null && comment.author.profilePicture!.isNotEmpty)
+              backgroundImage:
+                  (comment.author.profilePicture != null &&
+                      comment.author.profilePicture!.isNotEmpty)
                   ? NetworkImage(comment.author.profilePicture!)
                   : null,
-              child: (comment.author.profilePicture == null || comment.author.profilePicture!.isEmpty)
-                  ? Icon(Icons.person, size: 18, color: theme.colorScheme.primary)
+              child:
+                  (comment.author.profilePicture == null ||
+                      comment.author.profilePicture!.isEmpty)
+                  ? Icon(
+                      Icons.person,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    )
                   : null,
             ),
           ),
@@ -295,7 +338,10 @@ class _CommentTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerLow,
                     borderRadius: const BorderRadius.only(

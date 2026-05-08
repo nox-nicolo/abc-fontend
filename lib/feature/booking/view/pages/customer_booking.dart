@@ -1,3 +1,5 @@
+import 'package:africa_beuty/core/theme/colors_pallete.dart';
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/model/booking_status.dart';
 import 'package:africa_beuty/feature/booking/view/pages/customer_booking_detail.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/choose_style.dart';
@@ -29,26 +31,23 @@ class _CustomerBookingPageState extends ConsumerState<CustomerBookingPage> {
     // Refresh data every time this page is (re)shown
     WidgetsBinding.instance.addPostFrameCallback((_) => _invalidateAll());
 
-    ref.listenManual(
-      customerBookingActionViewModelProvider,
-      (_, next) {
-        next.whenOrNull(
-          error: (err, _) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(err.toString())),
-            );
-          },
-          data: (_) {
-            _invalidateAll();
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Done')),
-            );
-          },
-        );
-      },
-    );
+    ref.listenManual(customerBookingActionViewModelProvider, (_, next) {
+      next.whenOrNull(
+        error: (err, _) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(err.toString())));
+        },
+        data: (_) {
+          _invalidateAll();
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Done')));
+        },
+      );
+    });
   }
 
   @override
@@ -112,7 +111,7 @@ class _BookingTab extends ConsumerWidget {
     final state = ref.watch(myBookingsViewModelProvider(status));
 
     return state.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const _BookingsSkeletonList(),
       error: (e, _) => Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -133,9 +132,11 @@ class _BookingTab extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.event_busy_rounded,
-                    size: 56,
-                    color: Theme.of(context).colorScheme.outline),
+                Icon(
+                  Icons.event_busy_rounded,
+                  size: 56,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   status.isEmpty ? 'No bookings yet' : 'No $status bookings',
@@ -155,7 +156,7 @@ class _BookingTab extends ConsumerWidget {
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: sorted.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (_, i) => CustomerBookingCard(
               booking: sorted[i],
               onTap: () => Navigator.push(
@@ -169,6 +170,61 @@ class _BookingTab extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _BookingsSkeletonList extends StatelessWidget {
+  const _BookingsSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: 6,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (_, _) => const _BookingCardSkeleton(),
+    );
+  }
+}
+
+class _BookingCardSkeleton extends StatelessWidget {
+  const _BookingCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: const Row(
+        children: [
+          SkeletonCard(width: 48, height: 48, radius: 12),
+          SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonText(width: 170, height: 15),
+                SizedBox(height: 8),
+                SkeletonText(width: 130, height: 11),
+              ],
+            ),
+          ),
+          SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              SkeletonText(width: 64, height: 13),
+              SizedBox(height: 8),
+              SkeletonCard(width: 76, height: 20, radius: 99),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -214,22 +270,25 @@ class CustomerBookingCard extends StatelessWidget {
                 children: [
                   Text(
                     booking.serviceName,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     DateFormat('EEE, MMM d • HH:mm').format(booking.startAt),
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                   if (booking.cancelReason != null &&
                       booking.cancelReason!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       'Reason: ${booking.cancelReason}',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: scheme.error),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.error,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -243,8 +302,9 @@ class CustomerBookingCard extends StatelessWidget {
               children: [
                 Text(
                   '${booking.currency} ${booking.price.toStringAsFixed(0)}',
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 _StatusBadge(status: booking.status, color: color),
@@ -257,13 +317,14 @@ class CustomerBookingCard extends StatelessWidget {
   }
 
   Color _statusColor(ColorScheme scheme) {
+    final isLight = scheme.brightness == Brightness.light;
     switch (booking.status) {
       case 'pending':
-        return Colors.orange;
+        return isLight ? AppColors.warningLight : AppColors.warningDark;
       case 'confirmed':
-        return Colors.blue;
+        return scheme.primary;
       case 'completed':
-        return Colors.green;
+        return isLight ? AppColors.successLight : AppColors.successDark;
       case 'cancelled':
       case 'rejected':
         return scheme.error;

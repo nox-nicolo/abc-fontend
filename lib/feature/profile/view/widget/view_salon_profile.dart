@@ -727,7 +727,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                 child: CachedNetworkImage(
                                   imageUrl: salon.salon.profilePicture,
                                   fit: BoxFit.cover,
-                                  errorWidget: (_, __, ___) => const Icon(Icons.person),
+                                  errorWidget: (_, _, _) => const Icon(Icons.person),
                                 ),
                               ),
                             ),
@@ -821,8 +821,8 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                         child: CachedNetworkImage(
                                           imageUrl: salon.salon.profilePicture,
                                           fit: BoxFit.cover,
-                                          placeholder: (_, __) => Container(color: Colors.grey[300]),
-                                          errorWidget: (_, __, ___) =>
+                                          placeholder: (_, _) => Container(color: Colors.grey[300]),
+                                          errorWidget: (_, _, _) =>
                                               const Icon(Icons.person, size: 40),
                                         ),
                                       ),
@@ -1530,7 +1530,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: 4,
-                itemBuilder: (_, __) => Container(
+                itemBuilder: (_, _) => Container(
                   width: 150,
                   margin: const EdgeInsets.only(right: 12),
                   decoration: BoxDecoration(
@@ -1560,7 +1560,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
           // POSTS SHIMMER
           SliverList(
             delegate: SliverChildBuilderDelegate(
-              (_, __) => Padding(
+              (_, _) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Container(
                   height: 200,

@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/http/api_client.dart';
+import 'package:africa_beuty/core/monitoring/error_monitor.dart';
 import 'package:africa_beuty/core/page/bottom_nav.dart';
 import 'package:africa_beuty/core/reminders/reminder_service.dart';
 import 'package:africa_beuty/core/theme/dark_theme.dart';
@@ -19,14 +20,20 @@ final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ErrorMonitor.init();
+  ErrorMonitor.installFlutterHandlers();
+
+  ErrorMonitor.runGuarded(() async {
+    await _bootstrap();
+  });
+}
+
+Future<void> _bootstrap() async {
   await Hive.initFlutter();
 
   // When both tokens are expired the ApiClient calls this to force logout.
   ApiClient.onSessionExpired = () {
-    navigatorKey.currentState?.pushNamedAndRemoveUntil(
-      '/signin',
-      (_) => false,
-    );
+    navigatorKey.currentState?.pushNamedAndRemoveUntil('/signin', (_) => false);
   };
 
   final bool isFirstTime = await LocalStorageService.getIsFirstTime();
@@ -41,10 +48,7 @@ Future<void> main() async {
 
   runApp(
     ProviderScope(
-      child: MyApp(
-        isFirstTime: isFirstTime,
-        isLoggedIn: isLoggedIn,
-      ),
+      child: MyApp(isFirstTime: isFirstTime, isLoggedIn: isLoggedIn),
     ),
   );
 }
@@ -53,11 +57,7 @@ class MyApp extends StatelessWidget {
   final bool isFirstTime;
   final bool isLoggedIn;
 
-  const MyApp({
-    super.key,
-    required this.isFirstTime,
-    required this.isLoggedIn,
-  });
+  const MyApp({super.key, required this.isFirstTime, required this.isLoggedIn});
 
   Widget _getStartPage() {
     if (isFirstTime) {

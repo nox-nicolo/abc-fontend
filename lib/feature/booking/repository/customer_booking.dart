@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
+import 'package:africa_beuty/core/http/paginated_response.dart';
 import 'package:africa_beuty/feature/booking/model/booking_status.dart';
 import 'package:africa_beuty/feature/booking/model/start_booking.dart';
 import 'package:fpdart/fpdart.dart';
@@ -28,8 +29,10 @@ class CustomerBookingRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body) as List;
-        return Right(BookingListItem.listFromJson(decoded));
+        final decoded = jsonDecode(response.body);
+        return Right(
+          BookingListItem.listFromJson(listFromPaginatedBody(decoded)),
+        );
       }
 
       return Left(_detail(response.body, 'Failed to load bookings'));
@@ -104,7 +107,9 @@ class CustomerBookingRepository {
     DateTime startAt,
   ) async {
     try {
-      final uri = Uri.parse('${ServerConstants.serverUrl}/booking/$id/reschedule');
+      final uri = Uri.parse(
+        '${ServerConstants.serverUrl}/booking/$id/reschedule',
+      );
 
       final response = await ApiClient.instance
           .post(

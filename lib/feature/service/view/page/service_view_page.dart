@@ -277,7 +277,7 @@ class _ServiceDetailsBody extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: data.minorServices!.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 14),
+                        separatorBuilder: (_, _) => const SizedBox(width: 14),
                         itemBuilder: (context, i) {
                           final item = data.minorServices![i];
                           return MinorServiceHorizontalCard(
@@ -323,7 +323,7 @@ class _ServiceDetailsBody extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
             sliver: SliverList.separated(
               itemCount: data.salonDetails.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 14),
+              separatorBuilder: (_, _) => const SizedBox(height: 14),
               itemBuilder: (context, i) =>
                   SalonServiceCard(salon: data.salonDetails[i]),
             ),

@@ -27,11 +27,9 @@ abstract class HomeRepository {
     String? cursor,
   });
   // Future<Either<AppFailure, List<EventModel>>> getEvents();
-    Future<Either<AppFailure, PostLikeModel>> toggleLike({
+  Future<Either<AppFailure, PostLikeModel>> toggleLike({
     required String postId,
   });
-
-
 }
 
 /* ------------------------------------------------------------
@@ -60,9 +58,7 @@ class HomeRepositoryImpl implements HomeRepository {
         try {
           body = jsonDecode(response.body);
         } catch (_) {}
-        return Left(
-          AppFailure(body?['detail'] ?? 'Failed to load top salons'),
-        );
+        return Left(AppFailure(body?['detail'] ?? 'Failed to load top salons'));
       }
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
@@ -84,7 +80,6 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-
   /* ------------------------------------------------------------
      CATEGORIES
   ------------------------------------------------------------- */
@@ -104,20 +99,14 @@ class HomeRepositoryImpl implements HomeRepository {
         try {
           body = jsonDecode(response.body);
         } catch (_) {}
-        return Left(
-          AppFailure(body?['detail'] ?? 'Failed to load categories'),
-        );
+        return Left(AppFailure(body?['detail'] ?? 'Failed to load categories'));
       }
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       final List services = decoded['selected_services'] ?? [];
 
       final categories = services
-          .map(
-            (e) => SelectedServiceModel.fromMap(
-              e as Map<String, dynamic>,
-            ),
-          )
+          .map((e) => SelectedServiceModel.fromMap(e as Map<String, dynamic>))
           .toList();
 
       return Right(categories);
@@ -131,7 +120,6 @@ class HomeRepositoryImpl implements HomeRepository {
       return Left(AppFailure('Categories error: $e'));
     }
   }
-
 
   /* ------------------------------------------------------------
      HOME FEED
@@ -158,26 +146,18 @@ class HomeRepositoryImpl implements HomeRepository {
         try {
           body = jsonDecode(response.body);
         } catch (_) {}
-        return Left(
-          AppFailure(body?['detail'] ?? 'Failed to load posts'),
-        );
+        return Left(AppFailure(body?['detail'] ?? 'Failed to load posts'));
       }
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
 
-      final List<PostModel> items =
-          (decoded['items'] as List? ?? [])
-              .map((e) => PostModel.fromMap(e as Map<String, dynamic>))
-              .toList();
+      final List<PostModel> items = (decoded['items'] as List? ?? [])
+          .map((e) => PostModel.fromMap(e as Map<String, dynamic>))
+          .toList();
 
       final String? nextCursor = decoded['next_cursor'];
 
-      return Right(
-        FeedResponse(
-          items: items,
-          nextCursor: nextCursor,
-        ),
-      );
+      return Right(FeedResponse(items: items, nextCursor: nextCursor));
     } on SocketException {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
@@ -188,8 +168,6 @@ class HomeRepositoryImpl implements HomeRepository {
       return Left(AppFailure('Posts error: $e'));
     }
   }
-
-
 
   /* ------------------------------------------------------------
      EVENTS
@@ -233,7 +211,6 @@ class HomeRepositoryImpl implements HomeRepository {
   //   }
   // }
 
-  
   /* ------------------------------------------------------------
     Post Like
   ------------------------------------------------------------- */
@@ -242,16 +219,18 @@ class HomeRepositoryImpl implements HomeRepository {
     required String postId,
   }) async {
     try {
-      final uri = Uri.parse(
-        '${ServerConstants.serverUrl}/posts/$postId/like',
-      );
+      final uri = Uri.parse('${ServerConstants.serverUrl}/posts/$postId/like');
 
       final response = await ApiClient.instance
           .post(uri)
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
-        return Left(AppFailure('Failed to like post'));
+        Map<String, dynamic>? body;
+        try {
+          body = jsonDecode(response.body) as Map<String, dynamic>;
+        } catch (_) {}
+        return Left(AppFailure(body?['detail'] ?? 'Failed to like post'));
       }
 
       final Map<String, dynamic> decodedData = jsonDecode(response.body);
@@ -266,16 +245,10 @@ class HomeRepositoryImpl implements HomeRepository {
       return Left(AppFailure('Like error: $e'));
     }
   }
-
 }
 
-
-
 class FeedResponse {
-  FeedResponse({
-    required this.items,
-    required this.nextCursor,
-  });
+  FeedResponse({required this.items, required this.nextCursor});
 
   final List<PostModel> items;
   final String? nextCursor;

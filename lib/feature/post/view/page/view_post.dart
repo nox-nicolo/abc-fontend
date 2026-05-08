@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/choose_salon.dart';
 import 'package:africa_beuty/feature/post/model/single_post_view.dart';
 import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
@@ -21,10 +22,7 @@ import 'package:icons_plus/icons_plus.dart';
 class PostViewPage extends ConsumerWidget {
   final String postId;
 
-  const PostViewPage({
-    super.key,
-    required this.postId,
-  });
+  const PostViewPage({super.key, required this.postId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -94,7 +92,8 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
   @override
   Widget build(BuildContext context) {
     // Watch so the list rebuilds when more posts are loaded
-    final data = ref
+    final data =
+        ref
             .watch(singlePostViewModelProvider(widget.data.post.id))
             .asData
             ?.value ??
@@ -111,15 +110,15 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-                                
               Navigator.push(
-                context, 
+                context,
                 MaterialPageRoute(
-                  builder: (context) =>  ViewProfilePage(isServiceProfile: true,
+                  builder: (context) => ViewProfilePage(
+                    isServiceProfile: true,
                     userId: post.author.id,
-                    )
-                  )
-                );
+                  ),
+                ),
+              );
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -127,9 +126,12 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: Colors.grey.shade300,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     child: ClipOval(
-                      child: post.author.displayPicture != null &&
+                      child:
+                          post.author.displayPicture != null &&
                               post.author.displayPicture!.isNotEmpty
                           ? Image.network(
                               post.author.displayPicture!,
@@ -141,7 +143,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
                     ),
                   ),
                   const SizedBox(width: 10),
-            
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,13 +181,11 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
                           const SizedBox(height: 2),
                           Text(
                             _locationLabel(post.author.location!),
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
+                            style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -260,8 +260,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
                   '${data.service.price.min} - ${data.service.price.max} ${data.service.price.currency}',
               duration: '${data.service.durationMinutes} min',
               benefits: data.service.benefits,
-              products:
-                  data.service.products.map((e) => e.name).toList(),
+              products: data.service.products.map((e) => e.name).toList(),
             ),
           ),
 
@@ -351,16 +350,15 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
                   Text(
                     'More for you',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'From salons you follow and salons near you',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -368,39 +366,34 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           ),
         if (data.otherPosts.items.isNotEmpty)
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final p = data.otherPosts.items[index];
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final p = data.otherPosts.items[index];
 
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => PostViewPage(postId: p.id),
-                    ),
-                  ),
-                  onDoubleTap: () => HapticFeedback.lightImpact(),
-                  onLongPress: () {},
-                  child: Post(
-                    postId: p.id,
-                    isLiked: p.viewerState.isLiked,
-                    isSaved: p.viewerState.isSaved,
-                    images: p.images.map((e) => e.url).toList(),
-                    aspectRatio: p.images.isNotEmpty
-                        ? p.images.first.aspectRatio
-                        : 1.0,
-                    username: p.author.username,
-                    profileImage: p.author.displayPicture ?? '',
-                    likesCount: p.stats.likes,
-                    sharesCount: p.stats.shares,
-                    commentsCount: p.stats.comments,
-                    description: p.description,
-                    datePosted: p.createdAt.toIso8601String(),
-                  ),
-                );
-              },
-              childCount: data.otherPosts.items.length,
-            ),
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => PostViewPage(postId: p.id)),
+                ),
+                onDoubleTap: () => HapticFeedback.lightImpact(),
+                onLongPress: () {},
+                child: Post(
+                  postId: p.id,
+                  isLiked: p.viewerState.isLiked,
+                  isSaved: p.viewerState.isSaved,
+                  images: p.images.map((e) => e.url).toList(),
+                  aspectRatio: p.images.isNotEmpty
+                      ? p.images.first.aspectRatio
+                      : 1.0,
+                  username: p.author.username,
+                  profileImage: p.author.displayPicture ?? '',
+                  likesCount: p.stats.likes,
+                  sharesCount: p.stats.shares,
+                  commentsCount: p.stats.comments,
+                  description: p.description,
+                  datePosted: p.createdAt.toIso8601String(),
+                ),
+              );
+            }, childCount: data.otherPosts.items.length),
           ),
 
         // Loading indicator at bottom while fetching more
@@ -468,13 +461,13 @@ class _PostActionsMenuState extends ConsumerState<_PostActionsMenu> {
     if (!mounted) return;
 
     result.fold(
-      (failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
       (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Post deleted')));
         Navigator.of(context).pop();
       },
     );
@@ -495,11 +488,14 @@ class _PostActionsMenuState extends ConsumerState<_PostActionsMenu> {
         PopupMenuItem(
           value: 'delete',
           child: ListTile(
-            leading: Icon(Icons.delete_outline,
-                color: Theme.of(context).colorScheme.error),
-            title: Text('Delete post',
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.error)),
+            leading: Icon(
+              Icons.delete_outline,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: Text(
+              'Delete post',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
             contentPadding: EdgeInsets.zero,
           ),
         ),
@@ -517,64 +513,48 @@ class _PostViewSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = Theme.of(context)
-        .colorScheme
-        .surfaceContainerHighest
-        .withValues(alpha: 0.6);
-
-    Widget box({
-      double? width,
-      double height = 12,
-      double radius = 8,
-    }) =>
-        Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            color: base,
-            borderRadius: BorderRadius.circular(radius),
-          ),
-        );
-
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      children: [
+      children: const [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(color: base, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 12),
+              Skeleton.circle(size: 56),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    box(width: 140, height: 14),
-                    const SizedBox(height: 8),
-                    box(width: 90, height: 10),
+                    SkeletonText(width: 140, height: 14),
+                    SizedBox(height: 8),
+                    SkeletonText(width: 90, height: 10),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        AspectRatio(aspectRatio: 1, child: Container(color: base)),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
+        AspectRatio(
+          aspectRatio: 1,
+          child: SkeletonCard(
+            width: double.infinity,
+            height: double.infinity,
+            radius: 0,
+          ),
+        ),
+        SizedBox(height: 16),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              box(width: double.infinity),
-              const SizedBox(height: 8),
-              box(width: 220),
-              const SizedBox(height: 8),
-              box(width: 160),
+              SkeletonText(width: double.infinity),
+              SizedBox(height: 8),
+              SkeletonText(width: 220),
+              SizedBox(height: 8),
+              SkeletonText(width: 160),
             ],
           ),
         ),

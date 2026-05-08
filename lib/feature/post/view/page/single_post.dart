@@ -101,6 +101,7 @@ class _PostState extends ConsumerState<Post> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
@@ -137,7 +138,7 @@ class _PostState extends ConsumerState<Post> {
                           fadeOutDuration: const Duration(milliseconds: 300),
                           filterQuality: FilterQuality.low,
                           placeholder: (context, url) => Container(
-                            color: Theme.of(context).colorScheme.surfaceVariant,
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           ),
                           errorWidget: (context, url, error) => const Icon(Icons.error),
                         );
@@ -162,7 +163,7 @@ class _PostState extends ConsumerState<Post> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(3),
                               // Active dot is solid white, others are faded
-                              color: isActive ? Colors.white : Colors.white.withOpacity(0.5),
+                              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.5),
                             ),
                           );
                         },
@@ -180,7 +181,7 @@ class _PostState extends ConsumerState<Post> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: Colors.grey.shade300,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   child: ClipOval(
                     child: widget.profileImage.isNotEmpty
                         ? Image.network(
@@ -207,7 +208,7 @@ class _PostState extends ConsumerState<Post> {
                         Icon(
                           OctIcons.verified,
                           size: 12,
-                          color: Colors.blue.shade500,
+                          color: colorScheme.primary,
                         ),
                       ],
                     ),
@@ -250,8 +251,8 @@ class _PostState extends ConsumerState<Post> {
                                 ? Icons.favorite
                                 : Icons.favorite_border,
                             color: _isLiked
-                                ? Colors.red
-                                : Colors.blue.shade500,
+                                ? colorScheme.error
+                                : colorScheme.primary,
                             size: 26,
                           ),
                         ),
@@ -269,7 +270,7 @@ class _PostState extends ConsumerState<Post> {
                       children: [
                         Icon(
                           FontAwesome.paper_plane_solid,
-                          color: Colors.blue.shade500,
+                          color: colorScheme.primary,
                           size: 24,
                         ),
                         const SizedBox(width: 12),
@@ -292,7 +293,7 @@ class _PostState extends ConsumerState<Post> {
                           Icon(
                             FontAwesome.comment,
                             size: 24,
-                            color: Colors.blue.shade500,
+                            color: colorScheme.primary,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -313,7 +314,7 @@ class _PostState extends ConsumerState<Post> {
                       ? Icons.bookmark_rounded
                       : Icons.bookmark_border_rounded,
                   size: 32,
-                  color: Colors.blue.shade500,
+                  color: colorScheme.primary,
                 ),
               ),
             ],

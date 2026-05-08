@@ -91,7 +91,7 @@ class _PostHashTagPageState extends ConsumerState<PostHashTagPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withOpacity(0.2),
+                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Wrap(
@@ -158,12 +158,14 @@ class _PostHashTagPageState extends ConsumerState<PostHashTagPage> {
         const SizedBox(height: 8),
         ...items.map((item) {
           final isSelected = selected.any((s) => s.toLowerCase() == item.name.toLowerCase());
-          return ListTile(
-            title: Text(item.name),
-            trailing: Icon(isSelected ? Icons.check_circle : Icons.add_circle_outline, color: isSelected ? Colors.green : null),
-            onTap: () => vm.toggleSelect(item.name),
-          );
-        }).toList(),
+          return Builder(builder: (context) {
+            return ListTile(
+              title: Text(item.name),
+              trailing: Icon(isSelected ? Icons.check_circle : Icons.add_circle_outline, color: isSelected ? Theme.of(context).colorScheme.primary : null),
+              onTap: () => vm.toggleSelect(item.name),
+            );
+          });
+        }),
       ],
     );
   }

@@ -44,7 +44,7 @@ class PostSettingsPage extends ConsumerWidget {
               const SizedBox(height: 8),
 
               DropdownButtonFormField<String>(
-                value: settings.visibility,
+                initialValue: settings.visibility,
                 // decoration: _inputDecoration("Visibility"),
                 items: ['Public', 'Friends', 'Private'].map((value) {
                   return DropdownMenuItem(value: value, child: Text(value));
@@ -107,7 +107,7 @@ class PostSettingsPage extends ConsumerWidget {
               Text("Age Restriction", style: textTheme.titleMedium),
               
               DropdownButtonFormField<String>(
-                value: settings.ageRestriction,
+                initialValue: settings.ageRestriction,
                 // decoration: _inputDecoration("Age Restriction"),
                 items: ['Everyone', '13+', '18+'].map((value) {
                   return DropdownMenuItem(value: value, child: Text(value));

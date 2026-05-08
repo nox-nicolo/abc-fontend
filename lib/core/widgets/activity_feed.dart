@@ -71,7 +71,7 @@ class ActivityFeedTile extends StatelessWidget {
             width: 40,
             height: 40,
             fit: BoxFit.cover,
-            errorWidget: (_, __, ___) => Icon(
+            errorWidget: (_, _, _) => Icon(
               Icons.person,
               size: 20,
               color: scheme.onSurfaceVariant,

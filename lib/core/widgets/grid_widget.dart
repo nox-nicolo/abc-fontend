@@ -43,10 +43,11 @@ class UniversalPostGrid extends StatelessWidget {
               ? post.media[0].url
               : '';
 
+          final scheme = Theme.of(context).colorScheme;
           return GestureDetector(
             onTap: () => onPostTap(post),
             child: Container(
-              color: Colors.grey.shade200,
+              color: scheme.surfaceContainerHighest,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -54,9 +55,9 @@ class UniversalPostGrid extends StatelessWidget {
                   Image.network(
                     imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
+                    errorBuilder: (context, error, stackTrace) => Icon(
                       Icons.broken_image,
-                      color: Colors.grey,
+                      color: scheme.outline,
                     ),
                   ),
 

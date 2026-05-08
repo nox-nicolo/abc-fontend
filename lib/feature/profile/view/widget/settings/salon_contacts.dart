@@ -117,7 +117,7 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.toString()), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } finally {
@@ -152,7 +152,7 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
       if (state is AsyncData && mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Contacts and Location updated!'), backgroundColor: Colors.green),
+          SnackBar(content: Text('Contacts and Location updated!'), backgroundColor: Theme.of(context).colorScheme.primary),
         );
       }
     }
@@ -167,7 +167,7 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
     ref.listen<AsyncValue>(salonUpdateViewModelProvider, (prev, next) {
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(next.error.toString()), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     });
@@ -329,7 +329,7 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -381,7 +381,7 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
             hintText: hint,
             isDense: true,
             filled: true,
-            fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.2),
+            fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.2),
             contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -389,7 +389,7 @@ class _ContactsLocationPageState extends ConsumerState<ContactsLocationPage> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+              borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha:0.5)),
             ),
           ),
         ),

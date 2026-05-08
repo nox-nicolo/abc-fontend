@@ -1,0 +1,88 @@
+Add push notifications with Firebase Cloud Messaging or OneSignal.
+Store device tokens per user/device on backend.
+Add notification preferences: likes, comments, bookings, promotions, reminders.
+Add “mute salon/user/post” controls.
+Add deep links so tapping a notification opens the exact post, booking, comment, or profile.
+Add real-time updates with WebSockets/SSE so unread count updates without refreshing.
+Add notification grouping: “Asha and 12 others liked your post.”
+Add scheduled reminders for upcoming bookings.
+Add admin/system notifications for platform announcements.
+Add delivery status: created, sent, failed, read.
+Backend
+
+<!-- Add migrations with Alembic instead of relying only on Base.metadata.create_all. -->
+<!-- Add background workers for emails, push notifications, cleanup, ranking, reminders. Celery/RQ/Arq would help. -->
+<!-- Add proper pagination everywhere, not only some endpoints. -->
+<!-- Add rate limiting for login, verification, comments, likes, booking actions. -->
+Add audit logs for important actions: bookings, payments, profile edits.
+<!-- Add centralized logging and error monitoring. -->
+Add automated tests for auth, bookings, posts, notifications, and permissions.
+Add role/permission checks more formally: customer, salon owner, stylist, admin.
+Add API versioning, e.g. /api/v1/....
+<!-- Add database indexes for feed, search, bookings, notifications, and user relationships. -->
+Frontend
+
+Add app-wide notification access, not only Home. Profile or bottom navigation could also expose it.
+<!-- Add loading skeletons instead of mostly spinners. -->
+Add empty states with action buttons.
+Add offline handling and retry banners.
+Add optimistic UI for likes, follows, comments, saves, and booking actions.
+Add route/deep-link handling.
+Add better state refresh after important actions. Example: after booking confirm/cancel, refresh booking list and unread count.
+Add crash reporting.
+Add analytics for product decisions.
+Add accessibility improvements: labels, contrast, tap target sizes.
+Product Features
+
+Payments and deposits for bookings.
+Reviews and ratings after completed bookings.
+Salon availability calendar.
+Stylist assignment for bookings.
+Chat between customer and salon.
+Saved salons/services/styles.
+Promotions, discount codes, campaigns.
+Referral system.
+Location-based discovery.
+Trust and safety: report user/post/salon, block user, moderation queue.
+Admin dashboard for users, salons, posts, bookings, reports, payments.
+Scale And Quality
+
+Move secrets/config out of code and into environment management.
+Add staging and production environments.
+Add CI/CD for backend and frontend.
+Add database backups.
+Add media optimization: thumbnails, compression, CDN caching.
+Add monitoring for API latency, failed requests, DB load, notification delivery.
+Add security review: token storage, refresh flow, CORS, file uploads, authorization checks.
+Add data deletion/export support for privacy compliance.
+The next best notification-specific additions would be: push notifications, device-token registration, notification preferences, and deep-link navigation. Those would make the feature feel real rather than just an in-app inbox.
+
+Add rate limiting for login, verification, comments, likes, booking actions.
+
+    Note: this limiter is in-memory, good for local/single-process deployment. For serious production scale, the next upgrade should move rate-limit counters to Redis so limits work across multiple server instances.
+
+        That’s totally okay. You do not need Redis right now.
+
+        For where the project is today, the in-memory rate limiter I added is enough to protect the app during development and early launch. It costs nothing and requires no extra service.
+
+        The tradeoff is simple:
+
+        Works well when backend runs as one server/process.
+        Resets when the server restarts.
+        If Render/production runs multiple instances, each instance has its own limit counter.
+        Not perfect against serious abuse, but much better than having no protection.
+        For now I’d keep it this way.
+
+        Later, when the app starts getting real traffic or money, Redis becomes useful for:
+
+        shared rate limiting across servers
+        Celery background jobs
+        caching
+        session/device state
+        notification queues
+        But today, we can avoid that cost. A good low-cost path is:
+
+        Keep in-memory rate limiting now.
+        Keep Celery/Redis code as “production-ready foundation,” but don’t enable BACKGROUND_JOBS_ENABLED=true yet.
+        Continue sending emails directly as fallback.
+        When money/traffic arrives, add Redis through Render, Upstash, Railway, or another provider.

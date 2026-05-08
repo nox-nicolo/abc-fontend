@@ -222,7 +222,7 @@ class _SalonStylistsPageState extends ConsumerState<SalonStylistsPage> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: items.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(height: 10),
                             itemBuilder: (context, i) {
                               final stylist = items[i];
@@ -254,11 +254,11 @@ class _SalonStylistCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    final fullName = stylist.user?.name?.trim().isNotEmpty == true
+    final fullName = stylist.user?.name.trim().isNotEmpty == true
         ? stylist.user!.name.trim()
         : 'Unknown stylist';
 
-    final username = stylist.user?.username?.trim().isNotEmpty == true
+    final username = stylist.user?.username.trim().isNotEmpty == true
         ? '@${stylist.user!.username.trim()}'
         : 'No username';
 
@@ -402,7 +402,7 @@ class _StylistAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: 24,
       backgroundImage: NetworkImage(imageUrl),
-      onBackgroundImageError: (_, __) {},
+      onBackgroundImageError: (_, _) {},
       child: null,
     );
   }

@@ -62,7 +62,7 @@ class _ProfileDetailsPageState extends ConsumerState<ProfileDetailsPage> {
     ref.listen<AsyncValue>(salonUpdateViewModelProvider, (prev, next) {
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(next.error.toString()), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     });
@@ -134,7 +134,7 @@ class _ProfileDetailsPageState extends ConsumerState<ProfileDetailsPage> {
             child: Text(
               label,
               style: theme.textTheme.titleSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 1,
               ).copyWith(fontSize: 12),
@@ -149,7 +149,7 @@ class _ProfileDetailsPageState extends ConsumerState<ProfileDetailsPage> {
           decoration: InputDecoration(
             prefixIcon: Icon(icon),
             filled: true,
-            fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.2),
+            fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.2),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: theme.colorScheme.outlineVariant),

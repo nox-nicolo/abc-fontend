@@ -39,7 +39,7 @@ class SalonCard extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: coverImage!,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, _) => _placeholder(),
+                        errorWidget: (_, _, _) => _placeholder(),
                       )
                     : _placeholder(),
               ),

@@ -34,7 +34,7 @@ class SalonServicesSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[400],
+                  color: Theme.of(context).colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -187,11 +187,11 @@ class _ServiceCard extends StatelessWidget {
               width: double.infinity,
               fit: BoxFit.cover,
               placeholder: (ctx, url) =>
-                  Container(color: Colors.grey.shade200),
+                  Container(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               errorWidget: (ctx, url, err) =>
-                  Container(color: Colors.grey.shade200,
+                  Container(color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     child: Icon(Icons.spa_outlined,
-                        size: 40, color: Colors.grey.shade400)),
+                        size: 40, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ),
           ),
 
@@ -313,7 +313,7 @@ class _StylistsRow extends StatelessWidget {
                 backgroundImage: s.avatar != null
                     ? CachedNetworkImageProvider(s.avatar!)
                     : null,
-                backgroundColor: Colors.grey.shade300,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
               const SizedBox(width: 6),
               Text(
