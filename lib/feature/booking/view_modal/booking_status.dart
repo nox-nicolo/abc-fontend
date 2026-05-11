@@ -25,4 +25,42 @@ class BookingListViewModel extends _$BookingListViewModel {
         state = AsyncValue.data(r);
     }
   }
+
+  void applyOptimisticStatus(String bookingId, String nextStatus) {
+    final current = state.value;
+    if (current == null) return;
+
+    final shouldKeep = status.isEmpty || status == nextStatus;
+    final updated = <BookingListItem>[];
+
+    for (final booking in current) {
+      if (booking.id != bookingId) {
+        updated.add(booking);
+        continue;
+      }
+
+      if (shouldKeep) {
+        updated.add(booking.copyWith(status: nextStatus));
+      }
+    }
+
+    state = AsyncValue.data(updated);
+  }
+
+  void insertOrReplace(BookingListItem booking) {
+    final current = state.value;
+    if (current == null) return;
+
+    final shouldShow = status.isEmpty || status == booking.status;
+    final withoutBooking = current.where((b) => b.id != booking.id).toList();
+
+    state = AsyncValue.data(
+      shouldShow ? [booking, ...withoutBooking] : withoutBooking,
+    );
+  }
+
+  void restore(List<BookingListItem>? snapshot) {
+    if (snapshot == null) return;
+    state = AsyncValue.data(snapshot);
+  }
 }

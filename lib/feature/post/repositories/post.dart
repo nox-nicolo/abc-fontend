@@ -63,9 +63,7 @@ class PostRepositoryImpl implements PostRepository {
      CREATE POST
   ----------------------------------------------------------- */
   @override
-  Future<Either<AppFailure, bool>> createPost(
-    CreatePostModel post,
-  ) async {
+  Future<Either<AppFailure, bool>> createPost(CreatePostModel post) async {
     try {
       final token = await LocalStorageService.getAccessToken();
       if (token == null) {
@@ -77,6 +75,7 @@ class PostRepositoryImpl implements PostRepository {
       final request = http.MultipartRequest('POST', uri)
         ..headers['Authorization'] = 'Bearer $token'
         ..fields['caption'] = post.caption
+        ..fields['post_type'] = post.postType
         ..fields['category'] = post.category
         ..fields['author'] = post.author
         ..fields['status'] = post.status
@@ -84,9 +83,7 @@ class PostRepositoryImpl implements PostRepository {
         ..fields['tagged'] = jsonEncode(post.tagged)
         ..fields['settings'] = jsonEncode(post.settings.toJson())
         ..fields['media_metadata'] = jsonEncode(
-          post.media
-              .map((m) => {'aspect_ratio': m.aspectRatio})
-              .toList(),
+          post.media.map((m) => {'aspect_ratio': m.aspectRatio}).toList(),
         );
 
       for (final media in post.media) {
@@ -100,8 +97,9 @@ class PostRepositoryImpl implements PostRepository {
         );
       }
 
-      final streamed =
-          await request.send().timeout(const Duration(seconds: 30));
+      final streamed = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
       final response = await http.Response.fromStream(streamed);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -109,9 +107,7 @@ class PostRepositoryImpl implements PostRepository {
       }
 
       final body = _safeDecode(response.body);
-      return Left(
-        AppFailure(body?['detail'] ?? 'Failed to create post'),
-      );
+      return Left(AppFailure(body?['detail'] ?? 'Failed to create post'));
     } on SocketException {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
@@ -134,8 +130,7 @@ class PostRepositoryImpl implements PostRepository {
         return Left(AppFailure('No access token'));
       }
 
-      final uri =
-          Uri.parse('${ServerConstants.serverUrl}/posts/$postId');
+      final uri = Uri.parse('${ServerConstants.serverUrl}/posts/$postId');
 
       final response = await http
           .get(
@@ -153,9 +148,7 @@ class PostRepositoryImpl implements PostRepository {
       }
 
       final body = _safeDecode(response.body);
-      return Left(
-        AppFailure(body?['detail'] ?? 'Failed to load post'),
-      );
+      return Left(AppFailure(body?['detail'] ?? 'Failed to load post'));
     } on SocketException {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
@@ -205,9 +198,7 @@ class PostRepositoryImpl implements PostRepository {
       }
 
       final body = _safeDecode(response.body);
-      return Left(
-        AppFailure(body?['detail'] ?? 'Failed to load more posts'),
-      );
+      return Left(AppFailure(body?['detail'] ?? 'Failed to load more posts'));
     } on SocketException {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
@@ -269,7 +260,9 @@ class PostRepositoryImpl implements PostRepository {
   Future<Either<AppFailure, bool>> toggleBookmark(String postId) async {
     try {
       final response = await ApiClient.instance
-          .post(Uri.parse('${ServerConstants.serverUrl}/posts/$postId/bookmark'))
+          .post(
+            Uri.parse('${ServerConstants.serverUrl}/posts/$postId/bookmark'),
+          )
           .timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final body = _safeDecode(response.body);
@@ -321,15 +314,13 @@ class PostRepositoryImpl implements PostRepository {
   Future<Either<AppFailure, List<PostModel>>> getUserPosts(
     String userId,
     int page,
-  ) async =>
-      Left(AppFailure('Not implemented'));
+  ) async => Left(AppFailure('Not implemented'));
 
   @override
   Future<Either<AppFailure, bool>> updatePost(
     String postId,
     CreatePostModel post,
-  ) async =>
-      Left(AppFailure('Not implemented'));
+  ) async => Left(AppFailure('Not implemented'));
 }
 
 /* ------------------------------------------------------------

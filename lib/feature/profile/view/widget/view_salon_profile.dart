@@ -1,10 +1,10 @@
-
-
 import 'package:africa_beuty/core/widgets/activity_feed.dart';
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
+import 'package:africa_beuty/feature/chat/view/widget/single_chat_page.dart';
+import 'package:africa_beuty/feature/mute/repository/mute_repository.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/booking.dart';
@@ -15,6 +15,7 @@ import 'package:africa_beuty/feature/profile/view_model/salon_profile_post.dart'
 import 'package:africa_beuty/feature/profile/view_model/salon_view_follow_action.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon_view_profile.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon_view_profile_followers.dart';
+import 'package:africa_beuty/feature/saved/provider/saved_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -24,20 +25,15 @@ import 'package:latlong2/latlong.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-
 class ViewServiceProfilePage extends ConsumerStatefulWidget {
   final String salonId;
 
-  const ViewServiceProfilePage({
-    super.key,
-    required this.salonId,
-  });
+  const ViewServiceProfilePage({super.key, required this.salonId});
 
   @override
-  ConsumerState<ViewServiceProfilePage> createState() => _ViewServiceProfilePageState();
-
+  ConsumerState<ViewServiceProfilePage> createState() =>
+      _ViewServiceProfilePageState();
 }
-
 
 class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
     with SingleTickerProviderStateMixin {
@@ -61,7 +57,6 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
           });
         }
       });
-
   }
 
   @override
@@ -72,15 +67,12 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
   }
 
   bool get _isSliverAppBarExpanded =>
-    _scrollController.hasClients &&
-    _scrollController.offset > (kExpandedHeight - kToolbarHeight);
-
+      _scrollController.hasClients &&
+      _scrollController.offset > (kExpandedHeight - kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(
-      salonViewProfileViewModelProvider(widget.salonId),
-    );
+    final state = ref.watch(salonViewProfileViewModelProvider(widget.salonId));
 
     return Scaffold(
       body: state.when(
@@ -93,9 +85,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
   // Logic to refresh data (Pull-to-refresh)
   Future<void> _handleRefresh() async {
-    ref.invalidate(
-      salonViewProfileViewModelProvider(widget.salonId),
-    );
+    ref.invalidate(salonViewProfileViewModelProvider(widget.salonId));
   }
 
   // To be updated in the AddroidManifest.xml file
@@ -126,50 +116,38 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
   //   <string>mailto</string>
   //   <string>https</string>
   // </array>
-  
+
   Future<void> openPhone(String phoneNumber) async {
     final uri = Uri(scheme: 'tel', path: phoneNumber);
 
-    await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  // 
+  //
   Future<void> openSms(String phoneNumber) async {
     final uri = Uri.parse('sms:$phoneNumber');
 
-    await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  // 
+  //
   Future<void> openWhatsApp(String phoneNumber) async {
     // Remove any non-numeric characters (like + or spaces)
     final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
     final uri = Uri.parse('https://wa.me/$cleanPhone');
 
     // mode: LaunchMode.externalApplication is essential for WhatsApp!
-    await launchUrl(
-      uri, 
-      mode: LaunchMode.externalApplication
-    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  // 
+  //
   Future<void> openEmail(String email) async {
     final uri = Uri.parse('mailto:$email');
 
-    await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,   
-    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  // 
+  //
   Future<void> openMap(double lat, double lng) async {
     // Opens Google Maps with turn-by-turn directions from the user's location.
     // Fallback to Apple Maps on iOS via geo: scheme.
@@ -183,12 +161,9 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
     BuildContext context,
     SalonViewProfileModel salon,
   ) {
-       // 
-    final followLoading =
-        ref.watch(salonFollowActionViewModelProvider);
-    final followVM =
-        ref.read(salonFollowActionViewModelProvider.notifier);
-
+    //
+    final followLoading = ref.watch(salonFollowActionViewModelProvider);
+    final followVM = ref.read(salonFollowActionViewModelProvider.notifier);
 
     showModalBottomSheet(
       context: context,
@@ -247,17 +222,17 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                             ),
                           ),
                           onPressed: followLoading
-                            ? null
-                            : () async {
-                                final success = await followVM.unfollow(
-                                  salonId: salon.salon.id,
-                                );
+                              ? null
+                              : () async {
+                                  final success = await followVM.unfollow(
+                                    salonId: salon.salon.id,
+                                  );
 
-                                if (success && context.mounted) {
-                                  Navigator.of(context).pop(); // close sheet
-                                }
-                              },
-                          
+                                  if (success && context.mounted) {
+                                    Navigator.of(context).pop(); // close sheet
+                                  }
+                                },
+
                           child: const Text(
                             'Unfollow',
                             style: TextStyle(fontWeight: FontWeight.w700),
@@ -273,10 +248,9 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                       ),
                       child: Text(
                         'Followers · ${salon.metrics.followersCount}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
 
@@ -293,7 +267,8 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                           // pagination listener
                           scrollController.addListener(() {
                             if (scrollController.position.pixels >=
-                                scrollController.position.maxScrollExtent - 200) {
+                                scrollController.position.maxScrollExtent -
+                                    200) {
                               notifier.loadMore(salon.salon.id);
                             }
                           });
@@ -314,7 +289,8 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
                           return ListView.builder(
                             controller: scrollController,
-                            itemCount: state.items.length +
+                            itemCount:
+                                state.items.length +
                                 (state.isLoadingMore ? 1 : 0),
                             itemBuilder: (context, index) {
                               if (index >= state.items.length) {
@@ -346,22 +322,22 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                 trailing: follower.isFollowing
                                     ? OutlinedButton(
                                         onPressed: followLoading
-                                          ? null
-                                          : () async {
-                                              final success = await followVM.unfollow(
-                                                salonId: salon.salon.id,
-                                              );
-                                        },
+                                            ? null
+                                            : () async {
+                                                await followVM.unfollow(
+                                                  salonId: salon.salon.id,
+                                                );
+                                              },
                                         child: const Text('Following'),
                                       )
                                     : FilledButton(
                                         onPressed: followLoading
-                                          ? null
-                                          : () async {
-                                              final success = await followVM.follow(
-                                                salonId: salon.salon.id,
-                                              );
-                                        },
+                                            ? null
+                                            : () async {
+                                                await followVM.follow(
+                                                  salonId: salon.salon.id,
+                                                );
+                                              },
                                         child: const Text('Follow'),
                                       ),
                               );
@@ -380,12 +356,10 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
     );
   }
 
-
-
   void _showSalonActionsSheet(
     BuildContext context,
-    SalonViewProfileModel salon,) 
-  {
+    SalonViewProfileModel salon,
+  ) {
     bool notificationsOn = true;
 
     showModalBottomSheet(
@@ -418,12 +392,17 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
                   // SALON HEADER
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 24,
-                          backgroundImage: NetworkImage(salon.salon.profilePicture),
+                          backgroundImage: NetworkImage(
+                            salon.salon.profilePicture,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -434,16 +413,12 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                 salon.salon.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
+                                style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(fontWeight: FontWeight.w800),
                               ),
                               Text(
                                 "@${salon.salon.username}",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
+                                style: Theme.of(context).textTheme.labelSmall
                                     ?.copyWith(color: Colors.grey),
                               ),
                             ],
@@ -490,13 +465,10 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Contact salon',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey[700],
-                            ),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey[700],
+                        ),
                       ),
                     ),
                   ),
@@ -528,6 +500,30 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                     ),
                     onTap: () {
                       // share logic
+                    },
+                  ),
+
+                  const Divider(height: 1),
+
+                  ListTile(
+                    leading: const Icon(Icons.notifications_off_outlined),
+                    title: const Text('Mute salon'),
+                    subtitle: const Text('Hide notifications from this salon'),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final result = await MuteRepository().mute(
+                        targetType: 'salon',
+                        targetId: salon.salon.id,
+                      );
+                      if (!context.mounted) return;
+                      result.match(
+                        (failure) => ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(failure.message)),
+                        ),
+                        (_) => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Salon muted')),
+                        ),
+                      );
                     },
                   ),
 
@@ -594,22 +590,20 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
             );
 
           // Jump straight to date/time picker — style & salon already chosen
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const PickDateTimePage()),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const PickDateTimePage()));
         },
       ),
     );
   }
-
-
 
   bool notFollowing = true;
   List<int> items = List.generate(15, (index) => index);
   bool isLoadingMore = false;
 
   Widget _buildContent(BuildContext context, SalonViewProfileModel salon) {
-    // Dart weekday: Mon=1, Tue=2... Sun=7. 
+    // Dart weekday: Mon=1, Tue=2... Sun=7.
     // We subtract 1 to match your backend (Mon=0... Sun=6).
     final int currentDayIndex = DateTime.now().weekday - 1;
 
@@ -631,19 +625,23 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
     final size = MediaQuery.of(context).size;
 
-    // 
+    //
     final isFollowing = salon.viewer.isFollowing;
-    final followLoading =
-        ref.watch(salonFollowActionViewModelProvider);
-    final followVM =
-        ref.read(salonFollowActionViewModelProvider.notifier);
+    final isSaved = salon.viewer.isSaved;
+    final followLoading = ref.watch(salonFollowActionViewModelProvider);
+    final followVM = ref.read(salonFollowActionViewModelProvider.notifier);
 
     final postsState = ref.watch(profilePostsViewModelProvider(salon.salon.id));
-    final postsNotifier = ref.read(profilePostsViewModelProvider(salon.salon.id).notifier);
+    final postsNotifier = ref.read(
+      profilePostsViewModelProvider(salon.salon.id).notifier,
+    );
 
-    final activityState = ref.watch(salonActivityViewModelProvider(salon.salon.id));
-    final activityNotifier =
-        ref.read(salonActivityViewModelProvider(salon.salon.id).notifier);
+    final activityState = ref.watch(
+      salonActivityViewModelProvider(salon.salon.id),
+    );
+    final activityNotifier = ref.read(
+      salonActivityViewModelProvider(salon.salon.id).notifier,
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Only call if still loading and no data
@@ -656,7 +654,6 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
         activityNotifier.getInitialActivity();
       }
     });
-
 
     return RefreshIndicator(
       onRefresh: _handleRefresh,
@@ -701,8 +698,12 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                 flexibleSpace: FlexibleSpaceBar(
                   // Better alignment when pinned
                   centerTitle: false,
-                  titlePadding: const EdgeInsetsDirectional.only(start: 12, bottom: 12, end: 12),
-          
+                  titlePadding: const EdgeInsetsDirectional.only(
+                    start: 12,
+                    bottom: 12,
+                    end: 12,
+                  ),
+
                   // COLLAPSED (PINNED) TITLE: avatar size + alignment fixed
                   title: _isSliverAppBarExpanded
                       ? Row(
@@ -713,7 +714,10 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                               height: 48,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
                                 boxShadow: const [
                                   BoxShadow(
                                     color: Colors.black26,
@@ -727,7 +731,8 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                 child: CachedNetworkImage(
                                   imageUrl: salon.salon.profilePicture,
                                   fit: BoxFit.cover,
-                                  errorWidget: (_, _, _) => const Icon(Icons.person),
+                                  errorWidget: (_, _, _) =>
+                                      const Icon(Icons.person),
                                 ),
                               ),
                             ),
@@ -737,7 +742,8 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                 salon.salon.username,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -746,7 +752,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                           ],
                         )
                       : null,
-          
+
                   background: ClipRRect(
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(10),
@@ -759,11 +765,14 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         Container(
                           decoration: BoxDecoration(
                             gradient: RadialGradient(
-                              colors: [Colors.brown.shade400, Colors.blueGrey.shade500],
+                              colors: [
+                                Colors.brown.shade400,
+                                Colors.blueGrey.shade500,
+                              ],
                             ),
                           ),
                         ),
-          
+
                         // COVER IMAGE
                         if (salon.salon.coverImage.isNotEmpty)
                           CachedNetworkImage(
@@ -771,7 +780,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                             fit: BoxFit.cover,
                             errorWidget: (_, _, _) => const SizedBox.shrink(),
                           ),
-          
+
                         // Bottom Gradient (contrast)
                         Positioned(
                           bottom: 0,
@@ -783,19 +792,19 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                               gradient: LinearGradient(
                                 begin: Alignment.bottomCenter,
                                 end: Alignment.topCenter,
-                                colors: [
-                                  Colors.black54,
-                                  Colors.transparent,
-                                ],
+                                colors: [Colors.black54, Colors.transparent],
                               ),
                             ),
                           ),
                         ),
-          
+
                         // EXPANDED HEADER CONTENT (keeps your structure: title/user, followers+open, slogan)
                         Positioned.fill(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 20,
+                            ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.end,
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -808,7 +817,10 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                       height: 96,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white, width: 3),
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 3,
+                                        ),
                                         boxShadow: const [
                                           BoxShadow(
                                             color: Colors.black26,
@@ -821,19 +833,24 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                         child: CachedNetworkImage(
                                           imageUrl: salon.salon.profilePicture,
                                           fit: BoxFit.cover,
-                                          placeholder: (_, _) => Container(color: Colors.grey[300]),
-                                          errorWidget: (_, _, _) =>
-                                              const Icon(Icons.person, size: 40),
+                                          placeholder: (_, _) => Container(
+                                            color: Colors.grey[300],
+                                          ),
+                                          errorWidget: (_, _, _) => const Icon(
+                                            Icons.person,
+                                            size: 40,
+                                          ),
                                         ),
                                       ),
                                     ),
-          
+
                                     const SizedBox(width: 15),
-          
+
                                     // Title + Username
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             salon.salon.name,
@@ -851,7 +868,9 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                              color: Colors.white.withValues(alpha: 0.7),
+                                              color: Colors.white.withValues(
+                                                alpha: 0.7,
+                                              ),
                                               fontSize: 14,
                                             ),
                                           ),
@@ -860,9 +879,9 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                     ),
                                   ],
                                 ),
-          
+
                                 const SizedBox(height: 12),
-          
+
                                 // Row: Left = Follow/Follower/Options, Right = Open/Hours
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -874,8 +893,12 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                         if (!isFollowing)
                                           FilledButton.icon(
                                             style: FilledButton.styleFrom(
-                                              backgroundColor: Theme.of(context).colorScheme.secondary,
-                                              foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                                              backgroundColor: Theme.of(
+                                                context,
+                                              ).colorScheme.secondary,
+                                              foregroundColor: Theme.of(
+                                                context,
+                                              ).colorScheme.onSecondary,
                                             ),
                                             onPressed: followLoading
                                                 ? null
@@ -888,26 +911,43 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                                 ? SizedBox(
                                                     height: 16,
                                                     width: 16,
-                                                    child: CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      color: Theme.of(context).colorScheme.primary,
-                                                    ),
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Theme.of(
+                                                            context,
+                                                          ).colorScheme.primary,
+                                                        ),
                                                   )
-                                                : const Icon(Icons.add, size: 18),
+                                                : const Icon(
+                                                    Icons.add,
+                                                    size: 18,
+                                                  ),
                                             label: const Text("Follow"),
                                           )
                                         else
                                           GestureDetector(
                                             onTap: () {
-                                              _showFollowersBottomSheet(context, salon);
+                                              _showFollowersBottomSheet(
+                                                context,
+                                                salon,
+                                              );
                                             },
                                             child: Container(
                                               padding:
-                                                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: Colors.white.withValues(alpha: 0.18),
-                                                borderRadius: BorderRadius.circular(18),
-                                                border: Border.all(color: Colors.white24),
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.18,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(18),
+                                                border: Border.all(
+                                                  color: Colors.white24,
+                                                ),
                                               ),
                                               child: Row(
                                                 children: [
@@ -915,7 +955,8 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                                     '${salon.metrics.followersCount}',
                                                     style: const TextStyle(
                                                       color: Colors.white,
-                                                      fontWeight: FontWeight.w800,
+                                                      fontWeight:
+                                                          FontWeight.w800,
                                                     ),
                                                   ),
                                                   const SizedBox(width: 6),
@@ -924,20 +965,23 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                                     style: TextStyle(
                                                       color: Colors.white70,
                                                       fontSize: 12,
-                                                      fontWeight: FontWeight.w600,
+                                                      fontWeight:
+                                                          FontWeight.w600,
                                                     ),
                                                   ),
                                                 ],
                                               ),
                                             ),
                                           ),
-          
+
                                         const SizedBox(width: 10),
-          
+
                                         /// ---------------- MORE ACTIONS ----------------
                                         if (isFollowing)
                                           Material(
-                                            color: Colors.white.withValues(alpha: 0.12),
+                                            color: Colors.white.withValues(
+                                              alpha: 0.12,
+                                            ),
                                             shape: const CircleBorder(),
                                             clipBehavior: Clip.antiAlias,
                                             child: IconButton(
@@ -946,18 +990,111 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                                 color: Colors.white,
                                               ),
                                               onPressed: () {
-                                                _showSalonActionsSheet(context, salon);
+                                                _showSalonActionsSheet(
+                                                  context,
+                                                  salon,
+                                                );
                                               },
                                             ),
                                           ),
+
+                                        const SizedBox(width: 8),
+
+                                        Material(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          shape: const CircleBorder(),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: IconButton(
+                                            tooltip: 'Chat',
+                                            icon: const Icon(
+                                              Icons.chat_bubble_outline,
+                                              color: Colors.white,
+                                            ),
+                                            onPressed: () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      SingleChatPage(
+                                                        salonId: salon.salon.id,
+                                                        initialTitle:
+                                                            salon.salon.name,
+                                                      ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+
+                                        const SizedBox(width: 8),
+
+                                        Material(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          shape: const CircleBorder(),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: IconButton(
+                                            tooltip: isSaved
+                                                ? 'Unsave salon'
+                                                : 'Save salon',
+                                            icon: Icon(
+                                              isSaved
+                                                  ? Icons.bookmark
+                                                  : Icons.bookmark_border,
+                                              color: Colors.white,
+                                            ),
+                                            onPressed: () async {
+                                              final notifier = ref.read(
+                                                salonViewProfileViewModelProvider(
+                                                  salon.salon.id,
+                                                ).notifier,
+                                              );
+                                              final previous = isSaved;
+                                              notifier.applyOptimisticSaved(
+                                                !previous,
+                                              );
+                                              final result = await ref
+                                                  .read(savedRepositoryProvider)
+                                                  .toggleSalon(salon.salon.id);
+                                              if (!context.mounted) return;
+                                              result.fold(
+                                                (failure) {
+                                                  notifier.applyOptimisticSaved(
+                                                    previous,
+                                                  );
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        failure.message,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                (saved) {
+                                                  notifier.applyOptimisticSaved(
+                                                    saved,
+                                                  );
+                                                  ref.invalidate(
+                                                    savedCollectionProvider,
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ),
                                       ],
                                     ),
-          
+
                                     const Spacer(),
-          
+
                                     // RIGHT SIDE (Open status + hours)
                                     Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Row(
@@ -968,16 +1105,22 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                               height: 8,
                                               decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
-                                                color: todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent,
+                                                color: todaysHours.isOpen
+                                                    ? Colors.greenAccent
+                                                    : Colors.redAccent,
                                               ),
                                             ),
                                             const SizedBox(width: 6),
                                             Text(
-                                              todaysHours.isOpen ? "OPEN" : "CLOSED",
+                                              todaysHours.isOpen
+                                                  ? "OPEN"
+                                                  : "CLOSED",
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w900,
-                                                color: todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent,
+                                                color: todaysHours.isOpen
+                                                    ? Colors.greenAccent
+                                                    : Colors.redAccent,
                                               ),
                                             ),
                                           ],
@@ -1005,19 +1148,23 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                     ),
                                   ],
                                 ),
-          
+
                                 const SizedBox(height: 10),
-          
+
                                 // SLOGAN at bottom (restored)
                                 Row(
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        salon.salon.slogan.isNotEmpty ? salon.salon.slogan : "",
+                                        salon.salon.slogan.isNotEmpty
+                                            ? salon.salon.slogan
+                                            : "",
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          color: Colors.white.withValues(alpha: 0.92),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.92,
+                                          ),
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -1033,11 +1180,14 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                   ),
                 ),
               ),
-          
+
               SliverSpaceHeader(title: 'Bio'),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1048,9 +1198,9 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelMedium,
                       ),
-          
+
                       const SizedBox(height: 6),
-          
+
                       // READ MORE (optional future expansion)
                       GestureDetector(
                         onTap: () {
@@ -1058,15 +1208,16 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         },
                         child: Text(
                           "", // "Read more",
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                         ),
                       ),
-          
+
                       const SizedBox(height: 14),
-          
+
                       // TRUST / CONTEXT CHIPS
                       Wrap(
                         spacing: 8,
@@ -1075,17 +1226,24 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.star, size: 18, color: Color.fromARGB(255, 255, 174, 0),),
+                                const Icon(
+                                  Icons.star,
+                                  size: 18,
+                                  color: Color.fromARGB(255, 255, 174, 0),
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   salon.metrics.rating.toString(),
@@ -1095,17 +1253,24 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.verified, size: 18, color: Color.fromARGB(255, 205, 250, 3),),
+                                const Icon(
+                                  Icons.verified,
+                                  size: 18,
+                                  color: Color.fromARGB(255, 205, 250, 3),
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   "Certified",
@@ -1115,17 +1280,24 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.workspace_premium, size: 18, color: Color.fromARGB(255, 151, 143, 116),),
+                                const Icon(
+                                  Icons.workspace_premium,
+                                  size: 18,
+                                  color: Color.fromARGB(255, 151, 143, 116),
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   "5+ Years",
@@ -1136,14 +1308,19 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                           ),
                         ],
                       ),
-          
+
                       const SizedBox(height: 16),
-          
+
                       Container(
                         width: size.width * 0.9,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(20),
                           // Added the border color here
                           border: Border.all(
@@ -1152,7 +1329,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                           ),
                         ),
                         child: Row(
-                          // mainAxisSize: MainAxisSize.min is no longer strictly necessary 
+                          // mainAxisSize: MainAxisSize.min is no longer strictly necessary
                           // since the Container has a fixed width, but it doesn't hurt.
                           children: [
                             Icon(
@@ -1169,26 +1346,28 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                   salon.contacts.location?.lng ?? 0,
                                 ),
                                 child: Text(
-                                  salon.contacts.location?.address ?? "No Address",
+                                  salon.contacts.location?.address ??
+                                      "No Address",
                                   // Handles the "..." at the end
-                                  overflow: TextOverflow.ellipsis, 
+                                  overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
-                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                        decorationThickness: 5,
-                                      ),
+                                  style: Theme.of(context).textTheme.labelMedium
+                                      ?.copyWith(decorationThickness: 5),
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-          
+
                       if (salon.contacts.location != null &&
                           (salon.contacts.location!.lat != 0 ||
                               salon.contacts.location!.lng != 0)) ...[
                         const SizedBox(height: 16),
                         _SalonMapView(
                           currentSalonId: salon.salon.id,
+                          salonName: salon.salon.name,
+                          coverImage: salon.salon.coverImage,
                           lat: salon.contacts.location!.lat,
                           lng: salon.contacts.location!.lng,
                         ),
@@ -1213,71 +1392,74 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                   ),
                 ),
               ),
-          
+
               SliverSpaceHeader(title: 'Salon Gallery'),
               SliverToBoxAdapter(
                 child: salon.media.gallery.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: Text('No visuals uploaded')),
-                  )
-                : SizedBox(
-                    height: 190, // Portfolio feel
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: salon.media.gallery.length,
-                      itemBuilder: (context, i) {
-                        return TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: 1),
-                          duration: Duration(milliseconds: 450 + (i * 120)),
-                          curve: Curves.easeOutCubic,
-                          builder: (context, value, child) {
-                            return Transform.translate(
-                              offset: Offset(30 * (1 - value), 0),
-                              child: Opacity(opacity: value, child: child),
-                            );
-                          },
-                          child: Container(
-                            width: 150,
-                            margin: const EdgeInsets.only(right: 12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black26,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 6),
+                    ? const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: Text('No visuals uploaded')),
+                      )
+                    : SizedBox(
+                        height: 190, // Portfolio feel
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: salon.media.gallery.length,
+                          itemBuilder: (context, i) {
+                            return TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0, end: 1),
+                              duration: Duration(milliseconds: 450 + (i * 120)),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Transform.translate(
+                                  offset: Offset(30 * (1 - value), 0),
+                                  child: Opacity(opacity: value, child: child),
+                                );
+                              },
+                              child: Container(
+                                width: 150,
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 6),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: CachedNetworkImage(
-                                imageUrl: salon.media.gallery[i].imageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: Colors.grey[200],
-                                  child: const Center(
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: Colors.grey[300],
-                                  child: const Icon(
-                                    Icons.broken_image,
-                                    color: Colors.grey,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: CachedNetworkImage(
+                                    imageUrl: salon.media.gallery[i].imageUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: Colors.grey[200],
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                          color: Colors.grey[300],
+                                          child: const Icon(
+                                            Icons.broken_image,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                            );
+                          },
+                        ),
+                      ),
               ),
-              
+
               // Book Button
               SliverSpaceHeader(title: ''),
               SliverToBoxAdapter(
@@ -1285,7 +1467,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                   onPressed: () => _showSalonServicesSheet(context, salon),
                 ),
               ),
-          
+
               SliverSpaceHeader(title: ''),
               SliverPersistentHeader(
                 pinned: true,
@@ -1294,57 +1476,52 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                     controller: _tabController,
                     indicatorSize: TabBarIndicatorSize.tab,
                     labelColor: Theme.of(context).colorScheme.primary,
-                    unselectedLabelColor:
-                        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    unselectedLabelColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
                     tabs: const [
                       Tab(
                         icon: Icon(Bootstrap.grid_3x3_gap_fill),
                         text: 'Grid',
                       ),
-                      Tab(
-                        icon: Icon(Bootstrap.view_stacked),
-                        text: 'Posts',
-                      ),
-                      Tab(
-                        icon: Icon(Bootstrap.activity),
-                        text: 'Activity',
-                      ),
+                      Tab(icon: Icon(Bootstrap.view_stacked), text: 'Posts'),
+                      Tab(icon: Icon(Bootstrap.activity), text: 'Activity'),
                     ],
                   ),
                 ),
               ),
-          
-            //   if (_selectedTabIndex == 0)
-            //     UniversalPostGrid(posts: const [], onPostTap: (post) => print(post))
-            //   else if (_selectedTabIndex == 1)
-            //     SliverList(
-            //       delegate: SliverChildBuilderDelegate(
-            //         (_, i) => Post(
-            //           postId: 'postId_$i',
-            //           isLiked: false,
-            //           aspectRatio: 1,
-            //           username: salon.salon.username,
-            //           profileImage: salon.salon.profilePicture,
-            //           images: [salon.salon.coverImage],
-            //           likesCount: 100,
-            //           sharesCount: 50,
-            //           commentsCount: 20,
-            //           description: 'Salon highlight',
-            //           datePosted: 'Today',
-            //         ),
-            //         childCount: 3,
-            //       ),
-            //     ),
-          
-            //     // Loading Spinner at the bottom
-            //     if (isLoadingMore)
-            //       const SliverToBoxAdapter(
-            //         child: Padding(
-            //           padding: EdgeInsets.symmetric(vertical: 20),
-            //           child: Center(child: CircularProgressIndicator()),
-            //         ),
-            //       ),
-            // ],
+
+              //   if (_selectedTabIndex == 0)
+              //     UniversalPostGrid(posts: const [], onPostTap: (post) => print(post))
+              //   else if (_selectedTabIndex == 1)
+              //     SliverList(
+              //       delegate: SliverChildBuilderDelegate(
+              //         (_, i) => Post(
+              //           postId: 'postId_$i',
+              //           isLiked: false,
+              //           aspectRatio: 1,
+              //           username: salon.salon.username,
+              //           profileImage: salon.salon.profilePicture,
+              //           images: [salon.salon.coverImage],
+              //           likesCount: 100,
+              //           sharesCount: 50,
+              //           commentsCount: 20,
+              //           description: 'Salon highlight',
+              //           datePosted: 'Today',
+              //         ),
+              //         childCount: 3,
+              //       ),
+              //     ),
+
+              //     // Loading Spinner at the bottom
+              //     if (isLoadingMore)
+              //       const SliverToBoxAdapter(
+              //         child: Padding(
+              //           padding: EdgeInsets.symmetric(vertical: 20),
+              //           child: Center(child: CircularProgressIndicator()),
+              //         ),
+              //       ),
+              // ],
               if (_selectedTabIndex == 2)
                 activityState.when(
                   loading: () => const SliverFillRemaining(
@@ -1369,33 +1546,32 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                   },
                 )
               else
-              postsState.when(
-                loading: () => const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => SliverToBoxAdapter(
-                  child: Center(child: Text('Error: $e')),
-                ),
-                data: (posts) {
-                  if (posts.isEmpty) {
-                    return const SliverFillRemaining(
-                      child: Center(child: Text('No posts yet')),
-                    );
-                  }
+                postsState.when(
+                  loading: () => const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (e, _) => SliverToBoxAdapter(
+                    child: Center(child: Text('Error: $e')),
+                  ),
+                  data: (posts) {
+                    if (posts.isEmpty) {
+                      return const SliverFillRemaining(
+                        child: Center(child: Text('No posts yet')),
+                      );
+                    }
 
-                  if (_selectedTabIndex == 0) {
-                    // GRID TAB
-                    return UniversalPostGrid(
-                      posts: posts,
-                      onPostTap: (post) {
-                        // Logic to navigate or switch to List view
-                      },
-                    );
-                  } else {
-                    // LIST TAB
-                    return SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
+                    if (_selectedTabIndex == 0) {
+                      // GRID TAB
+                      return UniversalPostGrid(
+                        posts: posts,
+                        onPostTap: (post) {
+                          // Logic to navigate or switch to List view
+                        },
+                      );
+                    } else {
+                      // LIST TAB
+                      return SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
                           final post = posts[index];
                           return Post(
                             postId: post.id,
@@ -1410,14 +1586,12 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                             description: post.caption,
                             datePosted: post.createdAt,
                           );
-                        },
-                        childCount: posts.length,
-                      ),
-                    );
-                  }
-                },
-              ),
-          
+                        }, childCount: posts.length),
+                      );
+                    }
+                  },
+                ),
+
               // 3. PAGINATION SPINNER
               if ((_selectedTabIndex == 2 && activityNotifier.isLoadingMore) ||
                   (_selectedTabIndex != 2 &&
@@ -1512,9 +1686,17 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(height: 14, width: double.infinity, color: Colors.white),
+                  Container(
+                    height: 14,
+                    width: double.infinity,
+                    color: Colors.white,
+                  ),
                   const SizedBox(height: 8),
-                  Container(height: 14, width: double.infinity, color: Colors.white),
+                  Container(
+                    height: 14,
+                    width: double.infinity,
+                    color: Colors.white,
+                  ),
                   const SizedBox(height: 8),
                   Container(height: 14, width: 220, color: Colors.white),
                 ],
@@ -1561,7 +1743,10 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (_, _) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Container(
                   height: 200,
                   decoration: BoxDecoration(
@@ -1577,9 +1762,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
       ),
     );
   }
-
 }
-
 
 class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;
@@ -1599,7 +1782,8 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(covariant _StickyTabBarDelegate old) => tabBar != old.tabBar;
+  bool shouldRebuild(covariant _StickyTabBarDelegate old) =>
+      tabBar != old.tabBar;
 }
 
 // ── Embedded OpenStreetMap tile map ───────────────────────────────────────────
@@ -1607,11 +1791,15 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 class _SalonMapView extends ConsumerWidget {
   /// The salon currently being viewed.
   final String currentSalonId;
+  final String salonName;
+  final String? coverImage;
   final double lat;
   final double lng;
 
   const _SalonMapView({
     required this.currentSalonId,
+    required this.salonName,
+    required this.coverImage,
     required this.lat,
     required this.lng,
   });
@@ -1619,31 +1807,37 @@ class _SalonMapView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final center = LatLng(lat, lng);
-    final nearbyAsync = ref.watch(
-      nearbySalonsAtProvider((lat: lat, lng: lng)),
-    );
+    final nearbyAsync = ref.watch(nearbySalonsAtProvider((lat: lat, lng: lng)));
 
     // Build markers for nearby salons (excluding the one being viewed)
-    final nearbyMarkers = nearbyAsync.whenOrNull(
-      data: (items) => items
-          .where((s) => s.id != currentSalonId && s.lat != null && s.lng != null)
-          .map(
-            (s) => Marker(
-              point: LatLng(s.lat!, s.lng!),
-              width: 32,
-              height: 32,
-              child: GestureDetector(
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ViewServiceProfilePage(salonId: s.id),
+    final nearbyMarkers =
+        nearbyAsync.whenOrNull(
+          data: (items) => items
+              .where(
+                (s) => s.id != currentSalonId && s.lat != null && s.lng != null,
+              )
+              .map(
+                (s) => Marker(
+                  point: LatLng(s.lat!, s.lng!),
+                  width: 132,
+                  height: 74,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ViewServiceProfilePage(salonId: s.id),
+                      ),
+                    ),
+                    child: _SalonMapMarker(
+                      title: s.title,
+                      imageUrl: s.coverImage,
+                      accentColor: Colors.deepOrange,
+                    ),
                   ),
                 ),
-                child: const Icon(Icons.location_pin, color: Colors.orange, size: 32),
-              ),
-            ),
-          )
-          .toList(),
-    ) ?? [];
+              )
+              .toList(),
+        ) ??
+        [];
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -1656,12 +1850,15 @@ class _SalonMapView extends ConsumerWidget {
                 initialCenter: center,
                 initialZoom: 14,
                 interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
+                  flags:
+                      InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
                 ),
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate:
+                      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'com.africa_beuty.app',
                 ),
                 MarkerLayer(
@@ -1671,9 +1868,14 @@ class _SalonMapView extends ConsumerWidget {
                     // Current salon (red, on top)
                     Marker(
                       point: center,
-                      width: 44,
-                      height: 44,
-                      child: const Icon(Icons.location_pin, color: Colors.red, size: 44),
+                      width: 150,
+                      height: 82,
+                      child: _SalonMapMarker(
+                        title: salonName,
+                        imageUrl: coverImage,
+                        accentColor: Colors.redAccent,
+                        isActive: true,
+                      ),
                     ),
                   ],
                 ),
@@ -1692,7 +1894,10 @@ class _SalonMapView extends ConsumerWidget {
                   launchUrl(uri, mode: LaunchMode.externalApplication);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(20),
@@ -1718,7 +1923,10 @@ class _SalonMapView extends ConsumerWidget {
                 top: 10,
                 left: 10,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(20),
@@ -1726,11 +1934,18 @@ class _SalonMapView extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.location_pin, color: Colors.orange, size: 14),
+                      const Icon(
+                        Icons.location_pin,
+                        color: Colors.orange,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${nearbyMarkers.length} nearby salon${nearbyMarkers.length == 1 ? '' : 's'}',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -1741,4 +1956,84 @@ class _SalonMapView extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _SalonMapMarker extends StatelessWidget {
+  final String title;
+  final String? imageUrl;
+  final Color accentColor;
+  final bool isActive;
+
+  const _SalonMapMarker({
+    required this.title,
+    required this.imageUrl,
+    required this.accentColor,
+    this.isActive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final safeTitle = title.trim().isEmpty ? 'Salon' : title.trim();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          constraints: const BoxConstraints(maxWidth: 150),
+          padding: const EdgeInsets.fromLTRB(6, 5, 9, 5),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: accentColor, width: isActive ? 2 : 1.4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: accentColor.withValues(alpha: 0.5)),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: imageUrl != null && imageUrl!.trim().isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, _, _) => _markerFallback(),
+                      )
+                    : _markerFallback(),
+              ),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  safeTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Icon(Icons.location_pin, color: accentColor, size: isActive ? 24 : 20),
+      ],
+    );
+  }
+
+  Widget _markerFallback() =>
+      Icon(Icons.storefront, color: accentColor, size: 18);
 }

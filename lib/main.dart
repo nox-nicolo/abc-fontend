@@ -4,6 +4,7 @@ import 'package:africa_beuty/core/page/bottom_nav.dart';
 import 'package:africa_beuty/core/reminders/reminder_service.dart';
 import 'package:africa_beuty/core/theme/dark_theme.dart';
 import 'package:africa_beuty/core/theme/light_theme.dart';
+import 'package:africa_beuty/core/widgets/network_status_banner.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:africa_beuty/feature/auth/view/page/login.dart';
 import 'package:africa_beuty/feature/auth/view/page/logout_page.dart';
@@ -80,6 +81,9 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey,
+      builder: (context, child) {
+        return NetworkStatusBanner(child: child ?? const SizedBox.shrink());
+      },
       home: _getStartPage(),
       routes: {
         '/select_account': (context) => const SelectAccount(),

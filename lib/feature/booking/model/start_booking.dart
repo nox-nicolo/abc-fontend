@@ -21,8 +21,7 @@ class CreateBookingRequestModel {
     String? note,
   }) {
     return CreateBookingRequestModel(
-      salonServicePriceId:
-          salonServicePriceId ?? this.salonServicePriceId,
+      salonServicePriceId: salonServicePriceId ?? this.salonServicePriceId,
       startAt: startAt ?? this.startAt,
       note: note ?? this.note,
     );
@@ -42,15 +41,11 @@ class CreateBookingRequestModel {
   // --------------------------------------------------
   // fromMap (OPTIONAL — usually not needed)
   // --------------------------------------------------
-  factory CreateBookingRequestModel.fromMap(
-    Map<String, dynamic> map,
-  ) {
+  factory CreateBookingRequestModel.fromMap(Map<String, dynamic> map) {
     return CreateBookingRequestModel(
-      salonServicePriceId:
-          map['salon_service_price_id']?.toString() ?? '',
-      startAt: DateTime.tryParse(
-            map['start_at']?.toString() ?? '',
-          ) ??
+      salonServicePriceId: map['salon_service_price_id']?.toString() ?? '',
+      startAt:
+          DateTime.tryParse(map['start_at']?.toString() ?? '') ??
           DateTime.now(),
       note: map['note']?.toString(),
     );
@@ -82,9 +77,7 @@ class CreateBookingRequestModel {
 
   @override
   int get hashCode {
-    return salonServicePriceId.hashCode ^
-        startAt.hashCode ^
-        note.hashCode;
+    return salonServicePriceId.hashCode ^ startAt.hashCode ^ note.hashCode;
   }
 }
 
@@ -103,6 +96,10 @@ class BookingModel {
     required this.durationMinutesSnapshot,
     this.note,
     this.cancelReason,
+    this.hasReview = false,
+    this.reviewRating,
+    this.reviewComment,
+    this.reviewCreatedAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -123,6 +120,10 @@ class BookingModel {
 
   final String? note;
   final String? cancelReason;
+  final bool hasReview;
+  final int? reviewRating;
+  final String? reviewComment;
+  final DateTime? reviewCreatedAt;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -144,6 +145,10 @@ class BookingModel {
     int? durationMinutesSnapshot,
     String? note,
     String? cancelReason,
+    bool? hasReview,
+    int? reviewRating,
+    String? reviewComment,
+    DateTime? reviewCreatedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -158,9 +163,14 @@ class BookingModel {
       serviceNameSnapshot: serviceNameSnapshot ?? this.serviceNameSnapshot,
       priceSnapshot: priceSnapshot ?? this.priceSnapshot,
       currencySnapshot: currencySnapshot ?? this.currencySnapshot,
-      durationMinutesSnapshot: durationMinutesSnapshot ?? this.durationMinutesSnapshot,
+      durationMinutesSnapshot:
+          durationMinutesSnapshot ?? this.durationMinutesSnapshot,
       note: note ?? this.note,
       cancelReason: cancelReason ?? this.cancelReason,
+      hasReview: hasReview ?? this.hasReview,
+      reviewRating: reviewRating ?? this.reviewRating,
+      reviewComment: reviewComment ?? this.reviewComment,
+      reviewCreatedAt: reviewCreatedAt ?? this.reviewCreatedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -184,6 +194,10 @@ class BookingModel {
       'duration_minutes_snapshot': durationMinutesSnapshot,
       'note': note,
       'cancel_reason': cancelReason,
+      'has_review': hasReview,
+      'review_rating': reviewRating,
+      'review_comment': reviewComment,
+      'review_created_at': reviewCreatedAt?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -199,16 +213,30 @@ class BookingModel {
       customerName: map['customer_name']?.toString(),
       salonId: map['salon_id']?.toString() ?? '',
       status: map['status']?.toString() ?? 'pending',
-      startAt: DateTime.tryParse(map['start_at']?.toString() ?? '') ?? DateTime.now(),
-      endAt: DateTime.tryParse(map['end_at']?.toString() ?? '') ?? DateTime.now(),
+      startAt:
+          DateTime.tryParse(map['start_at']?.toString() ?? '') ??
+          DateTime.now(),
+      endAt:
+          DateTime.tryParse(map['end_at']?.toString() ?? '') ?? DateTime.now(),
       serviceNameSnapshot: map['service_name_snapshot']?.toString() ?? '',
       priceSnapshot: (map['price_snapshot'] as num?)?.toDouble() ?? 0.0,
       currencySnapshot: map['currency_snapshot']?.toString() ?? '',
-      durationMinutesSnapshot: (map['duration_minutes_snapshot'] as num?)?.toInt() ?? 0,
+      durationMinutesSnapshot:
+          (map['duration_minutes_snapshot'] as num?)?.toInt() ?? 0,
       note: map['note']?.toString(),
       cancelReason: map['cancel_reason']?.toString(),
-      createdAt: DateTime.tryParse(map['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      hasReview: map['has_review'] == true,
+      reviewRating: (map['review_rating'] as num?)?.toInt(),
+      reviewComment: map['review_comment']?.toString(),
+      reviewCreatedAt: DateTime.tryParse(
+        map['review_created_at']?.toString() ?? '',
+      ),
+      createdAt:
+          DateTime.tryParse(map['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(map['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -241,9 +269,12 @@ class BookingModel {
         other.serviceNameSnapshot == serviceNameSnapshot &&
         other.priceSnapshot == priceSnapshot &&
         other.currencySnapshot == currencySnapshot &&
-        other.durationMinutesSnapshot ==
-            durationMinutesSnapshot &&
+        other.durationMinutesSnapshot == durationMinutesSnapshot &&
         other.note == note &&
+        other.hasReview == hasReview &&
+        other.reviewRating == reviewRating &&
+        other.reviewComment == reviewComment &&
+        other.reviewCreatedAt == reviewCreatedAt &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -261,6 +292,10 @@ class BookingModel {
         currencySnapshot.hashCode ^
         durationMinutesSnapshot.hashCode ^
         note.hashCode ^
+        hasReview.hashCode ^
+        reviewRating.hashCode ^
+        reviewComment.hashCode ^
+        reviewCreatedAt.hashCode ^
         createdAt.hashCode ^
         updatedAt.hashCode;
   }

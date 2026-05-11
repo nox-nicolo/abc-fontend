@@ -22,6 +22,7 @@ class _CustomerBookingPageState extends ConsumerState<CustomerBookingPage> {
     ref.invalidate(myBookingsViewModelProvider('pending'));
     ref.invalidate(myBookingsViewModelProvider('confirmed'));
     ref.invalidate(myBookingsViewModelProvider('completed'));
+    ref.invalidate(myBookingsViewModelProvider('cancelled'));
   }
 
   @override

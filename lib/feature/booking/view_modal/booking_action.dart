@@ -1,8 +1,11 @@
 // booking_action_viewmodel.dart
 
 import 'package:africa_beuty/core/failure/failure.dart';
+import 'package:africa_beuty/feature/booking/model/booking_status.dart';
+import 'package:africa_beuty/feature/booking/model/start_booking.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_action.dart';
 import 'package:africa_beuty/feature/booking/view_modal/booking_status.dart';
+import 'package:africa_beuty/feature/notifications/view_model/notification.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -15,70 +18,144 @@ class BookingActionViewModel extends _$BookingActionViewModel {
     return const AsyncValue.data(null);
   }
 
-  // --------------------------------------------------
-  // ACCEPT BOOKING
-  // --------------------------------------------------
   Future<void> accept(String bookingId) async {
     await _run(
-      () => ref
-          .read(bookingActionRepositoryProvider)
-          .accept(bookingId),
+      () => ref.read(bookingActionRepositoryProvider).accept(bookingId),
+      bookingId: bookingId,
+      optimisticStatus: 'confirmed',
     );
   }
 
-  // --------------------------------------------------
-  // REJECT BOOKING
-  // --------------------------------------------------
   Future<void> reject(String bookingId) async {
     await _run(
-      () => ref
-          .read(bookingActionRepositoryProvider)
-          .reject(bookingId),
+      () => ref.read(bookingActionRepositoryProvider).reject(bookingId),
+      bookingId: bookingId,
+      optimisticStatus: 'cancelled',
     );
   }
 
-  // --------------------------------------------------
-  // COMPLETE BOOKING
-  // --------------------------------------------------
   Future<void> complete(String bookingId) async {
     await _run(
-      () => ref
-          .read(bookingActionRepositoryProvider)
-          .complete(bookingId),
+      () => ref.read(bookingActionRepositoryProvider).complete(bookingId),
+      bookingId: bookingId,
+      optimisticStatus: 'completed',
     );
   }
 
-  // --------------------------------------------------
-  // INTERNAL EXECUTOR
-  // --------------------------------------------------
   Future<void> _run(
-    Future<Either<AppFailure, void>> Function() action,
-  ) async {
+    Future<Either<AppFailure, BookingModel>> Function() action, {
+    required String bookingId,
+    required String optimisticStatus,
+  }) async {
+    if (state.isLoading) return;
+
     state = const AsyncValue.loading();
+    final snapshots = _snapshots();
+    _applyOptimisticStatus(bookingId, optimisticStatus, snapshots);
 
     final result = await action();
 
     switch (result) {
       case Left(value: final failure):
-        state = AsyncValue.error(
-          failure.message,
-          StackTrace.current,
-        );
+        _restore(snapshots);
+        state = AsyncValue.error(failure.message, StackTrace.current);
 
-      case Right():
-        // 🔁 Refresh booking lists
-        ref.invalidate(bookingListViewModelProvider('pending'));
-        ref.invalidate(bookingListViewModelProvider('confirmed'));
-        ref.invalidate(bookingListViewModelProvider('completed'));
-        ref.invalidate(bookingListViewModelProvider('cancelled'));
-
+      case Right(value: final booking):
+        _reconcile(booking);
+        _refreshAfterSuccess();
         state = const AsyncValue.data(null);
     }
   }
 
-  // --------------------------------------------------
-  // OPTIONAL RESET
-  // --------------------------------------------------
+  List<String> get _statuses => const [
+    'pending',
+    'confirmed',
+    'completed',
+    'cancelled',
+  ];
+
+  Map<String, List<BookingListItem>?> _snapshots() {
+    return {
+      for (final status in _statuses)
+        status: ref.read(bookingListViewModelProvider(status)).value,
+    };
+  }
+
+  void _applyOptimisticStatus(
+    String bookingId,
+    String optimisticStatus,
+    Map<String, List<BookingListItem>?> snapshots,
+  ) {
+    final original = _findSnapshotBooking(bookingId, snapshots);
+    if (original != null) {
+      final optimisticBooking = original.copyWith(status: optimisticStatus);
+      for (final status in _statuses) {
+        ref
+            .read(bookingListViewModelProvider(status).notifier)
+            .insertOrReplace(optimisticBooking);
+      }
+      return;
+    }
+
+    for (final status in _statuses) {
+      ref
+          .read(bookingListViewModelProvider(status).notifier)
+          .applyOptimisticStatus(bookingId, optimisticStatus);
+    }
+  }
+
+  BookingListItem? _findSnapshotBooking(
+    String bookingId,
+    Map<String, List<BookingListItem>?> snapshots,
+  ) {
+    for (final bookings in snapshots.values) {
+      if (bookings == null) continue;
+      for (final booking in bookings) {
+        if (booking.id == bookingId) return booking;
+      }
+    }
+    return null;
+  }
+
+  void _restore(Map<String, List<BookingListItem>?> snapshots) {
+    for (final entry in snapshots.entries) {
+      ref
+          .read(bookingListViewModelProvider(entry.key).notifier)
+          .restore(entry.value);
+    }
+  }
+
+  void _reconcile(BookingModel booking) {
+    final item = BookingListItem(
+      id: booking.id,
+      status: booking.status,
+      customerId: booking.customerId,
+      customerName: booking.customerName ?? '',
+      startAt: booking.startAt,
+      endAt: booking.endAt,
+      serviceName: booking.serviceNameSnapshot,
+      durationMinutes: booking.durationMinutesSnapshot,
+      price: booking.priceSnapshot,
+      currency: booking.currencySnapshot,
+      note: booking.note,
+      cancelReason: booking.cancelReason,
+    );
+
+    for (final status in _statuses) {
+      ref
+          .read(bookingListViewModelProvider(status).notifier)
+          .insertOrReplace(item);
+    }
+  }
+
+  void _refreshAfterSuccess() {
+    for (final status in _statuses) {
+      ref.invalidate(bookingListViewModelProvider(status));
+    }
+    ref.invalidate(unreadCountProvider);
+    ref.invalidate(notificationsViewModelProvider);
+  }
+
   void reset() {
     state = const AsyncValue.data(null);
   }

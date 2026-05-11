@@ -1,5 +1,6 @@
 import 'package:africa_beuty/core/widgets/activity_feed.dart';
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
+import 'package:africa_beuty/feature/notifications/view/widget/notifications_bell.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
@@ -81,7 +82,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
   }
 
   Widget _buildContent(BuildContext context, SalonProfileModel salon) {
-    // Dart weekday: Mon=1, Tue=2... Sun=7. 
+    // Dart weekday: Mon=1, Tue=2... Sun=7.
     // We subtract 1 to match your backend (Mon=0... Sun=6).
     final int currentDayIndex = DateTime.now().weekday - 1;
 
@@ -89,10 +90,10 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
       (h) => h.dayOfWeek == currentDayIndex,
       // If today isn't in the list, we assume they are closed
       orElse: () => WorkingHourModel(
-        dayOfWeek: currentDayIndex, 
-        isOpen: false, 
-        openTime: '', 
-        closeTime: ''
+        dayOfWeek: currentDayIndex,
+        isOpen: false,
+        openTime: '',
+        closeTime: '',
       ),
     );
 
@@ -107,13 +108,16 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
     final size = MediaQuery.of(context).size;
 
     return RefreshIndicator(
-      onRefresh: () => ref.read(salonProfileViewModelProvider.notifier).getSalonProfileData(),
+      onRefresh: () => ref
+          .read(salonProfileViewModelProvider.notifier)
+          .getSalonProfileData(),
       child: CustomScrollView(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
             automaticallyImplyLeading: false,
+            actions: const [NotificationsBell(), SizedBox(width: 6)],
             expandedHeight: size.height * .45,
             collapsedHeight: size.height * .12,
             pinned: true,
@@ -130,20 +134,26 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                 color: Colors.black.withValues(alpha: 0.6),
                                 blurRadius: 50,
                                 spreadRadius: 2,
-                                offset: const Offset(0, 3), // Moves shadow down slightly
+                                offset: const Offset(
+                                  0,
+                                  3,
+                                ), // Moves shadow down slightly
                               ),
                             ],
                           ),
                           child: CircleAvatar(
                             radius: 24,
-                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                             child: ClipOval(
                               child: CachedNetworkImage(
                                 imageUrl: salon.profilePicture,
                                 fit: BoxFit.cover,
                                 width: 48,
                                 height: 48,
-                                errorWidget: (context, url, error) => const Icon(Icons.person),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.person),
                               ),
                             ),
                           ),
@@ -168,7 +178,10 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                     Container(
                       decoration: BoxDecoration(
                         gradient: RadialGradient(
-                          colors: [Colors.brown.shade400, Colors.blueGrey.shade500],
+                          colors: [
+                            Colors.brown.shade400,
+                            Colors.blueGrey.shade500,
+                          ],
                         ),
                       ),
                     ),
@@ -178,14 +191,17 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                       CachedNetworkImage(
                         imageUrl: salon.displayAds,
                         fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => const SizedBox.shrink(),
+                        errorWidget: (context, url, error) =>
+                            const SizedBox.shrink(),
                       ),
 
                     // 3. DARK OVERLAY (Ensures text readability over any image)
                     if (salon.displayAds.isNotEmpty)
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.2), // Adjust darkness here
+                          color: Colors.black.withValues(
+                            alpha: 0.2,
+                          ), // Adjust darkness here
                         ),
                       ),
 
@@ -206,7 +222,8 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                     fit: BoxFit.cover,
                                     width: 100,
                                     height: 100,
-                                    errorWidget: (context, url, error) => Image.asset('assets/images/dp.jpg'),
+                                    errorWidget: (context, url, error) =>
+                                        Image.asset('assets/images/dp.jpg'),
                                   ),
                                 ),
                               ),
@@ -220,17 +237,22 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                       salon.title,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        shadows: [
-                                          Shadow(
-                                            offset: const Offset(0, 1),
-                                            blurRadius: 6.0,
-                                            color: Colors.black.withValues(alpha: 0.6),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            shadows: [
+                                              Shadow(
+                                                offset: const Offset(0, 1),
+                                                blurRadius: 6.0,
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.6,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -238,8 +260,8 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                     children: [
                                       // Later Batch implementation
                                       // Icon(
-                                      //   OctIcons.verified, 
-                                      //   size: 14, 
+                                      //   OctIcons.verified,
+                                      //   size: 14,
                                       //   color: Colors.blue.shade500,
                                       //   shadows: const [Shadow(blurRadius: 4, color: Colors.black26)],
                                       // ),
@@ -249,23 +271,27 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                           salon.username,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            shadows: [
-                                              Shadow(
-                                                offset: const Offset(0, 1),
-                                                blurRadius: 6.0,
-                                                color: Colors.black.withValues(alpha: 0.6),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                shadows: [
+                                                  Shadow(
+                                                    offset: const Offset(0, 1),
+                                                    blurRadius: 6.0,
+                                                    color: Colors.black
+                                                        .withValues(alpha: 0.6),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ],
-                              )
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -273,13 +299,17 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                             children: [
                               // Followers Column with Shadows
                               GestureDetector(
-                                onTap: () { /* Navigate to followers list if needed */ },
+                                onTap: () {
+                                  /* Navigate to followers list if needed */
+                                },
                                 child: Column(
                                   children: [
                                     Text(
                                       '${salon.followers}',
                                       style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onPrimary,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimary,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                         shadows: [
@@ -294,7 +324,9 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                     Text(
                                       'Followers',
                                       style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onPrimary,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimary,
                                         fontSize: 12,
                                         shadows: const [
                                           Shadow(
@@ -308,24 +340,29 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16), 
+                              const SizedBox(width: 16),
                               Row(
                                 children: [
                                   Material(
-                                    color: Colors.black26, // Semi-transparent black
+                                    color: Colors
+                                        .black26, // Semi-transparent black
                                     shape: const CircleBorder(),
                                     clipBehavior: Clip.antiAlias,
-                                    child: const SettingAccount(isCustomer: false),
+                                    child: const SettingAccount(
+                                      isCustomer: false,
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                   Material(
                                     color: Colors.black26,
                                     shape: const CircleBorder(),
                                     clipBehavior: Clip.antiAlias,
-                                    child: const ThreeDotsOptions(isCustomer: false),
+                                    child: const ThreeDotsOptions(
+                                      isCustomer: false,
+                                    ),
                                   ),
                                 ],
-                              )
+                              ),
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -337,7 +374,9 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
                                     shadows: const [
                                       Shadow(
                                         blurRadius: 2.0,
@@ -361,10 +400,16 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                         height: 8,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent,
+                                          color: todaysHours.isOpen
+                                              ? Colors.greenAccent
+                                              : Colors.redAccent,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: (todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent).withValues(alpha: 0.5),
+                                              color:
+                                                  (todaysHours.isOpen
+                                                          ? Colors.greenAccent
+                                                          : Colors.redAccent)
+                                                      .withValues(alpha: 0.5),
                                               blurRadius: 4,
                                               spreadRadius: 1,
                                             ),
@@ -378,9 +423,15 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                           fontSize: 12,
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 1.1,
-                                          color: todaysHours.isOpen ? Colors.greenAccent : Colors.redAccent,
+                                          color: todaysHours.isOpen
+                                              ? Colors.greenAccent
+                                              : Colors.redAccent,
                                           shadows: const [
-                                            Shadow(blurRadius: 4, color: Colors.black87, offset: Offset(0, 1))
+                                            Shadow(
+                                              blurRadius: 4,
+                                              color: Colors.black87,
+                                              offset: Offset(0, 1),
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -395,7 +446,11 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                         color: Colors.white,
                                         fontWeight: FontWeight.w600,
                                         shadows: [
-                                          Shadow(blurRadius: 4, color: Colors.black87, offset: Offset(0, 1))
+                                          Shadow(
+                                            blurRadius: 4,
+                                            color: Colors.black87,
+                                            offset: Offset(0, 1),
+                                          ),
                                         ],
                                       ),
                                     )
@@ -409,7 +464,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                       ),
                                     ),
                                 ],
-                              )
+                              ),
                             ],
                           ),
                         ],
@@ -447,19 +502,34 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                       itemCount: salon.gallery.length,
                       itemBuilder: (_, i) => Container(
                         width: 140, // Set the width for each image
-                        margin: const EdgeInsets.only(right: 12), // Spacing between items
+                        margin: const EdgeInsets.only(
+                          right: 12,
+                        ), // Spacing between items
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(16),
                           child: CachedNetworkImage(
                             imageUrl: salon.gallery[i].imageUrl,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
                             ),
                             errorWidget: (context, url, error) => Container(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              child: Icon(Icons.broken_image, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              child: Icon(
+                                Icons.broken_image,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                         ),
@@ -530,7 +600,8 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(covariant _StickyTabBarDelegate old) => tabBar != old.tabBar;
+  bool shouldRebuild(covariant _StickyTabBarDelegate old) =>
+      tabBar != old.tabBar;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -568,8 +639,7 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
 
   @override
   Widget build(BuildContext context) {
-    final postsState =
-        ref.watch(profilePostsViewModelProvider(widget.salonId));
+    final postsState = ref.watch(profilePostsViewModelProvider(widget.salonId));
 
     return postsState.when(
       loading: () => const SliverToBoxAdapter(
@@ -592,15 +662,17 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.photo_library_outlined,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.outline),
+                    Icon(
+                      Icons.photo_library_outlined,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       'No posts yet',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -614,47 +686,42 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
           return UniversalPostGrid(
             posts: posts,
             onPostTap: (post) => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => PostViewPage(postId: post.id),
-              ),
+              MaterialPageRoute(builder: (_) => PostViewPage(postId: post.id)),
             ),
           );
         } else if (widget.selectedTabIndex == 1) {
           // ── List view ──
           return SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (_, i) {
-                final p = posts[i];
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => PostViewPage(postId: p.id),
-                    ),
-                  ),
-                  child: Post(
-                    postId: p.id,
-                    isLiked: p.viewerState.isLiked,
-                    images: p.media.map((e) => e.url).toList(),
-                    aspectRatio:
-                        p.media.isNotEmpty ? p.media.first.aspectRatio : 1.0,
-                    username: p.author.username,
-                    profileImage: p.author.profilePicture,
-                    likesCount: p.stats.likes,
-                    sharesCount: p.stats.shares,
-                    commentsCount: p.stats.comments,
-                    description: p.caption,
-                    datePosted: p.createdAt,
-                  ),
-                );
-              },
-              childCount: posts.length,
-            ),
+            delegate: SliverChildBuilderDelegate((_, i) {
+              final p = posts[i];
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => PostViewPage(postId: p.id)),
+                ),
+                child: Post(
+                  postId: p.id,
+                  isLiked: p.viewerState.isLiked,
+                  images: p.media.map((e) => e.url).toList(),
+                  aspectRatio: p.media.isNotEmpty
+                      ? p.media.first.aspectRatio
+                      : 1.0,
+                  username: p.author.username,
+                  profileImage: p.author.profilePicture,
+                  likesCount: p.stats.likes,
+                  sharesCount: p.stats.shares,
+                  commentsCount: p.stats.comments,
+                  description: p.caption,
+                  datePosted: p.createdAt,
+                ),
+              );
+            }, childCount: posts.length),
           );
         } else {
           // ── Activity feed ──
-          final activityState =
-              ref.watch(salonActivityViewModelProvider(widget.salonId));
+          final activityState = ref.watch(
+            salonActivityViewModelProvider(widget.salonId),
+          );
           return activityState.when(
             loading: () => const SliverToBoxAdapter(
               child: Padding(
@@ -676,19 +743,19 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.notifications_none,
-                              size: 48,
-                              color: Theme.of(context).colorScheme.outline),
+                          Icon(
+                            Icons.notifications_none,
+                            size: 48,
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             'No activity yet',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyLarge
+                            style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ],

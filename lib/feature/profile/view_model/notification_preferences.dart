@@ -29,11 +29,19 @@ class NotificationPreferencesViewModel
   }
 
   Future<bool> update({
+    bool? allowLikes,
+    bool? allowComments,
+    bool? allowBookings,
+    bool? allowPromotions,
     bool? allowReminders,
     int? reminderLeadMinutes,
   }) async {
     final repo = ref.read(notificationPreferencesRepositoryProvider);
     final res = await repo.updatePreferences(
+      allowLikes: allowLikes,
+      allowComments: allowComments,
+      allowBookings: allowBookings,
+      allowPromotions: allowPromotions,
       allowReminders: allowReminders,
       reminderLeadMinutes: reminderLeadMinutes,
     );

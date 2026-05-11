@@ -17,7 +17,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-
 class CreatePostPage extends ConsumerStatefulWidget {
   final VoidCallback? onPostSubmit;
 
@@ -36,6 +35,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
 
   List<String> selectedHashtags = [];
   List<PostTagPeopleModel> taggedPeople = [];
+  String _postType = 'service';
 
   // Global aspect ratio for all images (shown in the picker chips)
   double _aspectRatio = 1.0;
@@ -50,8 +50,13 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
     return RegExp(r'#\w+').allMatches(text).map((e) => e.group(0)!).toList();
   }
 
-  bool get isValidPost =>
-      captionController.text.trim().isNotEmpty || selectedImages.isNotEmpty;
+  bool _isValidPost(bool hasServiceCategory) {
+    final hasText = captionController.text.trim().isNotEmpty;
+    if (_postType == 'announcement') {
+      return hasText || selectedImages.isNotEmpty;
+    }
+    return hasServiceCategory && selectedImages.isNotEmpty;
+  }
 
   // ── Aspect ratio ────────────────────────────────────────────
   void _onAspectRatioChanged(double ratio) {
@@ -68,8 +73,9 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
     try {
       final images = await picker.pickMultiImage();
       if (images.isEmpty) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('No images selected.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No images selected.')));
         return;
       }
 
@@ -84,8 +90,13 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
         final file = File(xfile.path);
         if (await file.exists()) {
           newSelected.add(xfile);
-          newEdited.add(ImageEditData(
-              image: file, aspectRatio: _aspectRatio, type: 'image'));
+          newEdited.add(
+            ImageEditData(
+              image: file,
+              aspectRatio: _aspectRatio,
+              type: 'image',
+            ),
+          );
         } else {
           missingFiles.add(xfile.name);
         }
@@ -94,7 +105,8 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
       if (missingFiles.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Cannot access files: ${missingFiles.join(', ')}')),
+            content: Text('Cannot access files: ${missingFiles.join(', ')}'),
+          ),
         );
       }
 
@@ -105,9 +117,9 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
         editedImages.addAll(newEdited);
       });
     } on Exception catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to access gallery: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to access gallery: $e')));
     }
   }
 
@@ -117,27 +129,30 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
     try {
       final image = await picker.pickImage(source: ImageSource.camera);
       if (image == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No image captured.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No image captured.')));
         return;
       }
 
       final file = File(image.path);
       if (!await file.exists()) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cannot access captured image.')));
+          const SnackBar(content: Text('Cannot access captured image.')),
+        );
         return;
       }
 
       setState(() {
         selectedImages.add(image);
-        editedImages.add(ImageEditData(
-            image: file, aspectRatio: _aspectRatio, type: 'image'));
+        editedImages.add(
+          ImageEditData(image: file, aspectRatio: _aspectRatio, type: 'image'),
+        );
       });
     } on Exception catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to access camera: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to access camera: $e')));
     }
   }
 
@@ -155,7 +170,9 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
         context,
         MaterialPageRoute(
           builder: (_) => ImageEditorPage(
-            initialImages: editedImages.map((e) => XFile(e.image.path)).toList(),
+            initialImages: editedImages
+                .map((e) => XFile(e.image.path))
+                .toList(),
             initialAspectRatio: _aspectRatio,
           ),
         ),
@@ -180,8 +197,10 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
       if (missingFiles.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text('Cannot access edited files: ${missingFiles.join(', ')}')),
+            content: Text(
+              'Cannot access edited files: ${missingFiles.join(', ')}',
+            ),
+          ),
         );
       }
 
@@ -196,9 +215,9 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
           ..addAll(newSelected);
       });
     } on Exception catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to edit image: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to edit image: $e')));
     }
   }
 
@@ -250,6 +269,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
       selectedHashtags.clear();
       taggedPeople.clear();
       _aspectRatio = 1.0;
+      _postType = 'service';
     });
     captionController.clear();
     ref.read(selectedCategoryProvider.notifier).clear();
@@ -257,26 +277,35 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
 
   // ── Submit ───────────────────────────────────────────────────
   Future<void> submit() async {
-    if (!isValidPost) return;
-
     final viewModel = ref.read(createPostViewModelProvider.notifier);
     final selectedCategory = ref.read(selectedCategoryProvider);
+    if (!_isValidPost(selectedCategory != null)) return;
 
-    viewModel.setCategory(selectedCategory?.id ?? '');
+    viewModel.setPostType(_postType);
+    viewModel.setCategory(
+      _postType == 'service' ? selectedCategory?.id ?? '' : '',
+    );
     viewModel.setCaption(captionController.text);
 
     // Merge inline hashtags from caption with those picked from the picker
-    viewModel.setHashtags({
-      ..._extractHashtags(captionController.text),
-      ...selectedHashtags,
-    }.toList());
+    viewModel.setHashtags(
+      {
+        ..._extractHashtags(captionController.text),
+        ...selectedHashtags,
+      }.toList(),
+    );
 
     viewModel.setTaggedUsers(taggedPeople.map((e) => e.id).toList());
 
     viewModel.setMedia(
       editedImages
-          .map((e) => PostMediaState(
-              path: e.image.path, aspectRatio: e.aspectRatio, type: e.type))
+          .map(
+            (e) => PostMediaState(
+              path: e.image.path,
+              aspectRatio: e.aspectRatio,
+              type: e.type,
+            ),
+          )
           .toList(),
     );
 
@@ -294,7 +323,10 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
       }
     } else if (postState.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(postState.error!), backgroundColor: Theme.of(context).colorScheme.error),
+        SnackBar(
+          content: Text(postState.error!),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     }
   }
@@ -305,7 +337,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
     final viewState = ref.watch(createPostViewModelProvider);
     final scheme = Theme.of(context).colorScheme;
 
-    final canSubmit = isValidPost && !viewState.isSubmitting;
+    final canSubmit = _isValidPost(category != null) && !viewState.isSubmitting;
 
     return Scaffold(
       appBar: AppBar(
@@ -323,7 +355,9 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: canSubmit ? scheme.primary : scheme.onSurface.withValues(alpha: 0.38),
+                      color: canSubmit
+                          ? scheme.primary
+                          : scheme.onSurface.withValues(alpha: 0.38),
                     ),
                   ),
           ),
@@ -345,57 +379,90 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
               onSettingPressed: openSettings,
             ),
 
-            // ── Category picker (optional) ─────────────────────
-            GestureDetector(
-              onTap: openCategories,
-              child: Container(
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    category?.fileName != null &&
-                            category!.fileName.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Image.network(
-                              category.fileName,
-                              width: 42,
-                              height: 42,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) =>
-                                  const Icon(Icons.category, size: 28),
-                            ),
-                          )
-                        : const Icon(Icons.campaign_outlined, size: 28),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        category?.name ?? 'Category  (optional)',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                          color: category == null
-                              ? scheme.onSurfaceVariant
-                              : null,
-                        ),
-                      ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(
+                      value: 'service',
+                      icon: Icon(Icons.spa_outlined),
+                      label: Text('Service'),
                     ),
-                    if (category != null)
-                      GestureDetector(
-                        onTap: () =>
-                            ref.read(selectedCategoryProvider.notifier).clear(),
-                        child: const Icon(Icons.close, size: 20),
-                      )
-                    else
-                      const Icon(Icons.arrow_drop_down),
+                    ButtonSegment(
+                      value: 'announcement',
+                      icon: Icon(Icons.campaign_outlined),
+                      label: Text('Announcement'),
+                    ),
                   ],
+                  selected: {_postType},
+                  onSelectionChanged: (selection) {
+                    setState(() {
+                      _postType = selection.first;
+                      if (_postType == 'announcement') {
+                        ref.read(selectedCategoryProvider.notifier).clear();
+                      }
+                    });
+                  },
                 ),
               ),
             ),
+
+            if (_postType == 'service')
+              GestureDetector(
+                onTap: openCategories,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      category?.fileName != null &&
+                              category!.fileName.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: Image.network(
+                                category.fileName,
+                                width: 42,
+                                height: 42,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) =>
+                                    const Icon(Icons.category, size: 28),
+                              ),
+                            )
+                          : const Icon(Icons.spa_outlined, size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          category?.name ?? 'Select service',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: category == null
+                                    ? scheme.onSurfaceVariant
+                                    : null,
+                              ),
+                        ),
+                      ),
+                      if (category != null)
+                        GestureDetector(
+                          onTap: () => ref
+                              .read(selectedCategoryProvider.notifier)
+                              .clear(),
+                          child: const Icon(Icons.close, size: 20),
+                        )
+                      else
+                        const Icon(Icons.arrow_drop_down),
+                    ],
+                  ),
+                ),
+              ),
 
             // ── Main text + media box ──────────────────────────
             AnimatedContainer(
@@ -409,8 +476,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final screenHeight =
-                      MediaQuery.of(context).size.height;
+                  final screenHeight = MediaQuery.of(context).size.height;
                   final containerHeight = selectedImages.isNotEmpty
                       ? screenHeight * 0.65
                       : screenHeight * 0.35;
@@ -442,7 +508,8 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
                                 onDeleted: () => setState(
-                                    () => selectedHashtags.remove(tag)),
+                                  () => selectedHashtags.remove(tag),
+                                ),
                               );
                             }).toList(),
                           ),
@@ -487,23 +554,27 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
   }
 }
 
-
 void showPostSuccessDialog(BuildContext context, VoidCallback onDone) {
   showDialog(
     context: context,
     barrierDismissible: false,
     builder: (_) => Dialog(
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle, size: 60, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.check_circle,
+              size: 60,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 16),
-            Text('Post Submitted',
-                style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              'Post Submitted',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,

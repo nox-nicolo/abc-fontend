@@ -1,6 +1,7 @@
 import 'package:africa_beuty/feature/post/view/page/post_management.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots/service/salon_service.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots/stylist/stylist_management.dart';
+import 'package:africa_beuty/feature/saved/view/page/saved_page.dart';
 import 'package:flutter/material.dart';
 
 class ThreedotsSalon extends StatefulWidget {
@@ -11,7 +12,6 @@ class ThreedotsSalon extends StatefulWidget {
 }
 
 class _ThreedotsSalonState extends State<ThreedotsSalon> {
-  
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -29,7 +29,10 @@ class _ThreedotsSalonState extends State<ThreedotsSalon> {
                 MaterialPageRoute(builder: (_) => const PostManagementPage()),
               );
             },
-            leading: Icon(Icons.photo_library_outlined, color: theme.colorScheme.secondary),
+            leading: Icon(
+              Icons.photo_library_outlined,
+              color: theme.colorScheme.secondary,
+            ),
             title: const Text('Content Management'),
             subtitle: const Text('View, delete your posts'),
           ),
@@ -39,14 +42,19 @@ class _ThreedotsSalonState extends State<ThreedotsSalon> {
               // Navigate to the stylist management page
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SalonStylistsPage()),
+                MaterialPageRoute(
+                  builder: (context) => const SalonStylistsPage(),
+                ),
               );
             },
-            leading: Icon(Icons.face_2_rounded, color: theme.colorScheme.secondary),
+            leading: Icon(
+              Icons.face_2_rounded,
+              color: theme.colorScheme.secondary,
+            ),
             title: const Text('Stylists Management'),
             subtitle: const Text('Add, Edit, Delete'),
           ),
-          const SizedBox(height: 10,), 
+          const SizedBox(height: 10),
           ListTile(
             onTap: () {
               // Navigate to the service management page
@@ -60,24 +68,36 @@ class _ThreedotsSalonState extends State<ThreedotsSalon> {
             subtitle: Text('Create service, custom service'),
           ),
           ListTile(
-            leading: Icon(Icons.sell_rounded, color: theme.colorScheme.secondary),
+            leading: Icon(
+              Icons.sell_rounded,
+              color: theme.colorScheme.secondary,
+            ),
             title: Text('Marketing & Promotion'),
             subtitle: Text('Create promotion, Setting loyalt programs'),
           ),
-          const SizedBox(height: 10,), 
+          const SizedBox(height: 10),
           ListTile(
-            leading: Icon(Icons.calendar_today_rounded, color: theme.colorScheme.secondary),
+            leading: Icon(
+              Icons.calendar_today_rounded,
+              color: theme.colorScheme.secondary,
+            ),
             title: Text('Appointment Management'),
             subtitle: Text('Schedule appointment'),
           ),
           ListTile(
-            leading: Icon(Icons.monetization_on, color: theme.colorScheme.secondary),
+            leading: Icon(
+              Icons.monetization_on,
+              color: theme.colorScheme.secondary,
+            ),
             title: Text('Payments'),
             subtitle: Text('Make payment, Programa'),
           ),
-          const SizedBox(height: 10,), 
+          const SizedBox(height: 10),
           ListTile(
-            leading: Icon(Icons.analytics_outlined, color: theme.colorScheme.secondary),
+            leading: Icon(
+              Icons.analytics_outlined,
+              color: theme.colorScheme.secondary,
+            ),
             title: Text('Report & Analytics'),
             subtitle: Text('Summary, Trends'),
           ),
@@ -86,9 +106,19 @@ class _ThreedotsSalonState extends State<ThreedotsSalon> {
             title: Text('Social & Availability'),
             subtitle: Text('Sync Social Account, Set Working time'),
           ),
-          const SizedBox(height: 10,), 
+          const SizedBox(height: 10),
           ListTile(
-            leading: Icon(Icons.bookmark_border, color: theme.colorScheme.secondary),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SavedPage()),
+              );
+            },
+            leading: Icon(
+              Icons.bookmark_border,
+              color: theme.colorScheme.secondary,
+            ),
             title: Text('Saved'),
           ),
         ],

@@ -1,5 +1,6 @@
 import 'package:africa_beuty/feature/post/model/comment.dart';
 import 'package:africa_beuty/feature/post/providers/comment.dart';
+import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -64,14 +65,14 @@ class CommentsViewModel extends _$CommentsViewModel {
 
     state = switch (res) {
       Left(value: final f) => state.copyWith(
-          isLoading: false,
-          error: f.message,
-        ),
+        isLoading: false,
+        error: f.message,
+      ),
       Right(value: final page) => state.copyWith(
-          isLoading: false,
-          items: page.items,
-          nextCursor: page.nextCursor,
-        ),
+        isLoading: false,
+        items: page.items,
+        nextCursor: page.nextCursor,
+      ),
     };
   }
 
@@ -79,31 +80,52 @@ class CommentsViewModel extends _$CommentsViewModel {
     if (state.isLoadingMore || !state.hasMore) return;
     state = state.copyWith(isLoadingMore: true);
 
-    final res = await ref.read(commentRepositoryProvider).list(
-          postId: postId,
-          cursor: state.nextCursor,
-        );
+    final res = await ref
+        .read(commentRepositoryProvider)
+        .list(postId: postId, cursor: state.nextCursor);
 
     if (!ref.mounted) return;
 
     state = switch (res) {
       Left(value: final f) => state.copyWith(
-          isLoadingMore: false,
-          error: f.message,
-        ),
+        isLoadingMore: false,
+        error: f.message,
+      ),
       Right(value: final page) => state.copyWith(
-          isLoadingMore: false,
-          items: [...state.items, ...page.items],
-          nextCursor: page.nextCursor,
-        ),
+        isLoadingMore: false,
+        items: [...state.items, ...page.items],
+        nextCursor: page.nextCursor,
+      ),
     };
   }
 
-  Future<bool> add({
-    required String content,
-    String? parentCommentId,
-  }) async {
-    final res = await ref.read(commentRepositoryProvider).create(
+  Future<bool> add({required String content, String? parentCommentId}) async {
+    final tempId = 'pending-${DateTime.now().microsecondsSinceEpoch}';
+    final user = await LocalStorageService.getUserData();
+    final optimisticComment = CommentModel(
+      id: tempId,
+      postId: postId,
+      content: content,
+      author: CommentAuthorModel(
+        id: user?.id ?? '',
+        username: user?.username ?? 'You',
+        profilePicture: user?.profilePicture,
+      ),
+      parentCommentId: parentCommentId,
+      replyCount: 0,
+      createdAt: DateTime.now().toUtc(),
+      isMine: true,
+      isPending: true,
+    );
+
+    state = state.copyWith(
+      items: [optimisticComment, ...state.items],
+      clearError: true,
+    );
+
+    final res = await ref
+        .read(commentRepositoryProvider)
+        .create(
           postId: postId,
           content: content,
           parentCommentId: parentCommentId,
@@ -113,11 +135,18 @@ class CommentsViewModel extends _$CommentsViewModel {
 
     return res.fold(
       (f) {
-        state = state.copyWith(error: f.message);
+        state = state.copyWith(
+          items: state.items.where((c) => c.id != tempId).toList(),
+          error: f.message,
+        );
         return false;
       },
       (c) {
-        state = state.copyWith(items: [c, ...state.items]);
+        state = state.copyWith(
+          items: state.items
+              .map((item) => item.id == tempId ? c : item)
+              .toList(),
+        );
         return true;
       },
     );
@@ -129,19 +158,15 @@ class CommentsViewModel extends _$CommentsViewModel {
       items: snapshot.where((c) => c.id != commentId).toList(),
     );
 
-    final res = await ref.read(commentRepositoryProvider).delete(
-          postId: postId,
-          commentId: commentId,
-        );
+    final res = await ref
+        .read(commentRepositoryProvider)
+        .delete(postId: postId, commentId: commentId);
 
     if (!ref.mounted) return false;
 
-    return res.fold(
-      (f) {
-        state = state.copyWith(items: snapshot, error: f.message);
-        return false;
-      },
-      (_) => true,
-    );
+    return res.fold((f) {
+      state = state.copyWith(items: snapshot, error: f.message);
+      return false;
+    }, (_) => true);
   }
 }

@@ -2,6 +2,7 @@ import 'package:africa_beuty/feature/profile/model/salon.dart';
 import 'package:africa_beuty/feature/profile/view/widget/settings/salon_contacts.dart';
 import 'package:africa_beuty/feature/profile/view/widget/settings/salon_gallery.dart';
 import 'package:africa_beuty/feature/profile/view/widget/settings/salon_prof_cover_photo.dart';
+import 'package:africa_beuty/feature/profile/view/widget/settings/salon_availability_calendar.dart';
 import 'package:africa_beuty/feature/profile/view/widget/settings/salon_details.dart';
 import 'package:africa_beuty/feature/profile/view/widget/settings/salon_working_hours.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon.dart'; // Import your view model
@@ -32,11 +33,58 @@ class SalonProfileInformationPage extends ConsumerWidget {
               const SizedBox(height: 24),
               _WorkingHoursSection(salon: salon),
               const SizedBox(height: 24),
+              const _AvailabilityCalendarSection(),
+              const SizedBox(height: 24),
               _GallerySection(salon: salon),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AvailabilityCalendarSection extends StatelessWidget {
+  const _AvailabilityCalendarSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        SettingsHeader(
+          name: 'Availability Calendar',
+          icon: Icons.calendar_month_rounded,
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const SalonAvailabilityCalendarPage(),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: ListTile(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+            leading: Icon(
+              Icons.event_available_rounded,
+              color: theme.colorScheme.primary,
+            ),
+            title: const Text('Special days and closures'),
+            subtitle: const Text('Close a date or set different hours.'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SalonAvailabilityCalendarPage(),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -66,8 +114,10 @@ class _CoverProfileSection extends StatelessWidget {
               ? CachedNetworkImage(
                   imageUrl: salon.displayAds,
                   fit: BoxFit.cover,
-                  placeholder: (_, _) => Container(color: colorScheme.surfaceContainerHighest),
-                  errorWidget: (_, _, _) => Container(color: Colors.brown.shade400),
+                  placeholder: (_, _) =>
+                      Container(color: colorScheme.surfaceContainerHighest),
+                  errorWidget: (_, _, _) =>
+                      Container(color: Colors.brown.shade400),
                 )
               : Container(color: Colors.brown.shade400),
         ),
@@ -79,7 +129,10 @@ class _CoverProfileSection extends StatelessWidget {
             icon: const Icon(Icons.edit),
             color: Colors.white,
             style: IconButton.styleFrom(backgroundColor: Colors.black26),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileCoverPhoto())),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileCoverPhoto()),
+            ),
           ),
         ),
 
@@ -93,7 +146,9 @@ class _CoverProfileSection extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: colorScheme.surface, width: 4),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 12)],
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 12),
+                ],
               ),
               child: CircleAvatar(
                 radius: 60,
@@ -104,7 +159,8 @@ class _CoverProfileSection extends StatelessWidget {
                     width: 120,
                     height: 120,
                     fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => const Icon(Icons.person, size: 48),
+                    errorWidget: (_, _, _) =>
+                        const Icon(Icons.person, size: 48),
                   ),
                 ),
               ),
@@ -131,22 +187,41 @@ class _ProfileSection extends StatelessWidget {
         SettingsHeader(
           name: 'Profile',
           icon: Icons.edit_rounded,
-          onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileDetailsPage())),
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileDetailsPage()),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              DisplayText(title: 'Owner Name', text: salon.title, icon: Icons.person_rounded),
+              DisplayText(
+                title: 'Owner Name',
+                text: salon.title,
+                icon: Icons.person_rounded,
+              ),
               const SizedBox(height: 8),
-              DisplayText(title: 'Salon Username', text: '@${salon.username}', icon: Icons.alternate_email),
+              DisplayText(
+                title: 'Salon Username',
+                text: '@${salon.username}',
+                icon: Icons.alternate_email,
+              ),
               const SizedBox(height: 8),
-              DisplayText(title: 'Slogan', text: salon.slogan.isEmpty ? 'No slogan set' : salon.slogan, icon: Icons.format_quote_rounded),
+              DisplayText(
+                title: 'Slogan',
+                text: salon.slogan.isEmpty ? 'No slogan set' : salon.slogan,
+                icon: Icons.format_quote_rounded,
+              ),
               const SizedBox(height: 8),
-              DisplayText(title: 'Description', text: salon.description, icon: Icons.description_rounded),
+              DisplayText(
+                title: 'Description',
+                text: salon.description,
+                icon: Icons.description_rounded,
+              ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
@@ -162,7 +237,6 @@ class _WorkingHoursSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     // Helper to format "10:00:00" -> "10:00"
     String formatTime(String time) {
       if (time.isEmpty) return '';
@@ -175,14 +249,25 @@ class _WorkingHoursSection extends StatelessWidget {
     final primaryColor = theme.colorScheme.primary;
 
     // Helper for Day Names
-    final List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final List<String> weekDays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
 
     return Column(
       children: [
         SettingsHeader(
           name: 'Working Hours',
           icon: Icons.edit_rounded,
-          onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkingHoursPage())),
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const WorkingHoursPage()),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -200,21 +285,23 @@ class _WorkingHoursSection extends StatelessWidget {
                   children: [
                     _HourRow(
                       day: weekDays[hour.dayOfWeek],
-                      value: hour.isOpen ? '${formatTime(hour.openTime)} - ${formatTime(hour.closeTime)}' : 'Closed',
+                      value: hour.isOpen
+                          ? '${formatTime(hour.openTime)} - ${formatTime(hour.closeTime)}'
+                          : 'Closed',
                       isClosed: !hour.isOpen,
                     ),
-                    if (hour.dayOfWeek != 6) const Divider(height: 16, thickness: 0.2),
+                    if (hour.dayOfWeek != 6)
+                      const Divider(height: 16, thickness: 0.2),
                   ],
                 );
               }).toList(),
             ),
           ),
-        )
+        ),
       ],
     );
   }
 }
-
 
 class _HourRow extends StatelessWidget {
   final String day;
@@ -222,9 +309,9 @@ class _HourRow extends StatelessWidget {
   final bool isClosed;
 
   const _HourRow({
-    required this.day, 
-    required this.value, 
-    this.isClosed = false
+    required this.day,
+    required this.value,
+    this.isClosed = false,
   });
 
   @override
@@ -254,7 +341,6 @@ class _HourRow extends StatelessWidget {
   }
 }
 
-
 /* -------------------------------------------------------------------------- */
 /* GALLERY SECTION                              */
 /* -------------------------------------------------------------------------- */
@@ -271,42 +357,45 @@ class _GallerySection extends StatelessWidget {
         SettingsHeader(
           name: 'Gallery',
           icon: Icons.edit_rounded,
-          onEdit: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GalleryPage())),
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const GalleryPage()),
+          ),
         ),
         SizedBox(
           height: 160,
-          child: salon.gallery.isEmpty ?  
-            SizedBox(
-              child: Center(
-                child: Text(
-                  'Add Gallery',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSecondary
-                  ),
-                ),
-              ),
-            )
-          :
-            ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: salon.gallery.length,
-              itemBuilder: (context, index) {
-                return
-                Container(
-                  width: 140,
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    image: DecorationImage(
-                      image: CachedNetworkImageProvider(salon.gallery[index].imageUrl),
-                      fit: BoxFit.cover,
+          child: salon.gallery.isEmpty
+              ? SizedBox(
+                  child: Center(
+                    child: Text(
+                      'Add Gallery',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSecondary,
+                      ),
                     ),
                   ),
-                );
-              },
-            ),
-          ),
+                )
+              : ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: salon.gallery.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      width: 140,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        image: DecorationImage(
+                          image: CachedNetworkImageProvider(
+                            salon.gallery[index].imageUrl,
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
         const SizedBox(height: 20),
       ],
     );
@@ -324,33 +413,35 @@ class _ContactLocationSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 1. Extract the main phone number (first one found)
-    final mainPhone = salon.contacts
-        .where((c) => c.type.toLowerCase() == 'phone')
-        .map((e) => e.value)
-        .firstOrNull ?? 'No phone number set';
+    final mainPhone =
+        salon.contacts
+            .where((c) => c.type.toLowerCase() == 'phone')
+            .map((e) => e.value)
+            .firstOrNull ??
+        'No phone number set';
 
     // 2. Extract the business email
-    final email = salon.contacts
-        .where((c) => c.type.toLowerCase() == 'email')
-        .map((e) => e.value)
-        .firstOrNull ?? 'No email set';
+    final email =
+        salon.contacts
+            .where((c) => c.type.toLowerCase() == 'email')
+            .map((e) => e.value)
+            .firstOrNull ??
+        'No email set';
 
     // 3. Combine Country, City, and Street into a single address string
     final location = salon.location;
-    final fullAddress = location != null 
+    final fullAddress = location != null
         ? "${location.street}, ${location.city}, ${location.country}"
         : 'No address set';
 
     return Column(
       children: [
         SettingsHeader(
-          name: 'Contact & Location', 
-          icon: Icons.edit_rounded, 
+          name: 'Contact & Location',
+          icon: Icons.edit_rounded,
           onEdit: () {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const ContactsLocationPage(),
-              ),
+              MaterialPageRoute(builder: (_) => const ContactsLocationPage()),
             );
           },
         ),
@@ -362,24 +453,24 @@ class _ContactLocationSection extends StatelessWidget {
             children: [
               // Use the dynamic phone number
               DisplayText(
-                title: 'Phone Number', 
-                text: mainPhone, 
+                title: 'Phone Number',
+                text: mainPhone,
                 icon: Icons.phone_android_rounded,
               ),
               const SizedBox(height: 12),
-              
+
               // Use the dynamic email
               DisplayText(
-                title: 'Business Email', 
-                text: email, 
+                title: 'Business Email',
+                text: email,
                 icon: Icons.email_outlined,
               ),
               const SizedBox(height: 12),
-              
+
               // Use the combined address string
               DisplayText(
-                title: 'Address', 
-                text: fullAddress, 
+                title: 'Address',
+                text: fullAddress,
                 icon: Icons.location_on_outlined,
               ),
               const SizedBox(height: 24),
@@ -392,7 +483,7 @@ class _ContactLocationSection extends StatelessWidget {
               //   ),
               // ),
               // const SizedBox(height: 8),
-              
+
               // Container(
               //   height: 200,
               //   width: double.infinity,
@@ -403,12 +494,12 @@ class _ContactLocationSection extends StatelessWidget {
               //       color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
               //     ),
               //   ),
-              //   child: const _MapPlaceholder(), 
+              //   child: const _MapPlaceholder(),
               // ),
               const SizedBox(height: 20),
             ],
           ),
-        )
+        ),
       ],
     );
   }
@@ -451,12 +542,7 @@ class SettingsHeader extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.only(
-        left: 20,
-        right: 16,
-        top: 24,
-        bottom: 12,
-      ),
+      padding: const EdgeInsets.only(left: 20, right: 16, top: 24, bottom: 12),
       child: Row(
         children: [
           // ───────────── Title ─────────────
@@ -475,17 +561,12 @@ class SettingsHeader extends StatelessWidget {
           // ───────────── Edit Action ─────────────
           Container(
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest
-                  .withOpacity(0.5),
+              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
               shape: BoxShape.circle,
             ),
             child: IconButton(
               onPressed: onEdit,
-              icon: Icon(
-                icon,
-                size: 18,
-                color: theme.colorScheme.primary,
-              ),
+              icon: Icon(icon, size: 18, color: theme.colorScheme.primary),
               tooltip: 'Edit',
             ),
           ),
@@ -495,16 +576,15 @@ class SettingsHeader extends StatelessWidget {
   }
 }
 
-
 class DisplayText extends StatelessWidget {
   final String title;
   final String text;
   final IconData? icon;
 
   const DisplayText({
-    super.key, 
-    required this.title, 
-    required this.text, 
+    super.key,
+    required this.title,
+    required this.text,
     this.icon,
   });
 
@@ -520,14 +600,19 @@ class DisplayText extends StatelessWidget {
         children: [
           // 1. Title Section
           Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8), // Small offset for better alignment
+            padding: const EdgeInsets.only(
+              left: 4,
+              bottom: 8,
+            ), // Small offset for better alignment
             child: Text(
               title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 1,
-              ).copyWith(fontSize: 12),
+              style: theme.textTheme.titleSmall
+                  ?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1,
+                  )
+                  .copyWith(fontSize: 12),
             ),
           ),
 
@@ -543,7 +628,8 @@ class DisplayText extends StatelessWidget {
               ),
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start, // Icon stays at the top if text wraps
+              crossAxisAlignment: CrossAxisAlignment
+                  .start, // Icon stays at the top if text wraps
               children: [
                 if (icon != null) ...[
                   Icon(icon, color: primaryColor, size: 20),
@@ -553,7 +639,9 @@ class DisplayText extends StatelessWidget {
                   child: Text(
                     text,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: primaryColor.withOpacity(0.9), // Slightly softer than title
+                      color: primaryColor.withOpacity(
+                        0.9,
+                      ), // Slightly softer than title
                       fontWeight: FontWeight.w500,
                       height: 1.5,
                     ),

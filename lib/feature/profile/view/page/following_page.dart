@@ -1,4 +1,5 @@
 import 'package:africa_beuty/feature/profile/model/following.dart';
+import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:africa_beuty/feature/profile/view_model/following.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -91,6 +92,11 @@ class _SalonTile extends StatelessWidget {
         style: Theme.of(
           context,
         ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+      ),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ViewServiceProfilePage(salonId: salon.salonId),
+        ),
       ),
       trailing: OutlinedButton(
         onPressed: () => _confirmUnfollow(context),

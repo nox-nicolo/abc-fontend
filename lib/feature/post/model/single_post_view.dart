@@ -23,7 +23,6 @@ class EngagementModel {
   }
 }
 
-
 /// =================================================
 /// BOOKING
 /// =================================================
@@ -46,7 +45,6 @@ class BookingModel {
     );
   }
 }
-
 
 /// =================================================
 /// STYLIST
@@ -72,14 +70,10 @@ class StylistModel {
       name: map['name'] ?? '',
       avatar: map['avatar'],
       title: map['title'],
-      rating: map['rating'] != null
-          ? (map['rating'] as num).toDouble()
-          : null,
+      rating: map['rating'] != null ? (map['rating'] as num).toDouble() : null,
     );
   }
 }
-
-
 
 /// =================================================
 /// LOCATION
@@ -244,6 +238,7 @@ class ViewerStateModel {
 /// =================================================
 class PostItemModel {
   final String id;
+  final String postType;
   final PostAuthorModel author;
   final String description;
   final List<PostImageModel> images;
@@ -254,6 +249,7 @@ class PostItemModel {
 
   const PostItemModel({
     required this.id,
+    required this.postType,
     required this.author,
     required this.description,
     required this.images,
@@ -266,6 +262,7 @@ class PostItemModel {
   factory PostItemModel.fromMap(Map<String, dynamic> map) {
     return PostItemModel(
       id: map['id'],
+      postType: map['post_type'] ?? 'service',
       author: PostAuthorModel.fromMap(map['author']),
       description: map['description'] ?? '',
       images: (map['images'] as List<dynamic>? ?? [])
@@ -306,16 +303,10 @@ class ServiceProductModel {
   final String name;
   final String? brand;
 
-  const ServiceProductModel({
-    required this.name,
-    this.brand,
-  });
+  const ServiceProductModel({required this.name, this.brand});
 
   factory ServiceProductModel.fromMap(Map<String, dynamic> map) {
-    return ServiceProductModel(
-      name: map['name'] ?? '',
-      brand: map['brand'],
-    );
+    return ServiceProductModel(name: map['name'] ?? '', brand: map['brand']);
   }
 }
 
@@ -357,10 +348,7 @@ class OtherPostsSectionModel {
   final List<PostItemModel> items;
   final DateTime? nextCursor;
 
-  const OtherPostsSectionModel({
-    required this.items,
-    this.nextCursor,
-  });
+  const OtherPostsSectionModel({required this.items, this.nextCursor});
 
   OtherPostsSectionModel copyWith({
     List<PostItemModel>? items,
@@ -421,7 +409,6 @@ class SimilarSectionModel {
   }
 }
 
-
 class SponsoredSalonModel {
   final String salonId;
   final String name;
@@ -446,9 +433,7 @@ class SponsoredSalonModel {
       salonId: map['salon_id'],
       name: map['name'] ?? '',
       location: map['location'],
-      rating: map['rating'] != null
-          ? (map['rating'] as num).toDouble()
-          : null,
+      rating: map['rating'] != null ? (map['rating'] as num).toDouble() : null,
       price: (map['price'] as num?)?.toDouble() ?? 0,
       currency: map['currency'] ?? 'TZS',
       planType: map['plan_type'] ?? '',
@@ -509,9 +494,6 @@ class ReviewSectionModel {
   }
 }
 
-
-
-
 /// =================================================
 /// ROOT SINGLE POST VIEW
 /// =================================================
@@ -557,8 +539,7 @@ class SinglePostViewModel {
       stylists: stylists ?? this.stylists,
       reviews: reviews ?? this.reviews,
       similar: similar ?? this.similar,
-      sponsoredSalons:
-          sponsoredSalons ?? this.sponsoredSalons,
+      sponsoredSalons: sponsoredSalons ?? this.sponsoredSalons,
       otherPosts: otherPosts ?? this.otherPosts,
     );
   }

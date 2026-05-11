@@ -3,5 +3,7 @@
 // }
 
 class ServerConstants {
-  static const String serverUrl = 'https://abc-backend-ajpc.onrender.com';
+  static const String apiBaseUrl = 'https://abc-backend-ajpc.onrender.com';
+  static const String apiVersion = 'v1';
+  static const String serverUrl = '$apiBaseUrl/api/$apiVersion';
 }

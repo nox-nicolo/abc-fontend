@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
+import 'package:africa_beuty/core/network/network_status_controller.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:http/http.dart' as http;
 
@@ -11,7 +12,8 @@ const _kTimeout = Duration(seconds: 15);
 class _TimeoutAppException implements Exception {
   const _TimeoutAppException();
   @override
-  String toString() => 'Request timed out. Please check your connection and try again.';
+  String toString() =>
+      'Request timed out. Please check your connection and try again.';
 }
 
 class _NetworkAppException implements Exception {
@@ -51,57 +53,62 @@ class ApiClient {
 
   // ── Public HTTP methods ─────────────────────────────────────────
 
-  Future<http.Response> get(Uri uri, {Map<String, String>? extra}) =>
-      _request(() async =>
-          http.get(uri, headers: await _headers(extra)).timeout(_kTimeout));
+  Future<http.Response> get(Uri uri, {Map<String, String>? extra}) => _request(
+    () async =>
+        http.get(uri, headers: await _headers(extra)).timeout(_kTimeout),
+  );
 
   Future<http.Response> post(
     Uri uri, {
     Map<String, String>? extra,
     Object? body,
     Encoding? encoding,
-  }) =>
-      _request(
-        () async => http
-            .post(uri,
-                headers: await _headers(extra), body: body, encoding: encoding)
-            .timeout(_kTimeout),
-      );
+  }) => _request(
+    () async => http
+        .post(
+          uri,
+          headers: await _headers(extra),
+          body: body,
+          encoding: encoding,
+        )
+        .timeout(_kTimeout),
+  );
 
   Future<http.Response> patch(
     Uri uri, {
     Map<String, String>? extra,
     Object? body,
-  }) =>
-      _request(
-        () async => http
-            .patch(uri, headers: await _headers(extra), body: body)
-            .timeout(_kTimeout),
-      );
+  }) => _request(
+    () async => http
+        .patch(uri, headers: await _headers(extra), body: body)
+        .timeout(_kTimeout),
+  );
 
   Future<http.Response> put(
     Uri uri, {
     Map<String, String>? extra,
     Object? body,
-  }) =>
-      _request(
-        () async => http
-            .put(uri, headers: await _headers(extra), body: body)
-            .timeout(_kTimeout),
-      );
+  }) => _request(
+    () async => http
+        .put(uri, headers: await _headers(extra), body: body)
+        .timeout(_kTimeout),
+  );
 
   Future<http.Response> delete(Uri uri, {Map<String, String>? extra}) =>
-      _request(() async =>
-          http.delete(uri, headers: await _headers(extra)).timeout(_kTimeout));
+      _request(
+        () async =>
+            http.delete(uri, headers: await _headers(extra)).timeout(_kTimeout),
+      );
 
   // ── Internal ────────────────────────────────────────────────────
 
-  Future<http.Response> _request(
-    Future<http.Response> Function() call,
-  ) async {
+  Future<http.Response> _request(Future<http.Response> Function() call) async {
     try {
       final response = await call();
-      if (response.statusCode != 401) return response;
+      if (response.statusCode != 401) {
+        NetworkStatusController.instance.reportOnline();
+        return response;
+      }
 
       final refreshed = await _refresh();
       if (!refreshed) {
@@ -110,27 +117,45 @@ class ApiClient {
       }
 
       // Retry with the freshly stored token.
-      return call();
+      final retryResponse = await call();
+      NetworkStatusController.instance.reportOnline();
+      return retryResponse;
     } on TimeoutException {
+      NetworkStatusController.instance.reportOffline();
       throw const _TimeoutAppException();
     } on SocketException {
+      NetworkStatusController.instance.reportOffline();
+      throw const _NetworkAppException();
+    } on http.ClientException {
+      NetworkStatusController.instance.reportOffline();
       throw const _NetworkAppException();
     }
   }
 
   /// Ensures only one refresh call happens even if multiple requests get 401
   /// at the same time.
-  Future<bool> _refresh() async {
-    if (_refreshCompleter != null) return _refreshCompleter!.future;
+  Future<bool> _refresh() {
+    final existingRefresh = _refreshCompleter;
+    if (existingRefresh != null) return existingRefresh.future;
 
-    _refreshCompleter = Completer<bool>();
+    final refreshCompleter = Completer<bool>();
+    _refreshCompleter = refreshCompleter;
+    unawaited(_runRefresh(refreshCompleter));
+    return refreshCompleter.future;
+  }
+
+  Future<void> _runRefresh(Completer<bool> refreshCompleter) async {
     try {
       final ok = await _doRefresh();
-      _refreshCompleter!.complete(ok);
-      return ok;
+      refreshCompleter.complete(ok);
+    } on TimeoutException catch (error, stackTrace) {
+      refreshCompleter.completeError(error, stackTrace);
+    } on SocketException catch (error, stackTrace) {
+      refreshCompleter.completeError(error, stackTrace);
+    } on http.ClientException catch (error, stackTrace) {
+      refreshCompleter.completeError(error, stackTrace);
     } catch (_) {
-      _refreshCompleter!.complete(false);
-      return false;
+      refreshCompleter.complete(false);
     } finally {
       _refreshCompleter = null;
     }
@@ -153,6 +178,8 @@ class ApiClient {
           )
           .timeout(_kTimeout);
 
+      NetworkStatusController.instance.reportOnline();
+
       if (response.statusCode != 200) {
         await LocalStorageService.clearAuthData();
         return false;
@@ -169,6 +196,15 @@ class ApiClient {
         userId: userId,
       );
       return true;
+    } on TimeoutException {
+      NetworkStatusController.instance.reportOffline();
+      rethrow;
+    } on SocketException {
+      NetworkStatusController.instance.reportOffline();
+      rethrow;
+    } on http.ClientException {
+      NetworkStatusController.instance.reportOffline();
+      rethrow;
     } catch (_) {
       await LocalStorageService.clearAuthData();
       return false;

@@ -53,6 +53,7 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
 
+    _controller.clear();
     setState(() => _sending = true);
     final ok = await ref
         .read(commentsViewModelProvider(widget.postId).notifier)
@@ -60,13 +61,14 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
     if (!mounted) return;
     setState(() => _sending = false);
     if (ok) {
-      _controller.clear();
       // Scroll to bottom to see new comment
       _scrollCtrl.animateTo(
         0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
+    } else {
+      _controller.text = text;
     }
   }
 
@@ -298,111 +300,116 @@ class _CommentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar with subtle border
-          Container(
-            padding: const EdgeInsets.all(1.5),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+    return Opacity(
+      opacity: comment.isPending ? 0.65 : 1,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar with subtle border
+            Container(
+              padding: const EdgeInsets.all(1.5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                backgroundImage:
+                    (comment.author.profilePicture != null &&
+                        comment.author.profilePicture!.isNotEmpty)
+                    ? NetworkImage(comment.author.profilePicture!)
+                    : null,
+                child:
+                    (comment.author.profilePicture == null ||
+                        comment.author.profilePicture!.isEmpty)
+                    ? Icon(
+                        Icons.person,
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      )
+                    : null,
               ),
             ),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              backgroundImage:
-                  (comment.author.profilePicture != null &&
-                      comment.author.profilePicture!.isNotEmpty)
-                  ? NetworkImage(comment.author.profilePicture!)
-                  : null,
-              child:
-                  (comment.author.profilePicture == null ||
-                      comment.author.profilePicture!.isEmpty)
-                  ? Icon(
-                      Icons.person,
-                      size: 18,
-                      color: theme.colorScheme.primary,
-                    )
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Content Bubble
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(18),
-                      bottomLeft: Radius.circular(18),
-                      bottomRight: Radius.circular(18),
+            const SizedBox(width: 12),
+            // Content Bubble
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        comment.author.username,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                          color: theme.colorScheme.primary,
-                        ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerLow,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(18),
+                        bottomLeft: Radius.circular(18),
+                        bottomRight: Radius.circular(18),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        comment.content,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          height: 1.3,
-                          color: theme.colorScheme.onSurface,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          comment.author.username,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Timestamp and Actions
-                Padding(
-                  padding: const EdgeInsets.only(top: 6, left: 4),
-                  child: Row(
-                    children: [
-                      Text(
-                        _relative(comment.createdAt),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      if (onDelete != null) ...[
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: onDelete,
-                          child: Text(
-                            'Delete',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.error,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          comment.content,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            height: 1.3,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  // Timestamp and Actions
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 4),
+                    child: Row(
+                      children: [
+                        Text(
+                          comment.isPending
+                              ? 'Sending...'
+                              : _relative(comment.createdAt),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (onDelete != null) ...[
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: onDelete,
+                            child: Text(
+                              'Delete',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.error,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

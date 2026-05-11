@@ -5,23 +5,46 @@ import 'package:geolocator/geolocator.dart';
 
 final _discoverRepo = DiscoverRepository();
 
+enum LocationDiscoveryAction { openLocationSettings, openAppSettings }
+
+class LocationDiscoveryException implements Exception {
+  final String message;
+  final LocationDiscoveryAction action;
+
+  const LocationDiscoveryException(this.message, this.action);
+
+  @override
+  String toString() => message;
+}
+
 // ── Location helper ───────────────────────────────────────────────────────────
 
 /// Returns the device's current position, handling permission flow.
 /// Throws a descriptive string on denial/unavailability.
 Future<Position> _getPosition() async {
   bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) throw 'Location services are disabled.';
+  if (!serviceEnabled) {
+    throw const LocationDiscoveryException(
+      'Turn on location services to find salons near you.',
+      LocationDiscoveryAction.openLocationSettings,
+    );
+  }
 
   LocationPermission permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied) {
-      throw 'Location permission denied.';
+      throw const LocationDiscoveryException(
+        'Allow location access to find nearby salons.',
+        LocationDiscoveryAction.openAppSettings,
+      );
     }
   }
   if (permission == LocationPermission.deniedForever) {
-    throw 'Location permission permanently denied. Enable it in settings.';
+    throw const LocationDiscoveryException(
+      'Location permission is off. Enable it in settings to discover salons nearby.',
+      LocationDiscoveryAction.openAppSettings,
+    );
   }
 
   return Geolocator.getCurrentPosition(
@@ -31,8 +54,9 @@ Future<Position> _getPosition() async {
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
-final nearbySalonsProvider =
-    FutureProvider.autoDispose<List<NearbySalonItem>>((ref) async {
+final nearbySalonsProvider = FutureProvider.autoDispose<List<NearbySalonItem>>((
+  ref,
+) async {
   final position = await _getPosition();
   final result = await _discoverRepo.getNearby(
     lat: position.latitude,
@@ -45,26 +69,25 @@ final nearbySalonsProvider =
 /// Does NOT request device GPS.
 typedef _Coords = ({double lat, double lng});
 
-final nearbySalonsAtProvider =
-    FutureProvider.autoDispose.family<List<NearbySalonItem>, _Coords>(
-  (ref, coords) async {
-    final result = await _discoverRepo.getNearby(
-      lat: coords.lat,
-      lng: coords.lng,
-      limit: 20,
-    );
-    return result.fold((l) => throw l.message, (r) => r);
-  },
-);
+final nearbySalonsAtProvider = FutureProvider.autoDispose
+    .family<List<NearbySalonItem>, _Coords>((ref, coords) async {
+      final result = await _discoverRepo.getNearby(
+        lat: coords.lat,
+        lng: coords.lng,
+        limit: 20,
+      );
+      return result.fold((l) => throw l.message, (r) => r);
+    });
 
-final topSalonsProvider =
-    FutureProvider.autoDispose<List<TopSalonItem>>((ref) async {
+final topSalonsProvider = FutureProvider.autoDispose<List<TopSalonItem>>((
+  ref,
+) async {
   final result = await _discoverRepo.getTopSalons();
   return result.fold((l) => throw l.message, (r) => r);
 });
 
 final trendingStylesProvider =
     FutureProvider.autoDispose<List<TrendingStyleItem>>((ref) async {
-  final result = await _discoverRepo.getTrending();
-  return result.fold((l) => throw l.message, (r) => r);
-});
+      final result = await _discoverRepo.getTrending();
+      return result.fold((l) => throw l.message, (r) => r);
+    });

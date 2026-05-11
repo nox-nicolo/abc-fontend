@@ -5,6 +5,7 @@ class CreatePostState {
   final String author;
   final String picture;
   final String categoryId;
+  final String postType;
   final String caption;
   final List<String> hashtags;
   final List<String> taggedUsers;
@@ -18,6 +19,7 @@ class CreatePostState {
   const CreatePostState({
     this.author = "",
     this.categoryId = "",
+    this.postType = "service",
     this.caption = "",
     this.hashtags = const [],
     this.taggedUsers = const [],
@@ -34,6 +36,7 @@ class CreatePostState {
     String? author,
     String? picture,
     String? categoryId,
+    String? postType,
     String? caption,
     List<String>? hashtags,
     List<String>? taggedUsers,
@@ -48,6 +51,7 @@ class CreatePostState {
       author: author ?? this.author,
       picture: picture ?? this.picture,
       categoryId: categoryId ?? this.categoryId,
+      postType: postType ?? this.postType,
       caption: caption ?? this.caption,
       hashtags: hashtags ?? this.hashtags,
       taggedUsers: taggedUsers ?? this.taggedUsers,

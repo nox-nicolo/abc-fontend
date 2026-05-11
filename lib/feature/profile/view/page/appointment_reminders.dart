@@ -19,7 +19,7 @@ class AppointmentRemindersPage extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reminders')),
+      appBar: AppBar(title: const Text('Notification Preferences')),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(
@@ -34,9 +34,38 @@ class AppointmentRemindersPage extends ConsumerWidget {
         ),
         data: (prefs) => ListView(
           children: [
+            _PrefSwitch(
+              value: prefs.allowLikes,
+              title: 'Likes',
+              subtitle: 'Notify me when someone likes my post',
+              icon: Icons.favorite_outline,
+              onChanged: (v) => vm.update(allowLikes: v),
+            ),
+            _PrefSwitch(
+              value: prefs.allowComments,
+              title: 'Comments',
+              subtitle: 'Notify me about comments and replies',
+              icon: Icons.mode_comment_outlined,
+              onChanged: (v) => vm.update(allowComments: v),
+            ),
+            _PrefSwitch(
+              value: prefs.allowBookings,
+              title: 'Bookings',
+              subtitle: 'Notify me about booking updates',
+              icon: Icons.event_available_outlined,
+              onChanged: (v) => vm.update(allowBookings: v),
+            ),
+            _PrefSwitch(
+              value: prefs.allowPromotions,
+              title: 'Promotions',
+              subtitle: 'Notify me about salon offers and event campaigns',
+              icon: Icons.campaign_outlined,
+              onChanged: (v) => vm.update(allowPromotions: v),
+            ),
             SwitchListTile(
               value: prefs.allowReminders,
               onChanged: (v) => vm.update(allowReminders: v),
+              secondary: const Icon(Icons.notifications_active_outlined),
               title: const Text('Allow reminders'),
               subtitle: const Text(
                 'Get a local notification before your booking starts',
@@ -101,5 +130,37 @@ class AppointmentRemindersPage extends ConsumerWidget {
     if (picked != null && picked != prefs.reminderLeadMinutes) {
       await vm.update(reminderLeadMinutes: picked);
     }
+  }
+}
+
+class _PrefSwitch extends StatelessWidget {
+  const _PrefSwitch({
+    required this.value,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SwitchListTile(
+          value: value,
+          onChanged: onChanged,
+          secondary: Icon(icon),
+          title: Text(title),
+          subtitle: Text(subtitle),
+        ),
+        const Divider(height: 1),
+      ],
+    );
   }
 }

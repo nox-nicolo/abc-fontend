@@ -13,17 +13,23 @@ class SalonFollowActionViewModel extends _$SalonFollowActionViewModel {
     return false;
   }
 
-  Future<void> follow({
-    required String salonId,
-  }) async {
+  Future<void> follow({required String salonId}) async {
     if (state) return;
     state = true;
+    final snapshot = ref.read(salonViewProfileViewModelProvider(salonId)).value;
+    ref
+        .read(salonViewProfileViewModelProvider(salonId).notifier)
+        .applyOptimisticFollow(true);
 
     final repo = ref.read(salonRepositoryProvider);
     final res = await repo.followSalon(salonId);
 
     res.fold(
-      (_) {},
+      (_) {
+        ref
+            .read(salonViewProfileViewModelProvider(salonId).notifier)
+            .restore(snapshot);
+      },
       (_) {
         //  Refresh salon profile
         ref.invalidate(salonViewProfileViewModelProvider(salonId));
@@ -36,16 +42,23 @@ class SalonFollowActionViewModel extends _$SalonFollowActionViewModel {
     state = false;
   }
 
-  Future<bool> unfollow({
-    required String salonId,
-  }) async {
+  Future<bool> unfollow({required String salonId}) async {
+    if (state) return false;
     state = true;
+    final snapshot = ref.read(salonViewProfileViewModelProvider(salonId)).value;
+    ref
+        .read(salonViewProfileViewModelProvider(salonId).notifier)
+        .applyOptimisticFollow(false);
 
     final repo = ref.read(salonRepositoryProvider);
     final res = await repo.unfollowSalon(salonId);
 
     res.fold(
-      (_) {},
+      (_) {
+        ref
+            .read(salonViewProfileViewModelProvider(salonId).notifier)
+            .restore(snapshot);
+      },
       (_) {
         ref.invalidate(salonViewProfileViewModelProvider(salonId));
         ref.invalidate(salonFollowersViewModelProvider(salonId));

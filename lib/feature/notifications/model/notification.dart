@@ -2,11 +2,15 @@ class NotificationActorModel {
   final String id;
   final String username;
   final String? profilePicture;
+  final String? role;
+  final String? salonId;
 
   const NotificationActorModel({
     required this.id,
     required this.username,
     this.profilePicture,
+    this.role,
+    this.salonId,
   });
 
   factory NotificationActorModel.fromMap(Map<String, dynamic> map) {
@@ -14,6 +18,8 @@ class NotificationActorModel {
       id: map['id'] ?? '',
       username: map['username'] ?? '',
       profilePicture: map['profile_picture'],
+      role: map['role'],
+      salonId: map['salon_id'],
     );
   }
 }
@@ -29,7 +35,10 @@ class NotificationModel {
   final String? commentId;
   final String? bookingId;
   final String? preview;
+  final bool isGrouped;
+  final int groupCount;
   final bool isRead;
+  final String deliveryStatus;
   final DateTime createdAt;
 
   const NotificationModel({
@@ -40,11 +49,14 @@ class NotificationModel {
     this.commentId,
     this.bookingId,
     this.preview,
+    this.isGrouped = false,
+    this.groupCount = 1,
     required this.isRead,
+    this.deliveryStatus = 'sent',
     required this.createdAt,
   });
 
-  NotificationModel copyWith({bool? isRead}) {
+  NotificationModel copyWith({bool? isRead, String? deliveryStatus}) {
     return NotificationModel(
       id: id,
       type: type,
@@ -53,7 +65,10 @@ class NotificationModel {
       commentId: commentId,
       bookingId: bookingId,
       preview: preview,
+      isGrouped: isGrouped,
+      groupCount: groupCount,
       isRead: isRead ?? this.isRead,
+      deliveryStatus: deliveryStatus ?? this.deliveryStatus,
       createdAt: createdAt,
     );
   }
@@ -67,7 +82,10 @@ class NotificationModel {
       commentId: map['comment_id'],
       bookingId: map['booking_id'],
       preview: map['preview'],
+      isGrouped: map['is_grouped'] == true,
+      groupCount: (map['group_count'] as num?)?.toInt() ?? 1,
       isRead: map['is_read'] ?? false,
+      deliveryStatus: map['delivery_status'] ?? 'sent',
       createdAt: DateTime.parse(map['created_at']),
     );
   }

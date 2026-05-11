@@ -1,9 +1,11 @@
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/choose_salon.dart';
+import 'package:africa_beuty/feature/mute/repository/mute_repository.dart';
 import 'package:africa_beuty/feature/post/model/single_post_view.dart';
 import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/booking.dart';
+import 'package:africa_beuty/feature/post/view/widgets/comments_sheet.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/look_alike.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/post_description.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/post_images.dart';
@@ -21,8 +23,13 @@ import 'package:icons_plus/icons_plus.dart';
 
 class PostViewPage extends ConsumerWidget {
   final String postId;
+  final bool openComments;
 
-  const PostViewPage({super.key, required this.postId});
+  const PostViewPage({
+    super.key,
+    required this.postId,
+    this.openComments = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,6 +44,7 @@ class PostViewPage extends ConsumerWidget {
           _PostActionsMenu(
             postId: postId,
             isMyPost: state.asData?.value.post.viewerState.isMyPost ?? false,
+            authorId: state.asData?.value.post.author.id,
           ),
           const SizedBox(width: 4),
         ],
@@ -44,7 +52,7 @@ class PostViewPage extends ConsumerWidget {
       body: state.when(
         loading: () => const _PostViewSkeleton(),
         error: (e, _) => Center(child: Text(e.toString())),
-        data: (data) => _PostViewBody(data: data),
+        data: (data) => _PostViewBody(data: data, openComments: openComments),
       ),
     );
   }
@@ -54,8 +62,9 @@ class PostViewPage extends ConsumerWidget {
 
 class _PostViewBody extends ConsumerStatefulWidget {
   final SinglePostViewModel data;
+  final bool openComments;
 
-  const _PostViewBody({required this.data});
+  const _PostViewBody({required this.data, required this.openComments});
 
   @override
   ConsumerState<_PostViewBody> createState() => _PostViewBodyState();
@@ -64,11 +73,20 @@ class _PostViewBody extends ConsumerStatefulWidget {
 class _PostViewBodyState extends ConsumerState<_PostViewBody> {
   late final ScrollController _scrollCtrl;
   bool _loadingMore = false;
+  bool _openedComments = false;
 
   @override
   void initState() {
     super.initState();
     _scrollCtrl = ScrollController()..addListener(_onScroll);
+    if (widget.openComments) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_openedComments) {
+          _openedComments = true;
+          showCommentsSheet(context, widget.data.post.id);
+        }
+      });
+    }
   }
 
   @override
@@ -100,6 +118,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
         widget.data;
 
     final post = data.post;
+    final isServicePost = post.postType == 'service';
 
     return CustomScrollView(
       controller: _scrollCtrl,
@@ -239,7 +258,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           ),
 
         // ─────────── Book Now (FIX 4: navigate to booking flow) ───────────
-        if (data.booking.canBook && data.service.id.isNotEmpty)
+        if (isServicePost && data.booking.canBook && data.service.id.isNotEmpty)
           SliverToBoxAdapter(
             child: BookingNowGlowButton(
               onPressed: () => Navigator.of(context).push(
@@ -252,7 +271,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           ),
 
         // ─────────── Service details (FIX 5: guard name) ───────────
-        if (data.service.name.isNotEmpty)
+        if (isServicePost && data.service.name.isNotEmpty)
           SliverToBoxAdapter(
             child: LuxuryServiceDetails(
               serviceName: data.service.name,
@@ -265,7 +284,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           ),
 
         // ─────────── Stylists (FIX 6: nullable avatar) ───────────
-        if (data.stylists.isNotEmpty)
+        if (isServicePost && data.stylists.isNotEmpty)
           SliverToBoxAdapter(
             child: PostStylistSection(
               stylists: data.stylists
@@ -283,23 +302,24 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           ),
 
         // ─────────── Reviews ───────────
-        SliverToBoxAdapter(
-          child: ServiceReviewsSection(
-            reviews: data.reviews.items
-                .map(
-                  (r) => ServiceReview(
-                    id: r.id,
-                    avatarUrl: r.userAvatar ?? '',
-                    rating: r.rating.toDouble(),
-                    text: r.comment,
-                  ),
-                )
-                .toList(),
+        if (isServicePost)
+          SliverToBoxAdapter(
+            child: ServiceReviewsSection(
+              reviews: data.reviews.items
+                  .map(
+                    (r) => ServiceReview(
+                      id: r.id,
+                      avatarUrl: r.userAvatar ?? '',
+                      rating: r.rating.toDouble(),
+                      text: r.comment,
+                    ),
+                  )
+                  .toList(),
+            ),
           ),
-        ),
 
         // ─────────── Similar ───────────
-        if (data.similar.items.isNotEmpty)
+        if (isServicePost && data.similar.items.isNotEmpty)
           SliverToBoxAdapter(
             child: SimilarResultsSection(
               items: data.similar.items
@@ -320,7 +340,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           ),
 
         // ─────────── Sponsored ───────────
-        if (data.sponsoredSalons.isNotEmpty)
+        if (isServicePost && data.sponsoredSalons.isNotEmpty)
           SliverToBoxAdapter(
             child: SponsoredSalonsSection(
               salons: data.sponsoredSalons
@@ -423,14 +443,35 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
 class _PostActionsMenu extends ConsumerStatefulWidget {
   final String postId;
   final bool isMyPost;
+  final String? authorId;
 
-  const _PostActionsMenu({required this.postId, required this.isMyPost});
+  const _PostActionsMenu({
+    required this.postId,
+    required this.isMyPost,
+    required this.authorId,
+  });
 
   @override
   ConsumerState<_PostActionsMenu> createState() => _PostActionsMenuState();
 }
 
 class _PostActionsMenuState extends ConsumerState<_PostActionsMenu> {
+  Future<void> _mute(String targetType, String targetId, String label) async {
+    final result = await MuteRepository().mute(
+      targetType: targetType,
+      targetId: targetId,
+    );
+    if (!mounted) return;
+    result.match(
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (_) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$label muted'))),
+    );
+  }
+
   Future<void> _deletePost() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -475,30 +516,51 @@ class _PostActionsMenuState extends ConsumerState<_PostActionsMenu> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.isMyPost) {
-      return const Icon(Icons.more_vert_outlined);
-    }
-
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert_outlined),
       onSelected: (action) {
         if (action == 'delete') _deletePost();
+        if (action == 'mute_post') _mute('post', widget.postId, 'Post');
+        if (action == 'mute_user' &&
+            widget.authorId != null &&
+            widget.authorId!.isNotEmpty) {
+          _mute('user', widget.authorId!, 'User');
+        }
       },
       itemBuilder: (_) => [
-        PopupMenuItem(
-          value: 'delete',
-          child: ListTile(
-            leading: Icon(
-              Icons.delete_outline,
-              color: Theme.of(context).colorScheme.error,
+        if (!widget.isMyPost) ...[
+          const PopupMenuItem(
+            value: 'mute_post',
+            child: ListTile(
+              leading: Icon(Icons.visibility_off_outlined),
+              title: Text('Mute post'),
+              contentPadding: EdgeInsets.zero,
             ),
-            title: Text(
-              'Delete post',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            contentPadding: EdgeInsets.zero,
           ),
-        ),
+          const PopupMenuItem(
+            value: 'mute_user',
+            child: ListTile(
+              leading: Icon(Icons.person_off_outlined),
+              title: Text('Mute user'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ],
+        if (widget.isMyPost)
+          PopupMenuItem(
+            value: 'delete',
+            child: ListTile(
+              leading: Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(
+                'Delete post',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
       ],
     );
   }

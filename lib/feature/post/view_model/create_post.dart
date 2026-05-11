@@ -39,6 +39,7 @@ class CreatePostViewModel extends _$CreatePostViewModel {
   void setAuthor(String v) => state = state.copyWith(author: v);
   void setPicture(String v) => state = state.copyWith(picture: v);
   void setCategory(String v) => state = state.copyWith(categoryId: v);
+  void setPostType(String v) => state = state.copyWith(postType: v);
   void setCaption(String v) => state = state.copyWith(caption: v);
   void setHashtags(List<String> v) => state = state.copyWith(hashtags: v);
   void setTaggedUsers(List<String> v) => state = state.copyWith(taggedUsers: v);
@@ -51,11 +52,7 @@ class CreatePostViewModel extends _$CreatePostViewModel {
   Future<void> submit() async {
     if (state.isSubmitting) return;
 
-    state = state.copyWith(
-      isSubmitting: true,
-      isSuccess: false,
-      error: null,
-    );
+    state = state.copyWith(isSubmitting: true, isSuccess: false, error: null);
 
     final model = _toModel(state);
 
@@ -63,15 +60,15 @@ class CreatePostViewModel extends _$CreatePostViewModel {
 
     state = switch (res) {
       Left(value: final failure) => state.copyWith(
-          isSubmitting: false,
-          isSuccess: false,
-          error: failure.message,
+        isSubmitting: false,
+        isSuccess: false,
+        error: failure.message,
       ),
 
       Right(value: final _) => state.copyWith(
-          isSubmitting: false,
-          isSuccess: true,
-          error: null,
+        isSubmitting: false,
+        isSuccess: true,
+        error: null,
       ),
     };
   }
@@ -83,12 +80,19 @@ class CreatePostViewModel extends _$CreatePostViewModel {
     return CreatePostModel(
       author: s.author,
       status: s.status ?? "published",
+      postType: s.postType,
       category: s.categoryId,
       caption: s.caption,
       hashtags: s.hashtags,
       tagged: s.taggedUsers,
       media: s.media
-          .map((m) => PostMedia(path: m.path, aspectRatio: m.aspectRatio, type: m.type))
+          .map(
+            (m) => PostMedia(
+              path: m.path,
+              aspectRatio: m.aspectRatio,
+              type: m.type,
+            ),
+          )
           .toList(),
       settings: PostSettings(
         visibility: s.settings.visibility.toString(),

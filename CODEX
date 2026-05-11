@@ -1,13 +1,15 @@
 Add push notifications with Firebase Cloud Messaging or OneSignal.
 Store device tokens per user/device on backend.
-Add notification preferences: likes, comments, bookings, promotions, reminders.
-Add “mute salon/user/post” controls.
-Add deep links so tapping a notification opens the exact post, booking, comment, or profile.
+<!-- Add notification preferences: likes, comments, bookings, promotions, reminders. -->
+<!-- Add “mute salon/user/post” controls. -->
+<!-- Add deep links so tapping a notification opens the exact post, booking, comment, or profile. -->
 Add real-time updates with WebSockets/SSE so unread count updates without refreshing.
-Add notification grouping: “Asha and 12 others liked your post.”
-Add scheduled reminders for upcoming bookings.
+<!-- Add notification grouping: “Asha and 12 others liked your post.” -->
+<!-- Add scheduled reminders for upcoming bookings. -->
+<!-- Add AI-assisted salon booking notification messages for reminders/rebooking, with strict send-time, frequency, and personalization rules. -->
+Add in-app stylist availability alerts when a followed/preferred stylist opens new booking slots.
 Add admin/system notifications for platform announcements.
-Add delivery status: created, sent, failed, read.
+<!-- Add delivery status: created, sent, failed, read. -->
 Backend
 
 <!-- Add migrations with Alembic instead of relying only on Base.metadata.create_all. -->
@@ -17,34 +19,98 @@ Backend
 Add audit logs for important actions: bookings, payments, profile edits.
 <!-- Add centralized logging and error monitoring. -->
 Add automated tests for auth, bookings, posts, notifications, and permissions.
-Add role/permission checks more formally: customer, salon owner, stylist, admin.
-Add API versioning, e.g. /api/v1/....
+<!-- Add role/permission checks more formally: customer, salon owner, stylist, admin. -->
+<!-- Add API versioning, e.g. /api/v1/.... -->
 <!-- Add database indexes for feed, search, bookings, notifications, and user relationships. -->
 Frontend
 
-Add app-wide notification access, not only Home. Profile or bottom navigation could also expose it.
+<!-- Add app-wide notification access, not only Home. Profile or bottom navigation could also expose it. -->
 <!-- Add loading skeletons instead of mostly spinners. -->
 Add empty states with action buttons.
-Add offline handling and retry banners.
-Add optimistic UI for likes, follows, comments, saves, and booking actions.
+<!-- Add offline handling and retry banners. -->
+<!-- Add optimistic UI for likes, follows, comments, saves, and booking actions. -->
 Add route/deep-link handling.
-Add better state refresh after important actions. Example: after booking confirm/cancel, refresh booking list and unread count.
-Add crash reporting.
-Add analytics for product decisions.
+<!-- Add better state refresh after important actions. Example: after booking confirm/cancel, refresh booking list and unread count. -->
+<!-- Add crash reporting. -->
 Add accessibility improvements: labels, contrast, tap target sizes.
 Product Features
 
 Payments and deposits for bookings.
-Reviews and ratings after completed bookings.
-Salon availability calendar.
+<!-- Reviews and ratings after completed bookings. -->
+<!-- Salon availability calendar. -->
 Stylist assignment for bookings.
-Chat between customer and salon.
-Saved salons/services/styles.
-Promotions, discount codes, campaigns.
+<!-- Chat between customer and salon. -->
+<!-- Saved salons/services/styles. -->
+<!-- Promotions, discount codes, campaigns. -->
 Referral system.
-Location-based discovery.
+<!-- Location-based discovery. -->
 Trust and safety: report user/post/salon, block user, moderation queue.
 Admin dashboard for users, salons, posts, bookings, reports, payments.
+Admin/Owner analytics for product decisions: signups, active users, salon views, saves, searches, booking funnels, notification performance, and promotion performance.
+Ads
+
+Salon Booking Notification AI
+
+Purpose: generate personalized booking/rebooking messages for customers using their booking data. These are notification/reminder messages, not human chat messages.
+
+Personality:
+- Warm, friendly, and professional.
+- Speak like a helpful friend, not a corporate robot.
+- Always personal; use the customer's first name.
+- Short and clear; respect the customer's time.
+
+Available data:
+- customer_name, first name only.
+- service_type, for example braids, weave, nails, facial.
+- salon_name.
+- stylist_name.
+- booking_date.
+- booking_time.
+- salon_address.
+- booking_link.
+- weeks_since_last_visit.
+- upcoming_event, if any, for example Eid, Christmas, school holidays.
+
+Rules:
+- Always use customer_name; never say "Dear Customer".
+- Mention stylist_name when available; if missing, skip it and never leave a blank placeholder.
+- Always include booking_link at the end.
+- Keep messages under 50 words.
+- Only send between 09:00 and 19:00 Tanzania time.
+- Never send more than 3 reminders per rebooking cycle.
+- Use simple English.
+- Add one relevant emoji per message, not more.
+- Never mention competitor platforms or salons.
+
+Stylist Availability In-App Alert
+
+Trigger: when a customer's preferred/followed stylist opens new booking slots.
+
+Purpose: generate an in-app notification/message that lets interested customers know their stylist has availability.
+
+Available data:
+- customer_name, first name only.
+- stylist_name.
+- salon_name.
+- available_dates.
+- booking_link.
+
+Output format:
+- channel: in app notification.
+- send_at: immediately when slots open, respecting notification preferences and send window.
+- trigger: stylist_availability.
+
+Rules:
+- Personal; focus on the stylist, not just the salon.
+- Exciting but not desperate.
+- Keep messages under 40 words.
+- Include booking_link.
+- Do not use WhatsApp for this unless a separate WhatsApp integration is added later.
+- Avoid sending if the customer already has an upcoming booking with that stylist/salon.
+- Limit repeated availability alerts for the same stylist.
+
+Example:
+Hi Amina 👋 Good news — Stylist Faith at Queens Beauty just opened new slots this week! Book before they fill up: africanbeauty://booking
 Scale And Quality
 
 Move secrets/config out of code and into environment management.

@@ -1,9 +1,13 @@
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/booking/view/pages/customer_booking.dart';
+import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
+import 'package:africa_beuty/feature/notifications/view/widget/notifications_bell.dart';
 import 'package:africa_beuty/feature/profile/model/customer_profile.dart';
+import 'package:africa_beuty/feature/profile/view/page/following_page.dart';
 import 'package:africa_beuty/feature/profile/view/widget/setting.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots.dart';
 import 'package:africa_beuty/feature/profile/view_model/customer_profile.dart';
+import 'package:africa_beuty/feature/saved/view/page/saved_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,8 +35,7 @@ class _CustomerProfileSliverWidgetState
   void initState() {
     super.initState();
 
-    _scrollController = ScrollController()
-      ..addListener(() => setState(() {}));
+    _scrollController = ScrollController()..addListener(() => setState(() {}));
 
     _tabController = TabController(length: 2, vsync: this)
       ..addListener(() {
@@ -84,6 +87,7 @@ class _CustomerProfileSliverWidgetState
           // ── Header ──────────────────────────────────────────────────────
           SliverAppBar(
             automaticallyImplyLeading: false,
+            actions: const [NotificationsBell(), SizedBox(width: 6)],
             expandedHeight: size.height * .45,
             collapsedHeight: size.height * .12,
             pinned: true,
@@ -117,10 +121,12 @@ class _CustomerProfileSliverWidgetState
                                       errorWidget: (ctx, url, err) =>
                                           const Icon(Icons.person),
                                     )
-                                  : Image.asset('assets/images/dp.jpg',
+                                  : Image.asset(
+                                      'assets/images/dp.jpg',
                                       fit: BoxFit.cover,
                                       width: 48,
-                                      height: 48),
+                                      height: 48,
+                                    ),
                             ),
                           ),
                         ),
@@ -170,12 +176,15 @@ class _CustomerProfileSliverWidgetState
                                           height: 100,
                                           errorWidget: (ctx, url, err) =>
                                               Image.asset(
-                                                  'assets/images/dp.jpg'),
+                                                'assets/images/dp.jpg',
+                                              ),
                                         )
-                                      : Image.asset('assets/images/dp.jpg',
+                                      : Image.asset(
+                                          'assets/images/dp.jpg',
                                           fit: BoxFit.cover,
                                           width: 100,
-                                          height: 100),
+                                          height: 100,
+                                        ),
                                 ),
                               ),
                               const SizedBox(width: 20),
@@ -198,8 +207,9 @@ class _CustomerProfileSliverWidgetState
                                               Shadow(
                                                 offset: const Offset(0, 1),
                                                 blurRadius: 6.0,
-                                                color: Colors.black
-                                                    .withValues(alpha: 0.6),
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.6,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -222,8 +232,9 @@ class _CustomerProfileSliverWidgetState
                                               Shadow(
                                                 offset: const Offset(0, 1),
                                                 blurRadius: 6.0,
-                                                color: Colors.black
-                                                    .withValues(alpha: 0.6),
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.6,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -237,6 +248,11 @@ class _CustomerProfileSliverWidgetState
                           // Stats: Bookings + Reviews only (no Following)
                           Row(
                             children: [
+                              _StatChip(
+                                value: '${profile.stats.followingCount}',
+                                label: 'Following',
+                              ),
+                              const SizedBox(width: 24),
                               _StatChip(
                                 value: '${profile.stats.bookingsCount}',
                                 label: 'Bookings',
@@ -256,16 +272,14 @@ class _CustomerProfileSliverWidgetState
                                 color: Colors.black26,
                                 shape: const CircleBorder(),
                                 clipBehavior: Clip.antiAlias,
-                                child:
-                                    const SettingAccount(isCustomer: true),
+                                child: const SettingAccount(isCustomer: true),
                               ),
                               const SizedBox(width: 8),
                               Material(
                                 color: Colors.black26,
                                 shape: const CircleBorder(),
                                 clipBehavior: Clip.antiAlias,
-                                child:
-                                    const ThreeDotsOptions(isCustomer: true),
+                                child: const ThreeDotsOptions(isCustomer: true),
                               ),
                             ],
                           ),
@@ -284,8 +298,10 @@ class _CustomerProfileSliverWidgetState
             SliverSpaceHeader(title: 'Bio'),
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
                 child: Text(
                   profile.bio!,
                   style: Theme.of(context).textTheme.labelMedium,
@@ -301,17 +317,20 @@ class _CustomerProfileSliverWidgetState
             SliverSpaceHeader(title: 'Details'),
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (profile.city != null || profile.country != null)
                       _DetailRow(
                         icon: Icons.location_on_outlined,
-                        text: [profile.city, profile.country]
-                            .where((s) => s != null && s.isNotEmpty)
-                            .join(', '),
+                        text: [
+                          profile.city,
+                          profile.country,
+                        ].where((s) => s != null && s.isNotEmpty).join(', '),
                       ),
                     if (profile.gender != null &&
                         profile.gender!.isNotEmpty) ...[
@@ -327,22 +346,18 @@ class _CustomerProfileSliverWidgetState
             ),
           ],
 
+          SliverSpaceHeader(title: 'Beauty Hub'),
+          SliverToBoxAdapter(child: _BeautyHubActions()),
+
           // ── Sticky tab bar (Bookings | Reviews) ─────────────────────────
-          SliverSpaceHeader(title: ''),
           SliverPersistentHeader(
             pinned: true,
             delegate: _StickyTabBarDelegate(
               tabBar: TabBar(
                 controller: _tabController,
                 tabs: const [
-                  Tab(
-                    icon: Icon(Bootstrap.calendar_check),
-                    text: 'Bookings',
-                  ),
-                  Tab(
-                    icon: Icon(Bootstrap.star),
-                    text: 'Reviews',
-                  ),
+                  Tab(icon: Icon(Bootstrap.calendar_check), text: 'Bookings'),
+                  Tab(icon: Icon(Bootstrap.star), text: 'Reviews'),
                 ],
               ),
             ),
@@ -350,13 +365,9 @@ class _CustomerProfileSliverWidgetState
 
           // ── Tab content ──────────────────────────────────────────────────
           if (_selectedTabIndex == 0)
-            SliverToBoxAdapter(
-              child: _BookingsTab(),
-            )
+            SliverToBoxAdapter(child: _BookingsTab())
           else
-            const SliverToBoxAdapter(
-              child: _ReviewsTab(),
-            ),
+            const SliverToBoxAdapter(child: _ReviewsTab()),
         ],
       ),
     );
@@ -372,7 +383,9 @@ class _CustomerProfileSliverWidgetState
       child: CustomScrollView(
         slivers: [
           const SliverAppBar(
-              expandedHeight: 250, backgroundColor: Colors.white),
+            expandedHeight: 250,
+            backgroundColor: Colors.white,
+          ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -396,30 +409,27 @@ class _BookingsTab extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Icon(Bootstrap.calendar_check,
-              size: 48, color: Colors.pinkAccent),
-          const SizedBox(height: 16),
-          Text(
-            'Your Bookings',
-            style: Theme.of(context).textTheme.titleMedium,
+          const Icon(
+            Bootstrap.calendar_check,
+            size: 48,
+            color: Colors.pinkAccent,
           ),
+          const SizedBox(height: 16),
+          Text('Your Bookings', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             'View and manage all your upcoming\nand past appointments.',
             textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: Colors.grey),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const CustomerBookingPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const CustomerBookingPage()),
               );
             },
             icon: const Icon(Icons.arrow_forward_rounded, size: 18),
@@ -444,18 +454,14 @@ class _ReviewsTab extends StatelessWidget {
         children: [
           Icon(Bootstrap.star, size: 48, color: Colors.amber[600]),
           const SizedBox(height: 16),
-          Text(
-            'Your Reviews',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('Your Reviews', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             'Reviews you leave after completed\nappointments will appear here.',
             textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: Colors.grey),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey),
           ),
         ],
       ),
@@ -464,6 +470,101 @@ class _ReviewsTab extends StatelessWidget {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+class _BeautyHubActions extends StatelessWidget {
+  const _BeautyHubActions();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _HubAction(
+              icon: Bootstrap.calendar_check,
+              label: 'Bookings',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CustomerBookingPage()),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _HubAction(
+              icon: Bootstrap.bookmark,
+              label: 'Saved',
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SavedPage())),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _HubAction(
+              icon: Bootstrap.heart,
+              label: 'Following',
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const FollowingPage())),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _HubAction(
+              icon: Bootstrap.chat_dots,
+              label: 'Chats',
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const ChatsPage())),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HubAction extends StatelessWidget {
+  const _HubAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        height: 72,
+        decoration: BoxDecoration(
+          border: Border.all(color: scheme.outlineVariant),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: scheme.primary),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _StatChip extends StatelessWidget {
   final String value;
@@ -482,9 +583,10 @@ class _StatChip extends StatelessWidget {
             fontSize: 16,
             shadows: const [
               Shadow(
-                  blurRadius: 4,
-                  color: Colors.black54,
-                  offset: Offset(0, 1)),
+                blurRadius: 4,
+                color: Colors.black54,
+                offset: Offset(0, 1),
+              ),
             ],
           ),
         ),
@@ -495,9 +597,10 @@ class _StatChip extends StatelessWidget {
             fontSize: 12,
             shadows: const [
               Shadow(
-                  blurRadius: 2,
-                  color: Colors.black45,
-                  offset: Offset(0, 1)),
+                blurRadius: 2,
+                color: Colors.black45,
+                offset: Offset(0, 1),
+              ),
             ],
           ),
         ),
@@ -536,7 +639,10 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: tabBar,

@@ -10,15 +10,11 @@ class PostMedia {
 
   const PostMedia({
     required this.path,
-    required this.aspectRatio,  
+    required this.aspectRatio,
     required this.type,
   });
 
-  PostMedia copyWith({
-    String? path,
-    double? aspectRatio,
-    String? type,
-  }) {
+  PostMedia copyWith({String? path, double? aspectRatio, String? type}) {
     return PostMedia(
       path: path ?? this.path,
       aspectRatio: aspectRatio ?? this.aspectRatio,
@@ -55,18 +51,20 @@ class PostMedia {
   bool operator ==(covariant PostMedia other) {
     if (identical(this, other)) return true;
 
-    return other.path == path && other.aspectRatio == aspectRatio && other.type == type;    
+    return other.path == path &&
+        other.aspectRatio == aspectRatio &&
+        other.type == type;
   }
 
   @override
   int get hashCode => path.hashCode ^ aspectRatio.hashCode ^ type.hashCode;
 }
 
-
 class CreatePostModel {
   final PostSettings settings;
   final String author;
   final String status;
+  final String postType;
   final String category;
   final String caption;
   final List<String> hashtags;
@@ -77,6 +75,7 @@ class CreatePostModel {
     required this.settings,
     required this.author,
     required this.status,
+    required this.postType,
     required this.category,
     required this.caption,
     required this.hashtags,
@@ -88,6 +87,7 @@ class CreatePostModel {
     PostSettings? settings,
     String? author,
     String? status,
+    String? postType,
     String? category,
     String? caption,
     List<String>? hashtags,
@@ -98,6 +98,7 @@ class CreatePostModel {
       settings: settings ?? this.settings,
       author: author ?? this.author,
       status: status ?? this.status,
+      postType: postType ?? this.postType,
       category: category ?? this.category,
       caption: caption ?? this.caption,
       hashtags: hashtags ?? this.hashtags,
@@ -111,6 +112,7 @@ class CreatePostModel {
       'settings': settings.toMap(),
       'author': author,
       'status': status,
+      'postType': postType,
       'category': category,
       'caption': caption,
       'hashtags': hashtags,
@@ -124,6 +126,7 @@ class CreatePostModel {
       settings: PostSettings.fromMap(map['settings']),
       author: map['author'] ?? "",
       status: map['status'] ?? "",
+      postType: map['postType'] ?? map['post_type'] ?? "service",
       category: map['category'] ?? "",
       caption: map['caption'] ?? "",
       hashtags: List<String>.from(map['hashtags'] ?? []),
@@ -141,7 +144,7 @@ class CreatePostModel {
 
   @override
   String toString() {
-    return 'CreatePostModel(settings: $settings, author: $author, status: $status, category: $category, caption: $caption, hashtags: $hashtags, tagged: $tagged, media: $media)';
+    return 'CreatePostModel(settings: $settings, author: $author, status: $status, postType: $postType, category: $category, caption: $caption, hashtags: $hashtags, tagged: $tagged, media: $media)';
   }
 
   @override
@@ -151,6 +154,7 @@ class CreatePostModel {
     return other.settings == settings &&
         other.author == author &&
         other.status == status &&
+        other.postType == postType &&
         other.category == category &&
         other.caption == caption &&
         other.hashtags == hashtags &&
@@ -163,6 +167,7 @@ class CreatePostModel {
     return settings.hashCode ^
         author.hashCode ^
         status.hashCode ^
+        postType.hashCode ^
         category.hashCode ^
         caption.hashCode ^
         hashtags.hashCode ^

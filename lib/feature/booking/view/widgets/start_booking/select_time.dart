@@ -1,3 +1,5 @@
+import 'package:africa_beuty/feature/booking/model/availability.dart';
+import 'package:africa_beuty/feature/booking/provider/availability.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/confirm.dart';
 import 'package:flutter/material.dart';
@@ -8,258 +10,333 @@ class PickDateTimePage extends ConsumerStatefulWidget {
   const PickDateTimePage({super.key});
 
   @override
-  ConsumerState<PickDateTimePage> createState() =>
-      _PickDateTimePageState();
+  ConsumerState<PickDateTimePage> createState() => _PickDateTimePageState();
 }
 
-class _PickDateTimePageState
-    extends ConsumerState<PickDateTimePage> {
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay? _selectedTime;
+class _PickDateTimePageState extends ConsumerState<PickDateTimePage> {
+  DateTime _startDate = DateTime.now();
+  DateTime? _selectedDay;
+  AvailabilitySlot? _selectedSlot;
 
-  late List<DateTime> _dates;
-
-  @override
-  void initState() {
-    super.initState();
-    _dates = List.generate(
-      3,
-      (i) => DateTime.now().add(Duration(days: i)),
-    );
+  void _selectSlot(AvailabilitySlot slot) {
+    setState(() => _selectedSlot = slot);
   }
 
-  void _openDatePicker() async {
+  Future<void> _openDatePicker() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: _selectedDay ?? _startDate,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
-  }
-
-  void _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
-    );
-
-    if (picked != null) {
-      setState(() => _selectedTime = picked);
-    }
+    if (picked == null) return;
+    setState(() {
+      _startDate = picked;
+      _selectedDay = picked;
+      _selectedSlot = null;
+    });
   }
 
   void _continue() {
-    if (_selectedTime == null) return;
+    final slot = _selectedSlot;
+    if (slot == null) return;
 
-    final draft = ref.read(bookingDraftProvider);
-
-    // 🚨 SAFETY CHECK
-    if (draft.salonServicePriceId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a salon first'),
-        ),
-      );
-      return;
-    }
-
-    final startAt = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _selectedTime!.hour,
-      _selectedTime!.minute,
-    ).toUtc();
-
-    // ✅ Save to booking draft
-    ref
-        .read(bookingDraftProvider.notifier)
-        .setStartAt(startAt);
-
-    // 👉 Go to confirmation
+    ref.read(bookingDraftProvider.notifier).setStartAt(slot.startAt.toUtc());
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const ConfirmBookingPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const ConfirmBookingPage()),
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final draft = ref.watch(bookingDraftProvider);
+    final salonServicePriceId = draft.salonServicePriceId;
+
+    if (salonServicePriceId == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Select Date & Time')),
+        body: const Center(child: Text('Please select a salon first')),
+      );
+    }
+
+    final request = AvailabilityRequest(
+      salonServicePriceId: salonServicePriceId,
+      startDate: _startDate,
+      days: 14,
+    );
+    final availability = ref.watch(availabilityProvider(request));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select Date & Time'),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // DATE
-            Text(
-              'Select Date',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            _buildDateList(),
-
-            const SizedBox(height: 24),
-
-            // TIME
-            const Text(
-              'Select Time',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildTimeSelector(),
-
-            const Spacer(),
-
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: FilledButton(
-                onPressed: _selectedTime == null ? null : _continue,
-                child: const Text('Continue'),
-              ),
-            ),
-          ],
+      body: availability.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => _ErrorState(
+          message: error.toString(),
+          onRetry: () => ref.invalidate(availabilityProvider(request)),
         ),
-      ),
-    );
-  }
+        data: (days) {
+          final selectedDay = _resolveSelectedDay(days);
+          final slots = selectedDay?.slots ?? const <AvailabilitySlot>[];
 
-  Widget _buildDateList() {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return SizedBox(
-      height: 96,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          ..._dates.map((date) {
-            final isSelected = DateUtils.isSameDay(date, _selectedDate);
-
-            return GestureDetector(
-              onTap: () => setState(() => _selectedDate = date),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                width: 86,
-                margin: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? scheme.primary
-                      : scheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: isSelected
-                        ? scheme.primary
-                        : scheme.outlineVariant,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: scheme.primary.withValues(alpha: .25),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          )
-                        ]
-                      : [],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      DateFormat('EEE').format(date),
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: isSelected
-                            ? scheme.onPrimary
-                            : scheme.onSurfaceVariant,
+                    Expanded(
+                      child: Text(
+                        'Choose an available slot',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      DateFormat('d').format(date),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isSelected
-                            ? scheme.onPrimary
-                            : scheme.onSurface,
-                      ),
+                    IconButton.filledTonal(
+                      tooltip: 'Pick date',
+                      onPressed: _openDatePicker,
+                      icon: const Icon(Icons.calendar_month_rounded),
                     ),
                   ],
                 ),
-              ),
-            );
-          }),
-
-          /// calendar picker
-          GestureDetector(
-            onTap: _openDatePicker,
-            child: Container(
-              width: 86,
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: scheme.outlineVariant),
-              ),
-              child: Icon(
-                Icons.calendar_month_rounded,
-                color: scheme.primary,
-              ),
+                const SizedBox(height: 12),
+                _DateStrip(
+                  days: days,
+                  selectedDate: selectedDay?.date,
+                  onSelected: (day) {
+                    setState(() {
+                      _selectedDay = day.date;
+                      _selectedSlot = null;
+                    });
+                  },
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  selectedDay == null
+                      ? 'Available times'
+                      : DateFormat('EEEE, d MMM').format(selectedDay.date),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: slots.isEmpty
+                      ? _NoSlots(day: selectedDay)
+                      : _SlotGrid(
+                          slots: slots,
+                          selectedSlot: _selectedSlot,
+                          onSelected: _selectSlot,
+                        ),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: FilledButton(
+                    onPressed: _selectedSlot == null ? null : _continue,
+                    child: const Text('Continue'),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildTimeSelector() {
+  AvailabilityDay? _resolveSelectedDay(List<AvailabilityDay> days) {
+    if (days.isEmpty) return null;
+    final selected = _selectedDay;
+    if (selected != null) {
+      for (final day in days) {
+        if (DateUtils.isSameDay(day.date, selected)) return day;
+      }
+    }
+    for (final day in days) {
+      if (day.slots.isNotEmpty) return day;
+    }
+    return days.first;
+  }
+}
+
+class _DateStrip extends StatelessWidget {
+  const _DateStrip({
+    required this.days,
+    required this.selectedDate,
+    required this.onSelected,
+  });
+
+  final List<AvailabilityDay> days;
+  final DateTime? selectedDate;
+  final ValueChanged<AvailabilityDay> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-
-    return InkWell(
-      onTap: _pickTime,
-      borderRadius: BorderRadius.circular(18),
-      child: Ink(
-        height: 60,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: scheme.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.schedule_rounded,
-              color: scheme.primary,
-            ),
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Text(
-                _selectedTime == null
-                    ? 'Select time'
-                    : _selectedTime!.format(context),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+    return SizedBox(
+      height: 104,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: days.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final day = days[index];
+          final isSelected = DateUtils.isSameDay(day.date, selectedDate);
+          final hasSlots = day.slots.isNotEmpty;
+          return InkWell(
+            onTap: hasSlots ? () => onSelected(day) : null,
+            borderRadius: BorderRadius.circular(8),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 84,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? scheme.primary
+                    : scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isSelected ? scheme.primary : scheme.outlineVariant,
                 ),
               ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    DateFormat('EEE').format(day.date),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: isSelected
+                          ? scheme.onPrimary
+                          : scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    DateFormat('d').format(day.date),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: isSelected ? scheme.onPrimary : scheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    hasSlots ? '${day.slots.length} slots' : 'Closed',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: isSelected
+                          ? scheme.onPrimary
+                          : scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
+          );
+        },
+      ),
+    );
+  }
+}
 
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 16,
-              color: scheme.outline,
+class _SlotGrid extends StatelessWidget {
+  const _SlotGrid({
+    required this.slots,
+    required this.selectedSlot,
+    required this.onSelected,
+  });
+
+  final List<AvailabilitySlot> slots;
+  final AvailabilitySlot? selectedSlot;
+  final ValueChanged<AvailabilitySlot> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return GridView.builder(
+      itemCount: slots.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 2.25,
+      ),
+      itemBuilder: (context, index) {
+        final slot = slots[index];
+        final selected = identical(slot, selectedSlot);
+        return OutlinedButton(
+          onPressed: () => onSelected(slot),
+          style: OutlinedButton.styleFrom(
+            backgroundColor: selected
+                ? scheme.primary
+                : scheme.surfaceContainerHighest,
+            foregroundColor: selected ? scheme.onPrimary : scheme.onSurface,
+            side: BorderSide(
+              color: selected ? scheme.primary : scheme.outlineVariant,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: EdgeInsets.zero,
+          ),
+          child: Text(
+            DateFormat('HH:mm').format(slot.startAt),
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: selected ? scheme.onPrimary : scheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _NoSlots extends StatelessWidget {
+  const _NoSlots({required this.day});
+
+  final AvailabilityDay? day;
+
+  @override
+  Widget build(BuildContext context) {
+    final reason = day?.reason;
+    return Center(
+      child: Text(
+        reason == null || reason.isEmpty
+            ? 'No available times for this day.'
+            : 'No available times: $reason',
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try again'),
             ),
           ],
         ),

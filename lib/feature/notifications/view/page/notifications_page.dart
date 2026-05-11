@@ -1,8 +1,9 @@
-import 'package:africa_beuty/core/page/bottom_nav.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
+import 'package:africa_beuty/feature/booking/view/pages/customer_booking_detail.dart';
 import 'package:africa_beuty/feature/notifications/model/notification.dart';
 import 'package:africa_beuty/feature/notifications/view_model/notification.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
+import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -120,20 +121,50 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     if (!item.isRead) {
       vm.markRead(item.id);
     }
-    if (item.bookingId != null) {
-      Navigator.pushAndRemoveUntil(
+    final bookingId = item.bookingId;
+    if (bookingId != null && bookingId.isNotEmpty) {
+      Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => const BottomNavigationPage(initialIndex: 2),
+          builder: (_) => CustomerBookingDetailPage(bookingId: bookingId),
         ),
-        (route) => false,
       );
       return;
     }
-    if (item.postId != null) {
+
+    final postId = item.postId;
+    if (postId != null && postId.isNotEmpty) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => PostViewPage(postId: item.postId!)),
+        MaterialPageRoute(
+          builder: (_) => PostViewPage(
+            postId: postId,
+            openComments: item.commentId != null && item.commentId!.isNotEmpty,
+          ),
+        ),
+      );
+      return;
+    }
+
+    final salonId = item.actor.salonId;
+    if (item.actor.role == 'salon' && salonId != null && salonId.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              ViewProfilePage(isServiceProfile: true, userId: salonId),
+        ),
+      );
+      return;
+    }
+
+    if (item.actor.id.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              ViewProfilePage(isServiceProfile: false, userId: item.actor.id),
+        ),
       );
     }
   }
@@ -178,6 +209,8 @@ class _NotificationTile extends StatelessWidget {
         return 'marked your booking as completed';
       case 'booking_rescheduled':
         return 'rescheduled their booking';
+      case 'booking_reminder_ai':
+        return 'sent a booking reminder';
       default:
         return 'sent you a notification';
     }
@@ -186,6 +219,7 @@ class _NotificationTile extends StatelessWidget {
   IconData _leadingIcon(String type) {
     switch (type) {
       case 'like':
+      case 'like_grouped':
         return Icons.favorite;
       case 'comment':
       case 'reply':
@@ -199,6 +233,7 @@ class _NotificationTile extends StatelessWidget {
       case 'booking_cancelled':
         return Icons.cancel;
       case 'booking_rescheduled':
+      case 'booking_reminder_ai':
         return Icons.schedule;
       default:
         return Icons.notifications;
@@ -208,12 +243,14 @@ class _NotificationTile extends StatelessWidget {
   Color _leadingColor(String type, ColorScheme scheme) {
     switch (type) {
       case 'like':
+      case 'like_grouped':
         return scheme.error;
       case 'comment':
       case 'reply':
         return scheme.primary;
       case 'booking_new':
       case 'booking_rescheduled':
+      case 'booking_reminder_ai':
         return scheme.tertiary;
       case 'booking_confirmed':
       case 'booking_completed':
@@ -289,20 +326,34 @@ class _NotificationTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RichText(
-                    text: TextSpan(
-                      style: theme.textTheme.bodyMedium,
-                      children: [
-                        TextSpan(
-                          text: item.actor.username,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const TextSpan(text: ' '),
-                        TextSpan(text: _actionText(item.type)),
-                      ],
+                  if (item.isGrouped &&
+                      item.preview != null &&
+                      item.preview!.isNotEmpty)
+                    Text(
+                      item.preview!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )
+                  else
+                    RichText(
+                      text: TextSpan(
+                        style: theme.textTheme.bodyMedium,
+                        children: [
+                          TextSpan(
+                            text: item.actor.username,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const TextSpan(text: ' '),
+                          TextSpan(text: _actionText(item.type)),
+                        ],
+                      ),
                     ),
-                  ),
-                  if (item.preview != null && item.preview!.isNotEmpty) ...[
+                  if (!item.isGrouped &&
+                      item.preview != null &&
+                      item.preview!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       item.preview!,

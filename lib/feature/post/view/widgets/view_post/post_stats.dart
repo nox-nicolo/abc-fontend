@@ -1,4 +1,3 @@
-
 /* ---------------------------------------------------
    POST STATS
 --------------------------------------------------- */
@@ -34,6 +33,8 @@ class PostStatsRow extends ConsumerStatefulWidget {
 class _PostStatsRowState extends ConsumerState<PostStatsRow> {
   late bool _liked;
   late bool _saved;
+  bool _likeInFlight = false;
+  bool _saveInFlight = false;
 
   @override
   void initState() {
@@ -43,7 +44,11 @@ class _PostStatsRowState extends ConsumerState<PostStatsRow> {
   }
 
   void _toggleLike() {
-    setState(() => _liked = !_liked);
+    if (_likeInFlight) return;
+    setState(() {
+      _likeInFlight = true;
+      _liked = !_liked;
+    });
     _likeAsync();
   }
 
@@ -54,15 +59,29 @@ class _PostStatsRowState extends ConsumerState<PostStatsRow> {
     final result = ref.read(postLikeViewModelProvider);
     if (result != null && mounted) {
       result.whenOrNull(
-        data: (m) => setState(() => _liked = m.liked),
+        data: (m) => setState(() {
+          if (m.postId == widget.postId) {
+            _liked = m.liked;
+          }
+          _likeInFlight = false;
+        }),
         // revert optimistic update on error
-        error: (_, e) => setState(() => _liked = !_liked),
+        error: (_, e) => setState(() {
+          _liked = !_liked;
+          _likeInFlight = false;
+        }),
       );
+    } else if (mounted) {
+      setState(() => _likeInFlight = false);
     }
   }
 
   void _toggleSave() {
-    setState(() => _saved = !_saved);
+    if (_saveInFlight) return;
+    setState(() {
+      _saveInFlight = true;
+      _saved = !_saved;
+    });
     _saveAsync();
   }
 
@@ -72,8 +91,14 @@ class _PostStatsRowState extends ConsumerState<PostStatsRow> {
         .toggleBookmark(widget.postId);
     if (mounted) {
       result.fold(
-        (failure) => setState(() => _saved = !_saved), // revert on error
-        (saved) => setState(() => _saved = saved),
+        (failure) => setState(() {
+          _saved = !_saved;
+          _saveInFlight = false;
+        }),
+        (saved) => setState(() {
+          _saved = saved;
+          _saveInFlight = false;
+        }),
       );
     }
   }
@@ -97,16 +122,11 @@ class _PostStatsRowState extends ConsumerState<PostStatsRow> {
             onTap: () => showCommentsSheet(context, widget.postId),
           ),
           const SizedBox(width: 16),
-          _IconBtn(
-            icon: Icons.send_outlined,
-            onTap: () {},
-          ),
+          _IconBtn(icon: Icons.send_outlined, onTap: () {}),
           const Spacer(),
           IconButton(
             splashRadius: 22,
-            icon: Icon(
-              _saved ? Icons.bookmark : Icons.bookmark_border,
-            ),
+            icon: Icon(_saved ? Icons.bookmark : Icons.bookmark_border),
             onPressed: _toggleSave,
           ),
         ],
@@ -124,11 +144,7 @@ class _IconBtn extends StatelessWidget {
   final VoidCallback onTap;
   final Color? color;
 
-  const _IconBtn({
-    required this.icon,
-    required this.onTap,
-    this.color,
-  });
+  const _IconBtn({required this.icon, required this.onTap, this.color});
 
   @override
   Widget build(BuildContext context) {

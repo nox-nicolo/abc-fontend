@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/widgets/skeleton.dart';
+import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
 import 'package:africa_beuty/feature/search/view/widgets/salon_card.dart';
 import 'package:africa_beuty/feature/search/view/widgets/section_header.dart';
@@ -44,6 +45,12 @@ class TopSalonsSection extends ConsumerWidget {
                         title: s.title,
                         coverImage: s.coverImage,
                         subtitle: s.city,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ViewServiceProfilePage(salonId: s.id),
+                          ),
+                        ),
                       );
                     },
                   ),

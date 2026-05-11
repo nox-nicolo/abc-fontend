@@ -9,18 +9,21 @@ class PostResponseModel {
   factory PostResponseModel.fromMap(Map<String, dynamic> map) {
     return PostResponseModel(
       items: List<PostModel>.from(
-        (map['items'] as List<dynamic>).map((x) => PostModel.fromMap(x as Map<String, dynamic>)),
+        (map['items'] as List<dynamic>).map(
+          (x) => PostModel.fromMap(x as Map<String, dynamic>),
+        ),
       ),
       nextCursor: map['next_cursor'],
     );
   }
 
-  factory PostResponseModel.fromJson(String source) => 
+  factory PostResponseModel.fromJson(String source) =>
       PostResponseModel.fromMap(json.decode(source) as Map<String, dynamic>);
 }
 
 class PostModel {
   final String id;
+  final String postType;
   final PostAuthor author;
   final String caption;
   final List<PostMedia> media;
@@ -31,6 +34,7 @@ class PostModel {
 
   PostModel({
     required this.id,
+    required this.postType,
     required this.author,
     required this.caption,
     required this.media,
@@ -44,10 +48,13 @@ class PostModel {
   factory PostModel.fromMap(Map<String, dynamic> map) {
     return PostModel(
       id: map['id'] ?? '',
+      postType: map['post_type'] ?? 'service',
       author: PostAuthor.fromMap(map['author'] ?? {}),
       caption: map['caption'] ?? '',
       media: List<PostMedia>.from(
-        (map['media'] as List<dynamic>).map((x) => PostMedia.fromMap(x as Map<String, dynamic>)),
+        (map['media'] as List<dynamic>).map(
+          (x) => PostMedia.fromMap(x as Map<String, dynamic>),
+        ),
       ),
       service: map['service'],
       stats: PostStats.fromMap(map['stats'] ?? {}),
@@ -60,6 +67,7 @@ class PostModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'post_type': postType,
       'author': author.toMap(),
       'caption': caption,
       'media': media.map((x) => x.toMap()).toList(),
@@ -72,6 +80,7 @@ class PostModel {
 
   PostModel copyWith({
     String? id,
+    String? postType,
     PostAuthor? author,
     String? caption,
     List<PostMedia>? media,
@@ -82,6 +91,7 @@ class PostModel {
   }) {
     return PostModel(
       id: id ?? this.id,
+      postType: postType ?? this.postType,
       author: author ?? this.author,
       caption: caption ?? this.caption,
       media: media ?? this.media,
@@ -135,7 +145,7 @@ class SalonInfo {
   final String id;
   final String title;
   // Note: You can add Address model here if needed
-  
+
   SalonInfo({required this.id, required this.title});
 
   factory SalonInfo.fromMap(Map<String, dynamic> map) {
@@ -160,7 +170,11 @@ class PostMedia {
     );
   }
 
-  Map<String, dynamic> toMap() => {'url': url, 'type': type, 'aspect_ratio': aspectRatio};
+  Map<String, dynamic> toMap() => {
+    'url': url,
+    'type': type,
+    'aspect_ratio': aspectRatio,
+  };
 }
 
 class PostStats {
@@ -168,7 +182,11 @@ class PostStats {
   final int comments;
   final int shares;
 
-  PostStats({required this.likes, required this.comments, required this.shares});
+  PostStats({
+    required this.likes,
+    required this.comments,
+    required this.shares,
+  });
 
   factory PostStats.fromMap(Map<String, dynamic> map) {
     return PostStats(
@@ -178,7 +196,11 @@ class PostStats {
     );
   }
 
-  Map<String, dynamic> toMap() => {'likes': likes, 'comments': comments, 'shares': shares};
+  Map<String, dynamic> toMap() => {
+    'likes': likes,
+    'comments': comments,
+    'shares': shares,
+  };
 }
 
 class ViewerState {
@@ -186,7 +208,11 @@ class ViewerState {
   final bool isSaved;
   final bool isMyPost;
 
-  ViewerState({required this.isLiked, required this.isSaved, required this.isMyPost});
+  ViewerState({
+    required this.isLiked,
+    required this.isSaved,
+    required this.isMyPost,
+  });
 
   factory ViewerState.fromMap(Map<String, dynamic> map) {
     return ViewerState(

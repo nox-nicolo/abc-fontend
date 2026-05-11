@@ -63,14 +63,14 @@ class NotificationsViewModel extends _$NotificationsViewModel {
 
     state = switch (res) {
       Left(value: final f) => state.copyWith(
-          isLoading: false,
-          error: f.message,
-        ),
+        isLoading: false,
+        error: f.message,
+      ),
       Right(value: final page) => state.copyWith(
-          isLoading: false,
-          items: page.items,
-          nextCursor: page.nextCursor,
-        ),
+        isLoading: false,
+        items: page.items,
+        nextCursor: page.nextCursor,
+      ),
     };
   }
 
@@ -86,32 +86,33 @@ class NotificationsViewModel extends _$NotificationsViewModel {
 
     state = switch (res) {
       Left(value: final f) => state.copyWith(
-          isLoadingMore: false,
-          error: f.message,
-        ),
+        isLoadingMore: false,
+        error: f.message,
+      ),
       Right(value: final page) => state.copyWith(
-          isLoadingMore: false,
-          items: [...state.items, ...page.items],
-          nextCursor: page.nextCursor,
-        ),
+        isLoadingMore: false,
+        items: [...state.items, ...page.items],
+        nextCursor: page.nextCursor,
+      ),
     };
   }
 
   Future<void> markAllRead() async {
     final snapshot = state.items;
     state = state.copyWith(
-      items: snapshot.map((n) => n.copyWith(isRead: true)).toList(),
+      items: snapshot
+          .map((n) => n.copyWith(isRead: true, deliveryStatus: 'read'))
+          .toList(),
     );
 
     final res = await ref.read(notificationRepositoryProvider).markAllRead();
     if (!ref.mounted) return;
 
-    res.fold(
-      (f) => state = state.copyWith(items: snapshot, error: f.message),
-      (_) {
-        ref.invalidate(unreadCountProvider);
-      },
-    );
+    res.fold((f) => state = state.copyWith(items: snapshot, error: f.message), (
+      _,
+    ) {
+      ref.invalidate(unreadCountProvider);
+    });
   }
 
   Future<void> markRead(String notificationId) async {
@@ -120,7 +121,7 @@ class NotificationsViewModel extends _$NotificationsViewModel {
 
     final snapshot = state.items;
     final updated = [...snapshot];
-    updated[idx] = updated[idx].copyWith(isRead: true);
+    updated[idx] = updated[idx].copyWith(isRead: true, deliveryStatus: 'read');
     state = state.copyWith(items: updated);
 
     final res = await ref

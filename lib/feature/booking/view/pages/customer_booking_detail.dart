@@ -20,15 +20,15 @@ class _CustomerBookingDetailPageState
     super.initState();
     ref.listenManual(customerBookingActionViewModelProvider, (_, next) {
       next.whenOrNull(
-        error: (err, _) => ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err.toString())),
-        ),
+        error: (err, _) => ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(err.toString()))),
         data: (_) {
           // Refresh the detail and pop any bottom sheet that may be open.
           ref.invalidate(bookingDetailViewModelProvider(widget.bookingId));
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Done')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Done')));
         },
       );
     });
@@ -36,16 +36,14 @@ class _CustomerBookingDetailPageState
 
   @override
   Widget build(BuildContext context) {
-    final detailState =
-        ref.watch(bookingDetailViewModelProvider(widget.bookingId));
+    final detailState = ref.watch(
+      bookingDetailViewModelProvider(widget.bookingId),
+    );
     final actionState = ref.watch(customerBookingActionViewModelProvider);
     final isLoading = actionState.isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Booking Details'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Booking Details'), centerTitle: true),
       body: detailState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
@@ -84,8 +82,9 @@ class _CustomerBookingDetailPageState
                         _InfoRow(
                           icon: Icons.calendar_today_outlined,
                           label: 'Date',
-                          value: DateFormat('EEE, MMM dd yyyy')
-                              .format(booking.startAt),
+                          value: DateFormat(
+                            'EEE, MMM dd yyyy',
+                          ).format(booking.startAt),
                         ),
                         const SizedBox(height: 12),
                         _InfoRow(
@@ -117,9 +116,7 @@ class _CustomerBookingDetailPageState
                       _SectionCard(
                         title: 'Note',
                         icon: Icons.sticky_note_2_outlined,
-                        children: [
-                          _MessageBox(text: booking.note!),
-                        ],
+                        children: [_MessageBox(text: booking.note!)],
                       ),
                     ],
                     if (booking.cancelReason != null &&
@@ -130,7 +127,23 @@ class _CustomerBookingDetailPageState
                         icon: Icons.error_outline_rounded,
                         children: [
                           _MessageBox(
-                              text: booking.cancelReason!, isDestructive: true),
+                            text: booking.cancelReason!,
+                            isDestructive: true,
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (booking.hasReview) ...[
+                      const SizedBox(height: 16),
+                      _SectionCard(
+                        title: 'Your Review',
+                        icon: Icons.star_rounded,
+                        children: [
+                          _ReviewSummary(
+                            rating: booking.reviewRating ?? 0,
+                            comment: booking.reviewComment,
+                            createdAt: booking.reviewCreatedAt,
+                          ),
                         ],
                       ),
                     ],
@@ -166,7 +179,9 @@ class _ActionBar extends ConsumerWidget {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: loading ? null : () => _showCancelDialog(context, vm, booking.id),
+                onPressed: loading
+                    ? null
+                    : () => _showCancelDialog(context, vm, booking.id),
                 icon: const Icon(Icons.cancel_outlined),
                 label: const Text('Cancel'),
               ),
@@ -185,16 +200,18 @@ class _ActionBar extends ConsumerWidget {
         );
         break;
       case 'completed':
-        actions = SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: loading
-                ? null
-                : () => _showReviewDialog(context, vm, booking.id),
-            icon: const Icon(Icons.star_outline_rounded),
-            label: const Text('Leave a Review'),
-          ),
-        );
+        if (!booking.hasReview) {
+          actions = SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: loading
+                  ? null
+                  : () => _showReviewDialog(context, vm, booking.id),
+              icon: const Icon(Icons.star_outline_rounded),
+              label: const Text('Leave a Review'),
+            ),
+          );
+        }
         break;
     }
 
@@ -213,9 +230,10 @@ class _ActionBar extends ConsumerWidget {
   }
 
   void _showCancelDialog(
-      BuildContext context,
-      CustomerBookingActionViewModel vm,
-      String bookingId) {
+    BuildContext context,
+    CustomerBookingActionViewModel vm,
+    String bookingId,
+  ) {
     final reasonCtrl = TextEditingController();
     showDialog(
       context: context,
@@ -247,9 +265,10 @@ class _ActionBar extends ConsumerWidget {
   }
 
   void _showRescheduleDialog(
-      BuildContext context,
-      CustomerBookingActionViewModel vm,
-      BookingModel booking) async {
+    BuildContext context,
+    CustomerBookingActionViewModel vm,
+    BookingModel booking,
+  ) async {
     final now = DateTime.now();
     final date = await showDatePicker(
       context: context,
@@ -266,15 +285,20 @@ class _ActionBar extends ConsumerWidget {
     if (time == null) return;
 
     final newStart = DateTime(
-      date.year, date.month, date.day, time.hour, time.minute,
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
     );
     vm.reschedule(booking.id, newStart);
   }
 
   void _showReviewDialog(
-      BuildContext context,
-      CustomerBookingActionViewModel vm,
-      String bookingId) {
+    BuildContext context,
+    CustomerBookingActionViewModel vm,
+    String bookingId,
+  ) {
     int rating = 5;
     final commentCtrl = TextEditingController();
 
@@ -292,7 +316,9 @@ class _ActionBar extends ConsumerWidget {
                   5,
                   (i) => IconButton(
                     icon: Icon(
-                      i < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                      i < rating
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
                       color: Colors.amber,
                     ),
                     onPressed: () => setState(() => rating = i + 1),
@@ -333,6 +359,54 @@ class _ActionBar extends ConsumerWidget {
   }
 }
 
+class _ReviewSummary extends StatelessWidget {
+  final int rating;
+  final String? comment;
+  final DateTime? createdAt;
+
+  const _ReviewSummary({required this.rating, this.comment, this.createdAt});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final hasComment = comment != null && comment!.trim().isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            ...List.generate(
+              5,
+              (index) => Icon(
+                index < rating
+                    ? Icons.star_rounded
+                    : Icons.star_outline_rounded,
+                color: Colors.amber,
+                size: 22,
+              ),
+            ),
+            if (createdAt != null) ...[
+              const Spacer(),
+              Text(
+                DateFormat('MMM dd').format(createdAt!),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+        if (hasComment) ...[
+          const SizedBox(height: 10),
+          _MessageBox(text: comment!.trim()),
+        ],
+      ],
+    );
+  }
+}
+
 // ── Shared card widgets ───────────────────────────────────────────────────────
 class _HeroCard extends StatelessWidget {
   final BookingModel booking;
@@ -357,15 +431,18 @@ class _HeroCard extends StatelessWidget {
         children: [
           Text(
             booking.serviceNameSnapshot,
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(99),
@@ -382,8 +459,9 @@ class _HeroCard extends StatelessWidget {
               const Spacer(),
               Text(
                 '${booking.currencySnapshot} ${booking.priceSnapshot.toStringAsFixed(0)}',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
@@ -410,8 +488,11 @@ class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final List<Widget> children;
-  const _SectionCard(
-      {required this.title, required this.icon, required this.children});
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -429,13 +510,18 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(icon, size: 18, color: scheme.primary),
-            const SizedBox(width: 8),
-            Text(title,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
-          ]),
+          Row(
+            children: [
+              Icon(icon, size: 18, color: scheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
           ...children,
         ],
@@ -449,11 +535,12 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
   final bool emphasize;
-  const _InfoRow(
-      {required this.icon,
-      required this.label,
-      required this.value,
-      this.emphasize = false});
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.emphasize = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -463,9 +550,12 @@ class _InfoRow extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: scheme.onSurfaceVariant),
         const SizedBox(width: 10),
-        Text(label,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: scheme.onSurfaceVariant)),
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
         const Spacer(),
         Text(
           value,
@@ -490,7 +580,9 @@ class _MessageBox extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDestructive ? scheme.errorContainer : scheme.surfaceContainerHigh,
+        color: isDestructive
+            ? scheme.errorContainer
+            : scheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

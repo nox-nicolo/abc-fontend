@@ -1,6 +1,7 @@
 import 'package:africa_beuty/feature/booking/model/booking_status.dart';
 import 'package:africa_beuty/feature/booking/model/start_booking.dart';
 import 'package:africa_beuty/feature/booking/provider/customer_booking.dart';
+import 'package:africa_beuty/feature/notifications/view_model/notification.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -29,6 +30,66 @@ class MyBookingsViewModel extends _$MyBookingsViewModel {
   }
 
   Future<void> refresh(String status) => _fetch(status);
+
+  void applyOptimisticStatus(String bookingId, String nextStatus) {
+    final current = state.value;
+    if (current == null) return;
+
+    final shouldKeep = status.isEmpty || status == nextStatus;
+    final updated = <BookingListItem>[];
+
+    for (final booking in current) {
+      if (booking.id != bookingId) {
+        updated.add(booking);
+        continue;
+      }
+
+      if (shouldKeep) {
+        updated.add(booking.copyWith(status: nextStatus));
+      }
+    }
+
+    state = AsyncValue.data(updated);
+  }
+
+  void applyOptimisticReview(
+    String bookingId, {
+    required int rating,
+    String? comment,
+  }) {
+    final current = state.value;
+    if (current == null) return;
+
+    state = AsyncValue.data([
+      for (final booking in current)
+        if (booking.id == bookingId)
+          booking.copyWith(
+            hasReview: true,
+            reviewRating: rating,
+            reviewComment: comment,
+            reviewCreatedAt: DateTime.now(),
+          )
+        else
+          booking,
+    ]);
+  }
+
+  void restore(List<BookingListItem>? snapshot) {
+    if (snapshot == null) return;
+    state = AsyncValue.data(snapshot);
+  }
+
+  void insertOrReplace(BookingListItem booking) {
+    final current = state.value;
+    if (current == null) return;
+
+    final shouldShow = status.isEmpty || status == booking.status;
+    final withoutBooking = current.where((b) => b.id != booking.id).toList();
+
+    state = AsyncValue.data(
+      shouldShow ? [booking, ...withoutBooking] : withoutBooking,
+    );
+  }
 }
 
 // ── Single booking detail ─────────────────────────────────────────────────────
@@ -50,6 +111,39 @@ class BookingDetailViewModel extends _$BookingDetailViewModel {
         state = AsyncValue.data(r);
     }
   }
+
+  void applyOptimisticStatus(String status, {String? cancelReason}) {
+    final booking = state.value;
+    if (booking == null) return;
+
+    state = AsyncValue.data(
+      booking.copyWith(
+        status: status,
+        cancelReason: cancelReason,
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  void applyOptimisticReview({required int rating, String? comment}) {
+    final booking = state.value;
+    if (booking == null) return;
+
+    state = AsyncValue.data(
+      booking.copyWith(
+        hasReview: true,
+        reviewRating: rating,
+        reviewComment: comment,
+        reviewCreatedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  void restore(BookingModel? snapshot) {
+    if (snapshot == null) return;
+    state = AsyncValue.data(snapshot);
+  }
 }
 
 // ── Customer actions (cancel, reschedule, review) ────────────────────────────
@@ -59,14 +153,25 @@ class CustomerBookingActionViewModel extends _$CustomerBookingActionViewModel {
   AsyncValue<void> build() => const AsyncValue.data(null);
 
   Future<void> cancel(String bookingId, {String? reason}) async {
+    if (state.isLoading) return;
     state = const AsyncValue.loading();
+    final snapshots = _snapshots();
+    final detailSnapshot = ref
+        .read(bookingDetailViewModelProvider(bookingId))
+        .value;
+    _applyOptimisticStatus(bookingId, 'cancelled', snapshots);
+    ref
+        .read(bookingDetailViewModelProvider(bookingId).notifier)
+        .applyOptimisticStatus('cancelled', cancelReason: reason);
+
     final res = await ref
         .read(customerBookingRepositoryProvider)
         .cancel(bookingId, reason: reason);
-    _handle(res);
+    _handle(res, snapshots: snapshots, detailSnapshot: detailSnapshot);
   }
 
   Future<void> reschedule(String bookingId, DateTime startAt) async {
+    if (state.isLoading) return;
     state = const AsyncValue.loading();
     final res = await ref
         .read(customerBookingRepositoryProvider)
@@ -79,23 +184,111 @@ class CustomerBookingActionViewModel extends _$CustomerBookingActionViewModel {
     required int rating,
     String? comment,
   }) async {
+    if (state.isLoading) return;
     state = const AsyncValue.loading();
+    final snapshots = _snapshots();
+    final detailSnapshot = ref
+        .read(bookingDetailViewModelProvider(bookingId))
+        .value;
+    for (final status in _statuses) {
+      ref
+          .read(myBookingsViewModelProvider(status).notifier)
+          .applyOptimisticReview(bookingId, rating: rating, comment: comment);
+    }
+    ref
+        .read(bookingDetailViewModelProvider(bookingId).notifier)
+        .applyOptimisticReview(rating: rating, comment: comment);
     final res = await ref
         .read(customerBookingRepositoryProvider)
         .review(bookingId, rating: rating, comment: comment);
-    _handle(res);
+    _handle(res, snapshots: snapshots, detailSnapshot: detailSnapshot);
   }
 
-  void _handle(dynamic result) {
+  void _handle(
+    dynamic result, {
+    Map<String, List<BookingListItem>?>? snapshots,
+    BookingModel? detailSnapshot,
+  }) {
     switch (result) {
       case Left(value: final failure):
+        if (snapshots != null) _restore(snapshots);
+        if (detailSnapshot != null) {
+          ref
+              .read(bookingDetailViewModelProvider(detailSnapshot.id).notifier)
+              .restore(detailSnapshot);
+        }
         state = AsyncValue.error(failure.message, StackTrace.current);
       case Right():
-        for (final s in ['', 'pending', 'confirmed', 'completed', 'cancelled']) {
-          ref.invalidate(myBookingsViewModelProvider(s));
-        }
+        _refreshAfterSuccess();
         state = const AsyncValue.data(null);
     }
+  }
+
+  List<String> get _statuses => const [
+    '',
+    'pending',
+    'confirmed',
+    'completed',
+    'cancelled',
+  ];
+
+  Map<String, List<BookingListItem>?> _snapshots() {
+    return {
+      for (final status in _statuses)
+        status: ref.read(myBookingsViewModelProvider(status)).value,
+    };
+  }
+
+  void _applyOptimisticStatus(
+    String bookingId,
+    String nextStatus,
+    Map<String, List<BookingListItem>?> snapshots,
+  ) {
+    final original = _findSnapshotBooking(bookingId, snapshots);
+    if (original != null) {
+      final optimisticBooking = original.copyWith(status: nextStatus);
+      for (final status in _statuses) {
+        ref
+            .read(myBookingsViewModelProvider(status).notifier)
+            .insertOrReplace(optimisticBooking);
+      }
+      return;
+    }
+
+    for (final status in _statuses) {
+      ref
+          .read(myBookingsViewModelProvider(status).notifier)
+          .applyOptimisticStatus(bookingId, nextStatus);
+    }
+  }
+
+  BookingListItem? _findSnapshotBooking(
+    String bookingId,
+    Map<String, List<BookingListItem>?> snapshots,
+  ) {
+    for (final bookings in snapshots.values) {
+      if (bookings == null) continue;
+      for (final booking in bookings) {
+        if (booking.id == bookingId) return booking;
+      }
+    }
+    return null;
+  }
+
+  void _restore(Map<String, List<BookingListItem>?> snapshots) {
+    for (final entry in snapshots.entries) {
+      ref
+          .read(myBookingsViewModelProvider(entry.key).notifier)
+          .restore(entry.value);
+    }
+  }
+
+  void _refreshAfterSuccess() {
+    for (final status in _statuses) {
+      ref.invalidate(myBookingsViewModelProvider(status));
+    }
+    ref.invalidate(unreadCountProvider);
+    ref.invalidate(notificationsViewModelProvider);
   }
 
   void reset() => state = const AsyncValue.data(null);

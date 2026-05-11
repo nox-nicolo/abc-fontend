@@ -28,20 +28,24 @@ class MyFollowingViewModel extends _$MyFollowingViewModel {
   Future<void> refresh() => _fetch();
 
   Future<bool> unfollow(String salonId) async {
+    final current = state.value;
+    if (current != null) {
+      state = AsyncValue.data(
+        current.where((s) => s.salonId != salonId).toList(),
+      );
+    }
+
     final repo = ref.read(customerProfileRepositoryProvider);
     final res = await repo.unfollowSalon(salonId);
     switch (res) {
       case Left(value: final l):
-        state = AsyncValue.error(l.message, StackTrace.current);
+        if (current != null) {
+          state = AsyncValue.data(current);
+        } else {
+          state = AsyncValue.error(l.message, StackTrace.current);
+        }
         return false;
       case Right():
-        // Remove from local list immediately
-        final current = state.value;
-        if (current != null) {
-          state = AsyncValue.data(
-            current.where((s) => s.salonId != salonId).toList(),
-          );
-        }
         return true;
     }
   }

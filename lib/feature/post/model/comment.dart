@@ -27,6 +27,7 @@ class CommentModel {
   final int replyCount;
   final DateTime createdAt;
   final bool isMine;
+  final bool isPending;
 
   const CommentModel({
     required this.id,
@@ -37,7 +38,32 @@ class CommentModel {
     required this.replyCount,
     required this.createdAt,
     required this.isMine,
+    this.isPending = false,
   });
+
+  CommentModel copyWith({
+    String? id,
+    String? postId,
+    String? content,
+    CommentAuthorModel? author,
+    String? parentCommentId,
+    int? replyCount,
+    DateTime? createdAt,
+    bool? isMine,
+    bool? isPending,
+  }) {
+    return CommentModel(
+      id: id ?? this.id,
+      postId: postId ?? this.postId,
+      content: content ?? this.content,
+      author: author ?? this.author,
+      parentCommentId: parentCommentId ?? this.parentCommentId,
+      replyCount: replyCount ?? this.replyCount,
+      createdAt: createdAt ?? this.createdAt,
+      isMine: isMine ?? this.isMine,
+      isPending: isPending ?? this.isPending,
+    );
+  }
 
   factory CommentModel.fromMap(Map<String, dynamic> map) {
     return CommentModel(
@@ -49,6 +75,7 @@ class CommentModel {
       replyCount: map['reply_count'] ?? 0,
       createdAt: DateTime.parse(map['created_at']),
       isMine: map['is_mine'] ?? false,
+      isPending: false,
     );
   }
 }

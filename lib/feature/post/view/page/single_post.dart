@@ -46,6 +46,7 @@ class _PostState extends ConsumerState<Post> {
   late bool _isLiked;
   late int _likesCount;
   late bool _isSaved;
+  bool _likeInFlight = false;
 
   final PageController _pageController = PageController();
   int _currentPage = 0; // Track the active image index
@@ -60,21 +61,18 @@ class _PostState extends ConsumerState<Post> {
     _likesCount = widget.likesCount;
     _isSaved = widget.isSaved;
 
-    _likeSub = ref.listenManual(
-      postLikeViewModelProvider,
-      (previous, next) {
-        if (next is AsyncData<PostLikeModel>) {
-          final data = next.value;
+    _likeSub = ref.listenManual(postLikeViewModelProvider, (previous, next) {
+      if (next is AsyncData<PostLikeModel>) {
+        final data = next.value;
 
-          if (data.postId == widget.postId && mounted) {
-            setState(() {
-              _isLiked = data.liked;
-              _likesCount = data.likesCount;
-            });
-          }
+        if (data.postId == widget.postId && mounted) {
+          setState(() {
+            _isLiked = data.liked;
+            _likesCount = data.likesCount;
+          });
         }
-      },
-    );
+      }
+    });
   }
 
   // Impotant for cleanup
@@ -97,6 +95,48 @@ class _PostState extends ConsumerState<Post> {
     );
   }
 
+  Future<void> _toggleLike() async {
+    if (_likeInFlight) return;
+
+    final previousLiked = _isLiked;
+    final previousCount = _likesCount;
+
+    setState(() {
+      _likeInFlight = true;
+      _isLiked = !_isLiked;
+      _likesCount += _isLiked ? 1 : -1;
+      if (_likesCount < 0) _likesCount = 0;
+    });
+
+    await ref
+        .read(postLikeViewModelProvider.notifier)
+        .toggleLike(postId: widget.postId);
+
+    final result = ref.read(postLikeViewModelProvider);
+    if (!mounted) return;
+
+    result?.whenOrNull(
+      error: (_, _) {
+        setState(() {
+          _isLiked = previousLiked;
+          _likesCount = previousCount;
+          _likeInFlight = false;
+        });
+      },
+      data: (m) {
+        if (m.postId != widget.postId) {
+          setState(() => _likeInFlight = false);
+          return;
+        }
+
+        setState(() {
+          _isLiked = m.liked;
+          _likesCount = m.likesCount;
+          _likeInFlight = false;
+        });
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,9 +178,12 @@ class _PostState extends ConsumerState<Post> {
                           fadeOutDuration: const Duration(milliseconds: 300),
                           filterQuality: FilterQuality.low,
                           placeholder: (context, url) => Container(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                           ),
-                          errorWidget: (context, url, error) => const Icon(Icons.error),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error),
                         );
                       },
                     ),
@@ -151,23 +194,24 @@ class _PostState extends ConsumerState<Post> {
                     bottom: 10,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        widget.images.length,
-                        (index) {
-                          bool isActive = _currentPage == index;
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 300), // Smoothly transition
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            width: isActive ? 12 : 6, // Active dot is wider
-                            height: 6,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(3),
-                              // Active dot is solid white, others are faded
-                              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.5),
-                            ),
-                          );
-                        },
-                      ),
+                      children: List.generate(widget.images.length, (index) {
+                        bool isActive = _currentPage == index;
+                        return AnimatedContainer(
+                          duration: const Duration(
+                            milliseconds: 300,
+                          ), // Smoothly transition
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: isActive ? 12 : 6, // Active dot is wider
+                          height: 6,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(3),
+                            // Active dot is solid white, others are faded
+                            color: isActive
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.5),
+                          ),
+                        );
+                      }),
                     ),
                   ),
               ],
@@ -181,7 +225,9 @@ class _PostState extends ConsumerState<Post> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
                   child: ClipOval(
                     child: widget.profileImage.isNotEmpty
                         ? Image.network(
@@ -219,7 +265,6 @@ class _PostState extends ConsumerState<Post> {
                     // ),
                   ],
                 ),
-                
               ],
             ),
           ),
@@ -231,25 +276,18 @@ class _PostState extends ConsumerState<Post> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 16,
+                ),
                 child: Row(
                   children: [
                     Row(
                       children: [
                         IconButton(
-                          onPressed: () {
-                            ref
-                                .read(
-                                    postLikeViewModelProvider.notifier)
-                                .toggleLike(
-                                  postId: widget.postId,
-                                );
-                          },
+                          onPressed: _toggleLike,
                           icon: Icon(
-                            _isLiked
-                                ? Icons.favorite
-                                : Icons.favorite_border,
+                            _isLiked ? Icons.favorite : Icons.favorite_border,
                             color: _isLiked
                                 ? colorScheme.error
                                 : colorScheme.primary,
@@ -258,8 +296,7 @@ class _PostState extends ConsumerState<Post> {
                         ),
                         Text(
                           _likesCount.toString(),
-                          style:
-                              Theme.of(context).textTheme.labelLarge,
+                          style: Theme.of(context).textTheme.labelLarge,
                         ),
                       ],
                     ),
@@ -276,8 +313,7 @@ class _PostState extends ConsumerState<Post> {
                         const SizedBox(width: 12),
                         Text(
                           widget.sharesCount.toString(),
-                          style:
-                              Theme.of(context).textTheme.labelLarge,
+                          style: Theme.of(context).textTheme.labelLarge,
                         ),
                       ],
                     ),
@@ -285,8 +321,7 @@ class _PostState extends ConsumerState<Post> {
                     const SizedBox(width: 24),
 
                     GestureDetector(
-                      onTap: () =>
-                          showCommentsSheet(context, widget.postId),
+                      onTap: () => showCommentsSheet(context, widget.postId),
                       behavior: HitTestBehavior.opaque,
                       child: Row(
                         children: [
@@ -298,8 +333,7 @@ class _PostState extends ConsumerState<Post> {
                           const SizedBox(width: 8),
                           Text(
                             widget.commentsCount.toString(),
-                            style:
-                                Theme.of(context).textTheme.labelLarge,
+                            style: Theme.of(context).textTheme.labelLarge,
                           ),
                         ],
                       ),
@@ -346,7 +380,9 @@ class _PostState extends ConsumerState<Post> {
                         isExpanded ? 'Show Less' : 'Read More',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Theme.of(context).colorScheme.onPrimaryFixedVariant,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryFixedVariant,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -363,10 +399,9 @@ class _PostState extends ConsumerState<Post> {
             padding: const EdgeInsets.only(left: 8, top: 4),
             child: Text(
               widget.datePosted,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelSmall
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
 

@@ -11,7 +11,6 @@ class SalonViewProfileModel {
   final SalonActionsModel actions;
   final SalonServicesModel services;
 
-
   SalonViewProfileModel({
     required this.salon,
     required this.viewer,
@@ -67,7 +66,7 @@ class SalonViewProfileModel {
       contacts: SalonContactsModel.fromMap(map['contacts']),
       media: SalonMediaModel.fromMap(map['media']),
       actions: SalonActionsModel.fromMap(map['actions']),
-      services: SalonServicesModel.fromMap(map['services'])
+      services: SalonServicesModel.fromMap(map['services']),
     );
   }
 
@@ -91,7 +90,6 @@ class SalonViewProfileModel {
         other.media == media &&
         other.actions == actions &&
         other.services == services;
-
   }
 
   @override
@@ -102,7 +100,7 @@ class SalonViewProfileModel {
       availability.hashCode ^
       contacts.hashCode ^
       media.hashCode ^
-      actions.hashCode^
+      actions.hashCode ^
       services.hashCode;
 }
 
@@ -130,16 +128,16 @@ class SalonCoreModel {
   });
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'username': username,
-        'name': name,
-        'slogan': slogan,
-        'description': description,
-        'profile_picture': profilePicture,
-        'cover_image': coverImage,
-        'is_verified': isVerified,
-        'created_at': createdAt,
-      };
+    'id': id,
+    'username': username,
+    'name': name,
+    'slogan': slogan,
+    'description': description,
+    'profile_picture': profilePicture,
+    'cover_image': coverImage,
+    'is_verified': isVerified,
+    'created_at': createdAt,
+  };
 
   factory SalonCoreModel.fromMap(Map<String, dynamic> map) {
     return SalonCoreModel(
@@ -156,26 +154,44 @@ class SalonCoreModel {
   }
 }
 
-
 class SalonViewerModel {
   final bool isFollowing;
   final bool notificationsEnabled;
   final bool isBlocked;
   final bool isOwner;
+  final bool isSaved;
 
   SalonViewerModel({
     required this.isFollowing,
     required this.notificationsEnabled,
     required this.isBlocked,
     this.isOwner = false,
+    this.isSaved = false,
   });
 
+  SalonViewerModel copyWith({
+    bool? isFollowing,
+    bool? notificationsEnabled,
+    bool? isBlocked,
+    bool? isOwner,
+    bool? isSaved,
+  }) {
+    return SalonViewerModel(
+      isFollowing: isFollowing ?? this.isFollowing,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      isBlocked: isBlocked ?? this.isBlocked,
+      isOwner: isOwner ?? this.isOwner,
+      isSaved: isSaved ?? this.isSaved,
+    );
+  }
+
   Map<String, dynamic> toMap() => {
-        'is_following': isFollowing,
-        'notifications_enabled': notificationsEnabled,
-        'is_blocked': isBlocked,
-        'is_owner': isOwner,
-      };
+    'is_following': isFollowing,
+    'notifications_enabled': notificationsEnabled,
+    'is_blocked': isBlocked,
+    'is_owner': isOwner,
+    'is_saved': isSaved,
+  };
 
   factory SalonViewerModel.fromMap(Map<String, dynamic> map) {
     return SalonViewerModel(
@@ -183,10 +199,10 @@ class SalonViewerModel {
       notificationsEnabled: map['notifications_enabled'] ?? false,
       isBlocked: map['is_blocked'] ?? false,
       isOwner: map['is_owner'] ?? false,
+      isSaved: map['is_saved'] ?? false,
     );
   }
 }
-
 
 class SalonMetricsModel {
   final int followersCount;
@@ -201,12 +217,26 @@ class SalonMetricsModel {
     required this.reviewsCount,
   });
 
+  SalonMetricsModel copyWith({
+    int? followersCount,
+    int? postsCount,
+    double? rating,
+    int? reviewsCount,
+  }) {
+    return SalonMetricsModel(
+      followersCount: followersCount ?? this.followersCount,
+      postsCount: postsCount ?? this.postsCount,
+      rating: rating ?? this.rating,
+      reviewsCount: reviewsCount ?? this.reviewsCount,
+    );
+  }
+
   Map<String, dynamic> toMap() => {
-        'followers_count': followersCount,
-        'posts_count': postsCount,
-        'rating': rating,
-        'reviews_count': reviewsCount,
-      };
+    'followers_count': followersCount,
+    'posts_count': postsCount,
+    'rating': rating,
+    'reviews_count': reviewsCount,
+  };
 
   factory SalonMetricsModel.fromMap(Map<String, dynamic> map) {
     return SalonMetricsModel(
@@ -217,7 +247,6 @@ class SalonMetricsModel {
     );
   }
 }
-
 
 class SalonAvailabilityModel {
   final bool isOpenNow;
@@ -231,10 +260,10 @@ class SalonAvailabilityModel {
   });
 
   Map<String, dynamic> toMap() => {
-        'is_open_now': isOpenNow,
-        'today': today?.toMap(),
-        'weekly': weekly.map((x) => x.toMap()).toList(),
-      };
+    'is_open_now': isOpenNow,
+    'today': today?.toMap(),
+    'weekly': weekly.map((x) => x.toMap()).toList(),
+  };
 
   factory SalonAvailabilityModel.fromMap(Map<String, dynamic> map) {
     return SalonAvailabilityModel(
@@ -244,8 +273,7 @@ class SalonAvailabilityModel {
           : null,
       weekly: map['weekly'] is List
           ? List<SalonWeeklyModel>.from(
-              (map['weekly'] as List)
-                  .map((x) => SalonWeeklyModel.fromMap(x)),
+              (map['weekly'] as List).map((x) => SalonWeeklyModel.fromMap(x)),
             )
           : [],
     );
@@ -263,8 +291,11 @@ class SalonTodayModel {
     required this.closeTime,
   });
 
-  Map<String, dynamic> toMap() =>
-      {'day': day, 'open_time': openTime, 'close_time': closeTime};
+  Map<String, dynamic> toMap() => {
+    'day': day,
+    'open_time': openTime,
+    'close_time': closeTime,
+  };
 
   factory SalonTodayModel.fromMap(Map<String, dynamic> map) {
     return SalonTodayModel(
@@ -288,8 +319,12 @@ class SalonWeeklyModel {
     this.close,
   });
 
-  Map<String, dynamic> toMap() =>
-      {'day': day, 'is_open': isOpen, 'open': open, 'close': close};
+  Map<String, dynamic> toMap() => {
+    'day': day,
+    'is_open': isOpen,
+    'open': open,
+    'close': close,
+  };
 
   factory SalonWeeklyModel.fromMap(Map<String, dynamic> map) {
     return SalonWeeklyModel(
@@ -300,7 +335,6 @@ class SalonWeeklyModel {
     );
   }
 }
-
 
 class SalonContactsModel {
   final String? phone;
@@ -318,12 +352,12 @@ class SalonContactsModel {
   });
 
   Map<String, dynamic> toMap() => {
-        'phone': phone,
-        'sms': sms,
-        'whatsapp': whatsapp,
-        'email': email,
-        'location': location?.toMap(),
-      };
+    'phone': phone,
+    'sms': sms,
+    'whatsapp': whatsapp,
+    'email': email,
+    'location': location?.toMap(),
+  };
 
   factory SalonContactsModel.fromMap(Map<String, dynamic> map) {
     return SalonContactsModel(
@@ -349,8 +383,7 @@ class SalonLocationModel {
     required this.lng,
   });
 
-  Map<String, dynamic> toMap() =>
-      {'address': address, 'lat': lat, 'lng': lng};
+  Map<String, dynamic> toMap() => {'address': address, 'lat': lat, 'lng': lng};
 
   factory SalonLocationModel.fromMap(Map<String, dynamic> map) {
     return SalonLocationModel(
@@ -366,15 +399,15 @@ class SalonMediaModel {
 
   SalonMediaModel({required this.gallery});
 
-  Map<String, dynamic> toMap() =>
-      {'gallery': gallery.map((x) => x.toMap()).toList()};
+  Map<String, dynamic> toMap() => {
+    'gallery': gallery.map((x) => x.toMap()).toList(),
+  };
 
   factory SalonMediaModel.fromMap(Map<String, dynamic> map) {
     return SalonMediaModel(
       gallery: map['gallery'] is List
           ? List<SalonGalleryModel>.from(
-              (map['gallery'] as List)
-                  .map((x) => SalonGalleryModel.fromMap(x)),
+              (map['gallery'] as List).map((x) => SalonGalleryModel.fromMap(x)),
             )
           : [],
     );
@@ -392,8 +425,11 @@ class SalonGalleryModel {
     required this.order,
   });
 
-  Map<String, dynamic> toMap() =>
-      {'id': id, 'image_url': imageUrl, 'order': order};
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'image_url': imageUrl,
+    'order': order,
+  };
 
   factory SalonGalleryModel.fromMap(Map<String, dynamic> map) {
     return SalonGalleryModel(
@@ -422,13 +458,13 @@ class SalonActionsModel {
   });
 
   Map<String, dynamic> toMap() => {
-        'can_follow': canFollow,
-        'can_unfollow': canUnfollow,
-        'can_contact': canContact,
-        'can_share': canShare,
-        'can_report': canReport,
-        'can_block': canBlock,
-      };
+    'can_follow': canFollow,
+    'can_unfollow': canUnfollow,
+    'can_contact': canContact,
+    'can_share': canShare,
+    'can_report': canReport,
+    'can_block': canBlock,
+  };
 
   factory SalonActionsModel.fromMap(Map<String, dynamic> map) {
     return SalonActionsModel(
@@ -448,21 +484,21 @@ class SalonServicesModel {
   SalonServicesModel({required this.categories});
 
   Map<String, dynamic> toMap() => {
-        'categories': categories.map((x) => x.toMap()).toList(),
-      };
+    'categories': categories.map((x) => x.toMap()).toList(),
+  };
 
   factory SalonServicesModel.fromMap(Map<String, dynamic> map) {
     return SalonServicesModel(
       categories: map['categories'] is List
           ? List<SalonServiceCategoryModel>.from(
-              (map['categories'] as List)
-                  .map((x) => SalonServiceCategoryModel.fromMap(x)),
+              (map['categories'] as List).map(
+                (x) => SalonServiceCategoryModel.fromMap(x),
+              ),
             )
           : [],
     );
   }
 }
-
 
 class SalonServiceCategoryModel {
   final String categoryId;
@@ -476,10 +512,10 @@ class SalonServiceCategoryModel {
   });
 
   Map<String, dynamic> toMap() => {
-        'category_id': categoryId,
-        'category_name': categoryName,
-        'services': services.map((x) => x.toMap()).toList(),
-      };
+    'category_id': categoryId,
+    'category_name': categoryName,
+    'services': services.map((x) => x.toMap()).toList(),
+  };
 
   factory SalonServiceCategoryModel.fromMap(Map<String, dynamic> map) {
     return SalonServiceCategoryModel(
@@ -487,14 +523,14 @@ class SalonServiceCategoryModel {
       categoryName: map['category_name'] ?? '',
       services: map['services'] is List
           ? List<SalonServiceItemModel>.from(
-              (map['services'] as List)
-                  .map((x) => SalonServiceItemModel.fromMap(x)),
+              (map['services'] as List).map(
+                (x) => SalonServiceItemModel.fromMap(x),
+              ),
             )
           : [],
     );
   }
 }
-
 
 class SalonServiceItemModel {
   final String id;
@@ -516,14 +552,14 @@ class SalonServiceItemModel {
   });
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'name': name,
-        'price_min': priceMin,
-        'price_max': priceMax,
-        'currency': currency,
-        'duration_minutes': durationMinutes,
-        'stylists': stylists.map((x) => x.toMap()).toList(),
-      };
+    'id': id,
+    'name': name,
+    'price_min': priceMin,
+    'price_max': priceMax,
+    'currency': currency,
+    'duration_minutes': durationMinutes,
+    'stylists': stylists.map((x) => x.toMap()).toList(),
+  };
 
   factory SalonServiceItemModel.fromMap(Map<String, dynamic> map) {
     return SalonServiceItemModel(
@@ -535,28 +571,23 @@ class SalonServiceItemModel {
       durationMinutes: map['duration_minutes'],
       stylists: map['stylists'] is List
           ? List<SalonServiceStylistModel>.from(
-              (map['stylists'] as List)
-                  .map((x) => SalonServiceStylistModel.fromMap(x)),
+              (map['stylists'] as List).map(
+                (x) => SalonServiceStylistModel.fromMap(x),
+              ),
             )
           : [],
     );
   }
 }
 
-
 class SalonServiceStylistModel {
   final String id;
   final String name;
   final String? avatar;
 
-  SalonServiceStylistModel({
-    required this.id,
-    required this.name,
-    this.avatar,
-  });
+  SalonServiceStylistModel({required this.id, required this.name, this.avatar});
 
-  Map<String, dynamic> toMap() =>
-      {'id': id, 'name': name, 'avatar': avatar};
+  Map<String, dynamic> toMap() => {'id': id, 'name': name, 'avatar': avatar};
 
   factory SalonServiceStylistModel.fromMap(Map<String, dynamic> map) {
     return SalonServiceStylistModel(
