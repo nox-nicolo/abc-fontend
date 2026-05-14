@@ -35,6 +35,7 @@ class ChooseSalonPage extends ConsumerWidget {
                     .selectSalonOffer(
                       salonServicePriceId: s.salonServicePriceId,
                       salonName: s.salonName,
+                      serviceName: s.subServiceName,
                       price: s.price,
                       currency: s.currency,
                       durationMinutes: s.durationMinutes,

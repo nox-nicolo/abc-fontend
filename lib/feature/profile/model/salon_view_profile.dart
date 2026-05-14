@@ -113,6 +113,13 @@ class SalonCoreModel {
   final String profilePicture;
   final String coverImage;
   final bool isVerified;
+  final String verificationStatus;
+  final String verificationLabel;
+  final List<String> verificationReasons;
+  final List<String> verificationMissing;
+  final bool isPremiumMember;
+  final String? premiumPlan;
+  final String? premiumLabel;
   final String createdAt;
 
   SalonCoreModel({
@@ -124,6 +131,13 @@ class SalonCoreModel {
     required this.profilePicture,
     required this.coverImage,
     required this.isVerified,
+    required this.verificationStatus,
+    required this.verificationLabel,
+    required this.verificationReasons,
+    required this.verificationMissing,
+    required this.isPremiumMember,
+    this.premiumPlan,
+    this.premiumLabel,
     required this.createdAt,
   });
 
@@ -136,6 +150,13 @@ class SalonCoreModel {
     'profile_picture': profilePicture,
     'cover_image': coverImage,
     'is_verified': isVerified,
+    'verification_status': verificationStatus,
+    'verification_label': verificationLabel,
+    'verification_reasons': verificationReasons,
+    'verification_missing': verificationMissing,
+    'is_premium_member': isPremiumMember,
+    'premium_plan': premiumPlan,
+    'premium_label': premiumLabel,
     'created_at': createdAt,
   };
 
@@ -149,6 +170,21 @@ class SalonCoreModel {
       profilePicture: map['profile_picture'] ?? '',
       coverImage: map['cover_image'] ?? '',
       isVerified: map['is_verified'] ?? false,
+      verificationStatus: map['verification_status'] ?? 'not_verified',
+      verificationLabel: map['verification_label'] ?? 'Not verified',
+      verificationReasons: List<String>.from(
+        (map['verification_reasons'] as List? ?? const []).map(
+          (item) => item.toString(),
+        ),
+      ),
+      verificationMissing: List<String>.from(
+        (map['verification_missing'] as List? ?? const []).map(
+          (item) => item.toString(),
+        ),
+      ),
+      isPremiumMember: map['is_premium_member'] ?? false,
+      premiumPlan: map['premium_plan'],
+      premiumLabel: map['premium_label'],
       createdAt: map['created_at'] ?? '',
     );
   }

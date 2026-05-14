@@ -37,6 +37,7 @@ class SalonServiceDetailPage extends ConsumerWidget {
       ..selectSalonOffer(
         salonServicePriceId: service.id,
         salonName: salon.salon.name,
+        serviceName: service.name,
         price: (service.priceMin ?? 0).toDouble(),
         currency: service.currency,
         durationMinutes: service.durationMinutes ?? 60,

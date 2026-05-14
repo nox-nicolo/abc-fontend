@@ -11,6 +11,7 @@ class BookingDraft {
 
   // UI SNAPSHOTS (frontend-only)
   final String? salonName;
+  final String? serviceName;
   final double? price;
   final String? currency;
   final int? durationMinutes;
@@ -21,6 +22,7 @@ class BookingDraft {
     this.startAt,
     this.note,
     this.salonName,
+    this.serviceName,
     this.price,
     this.currency,
     this.durationMinutes,
@@ -32,6 +34,7 @@ class BookingDraft {
     DateTime? startAt,
     String? note,
     String? salonName,
+    String? serviceName,
     double? price,
     String? currency,
     int? durationMinutes,
@@ -43,6 +46,7 @@ class BookingDraft {
       startAt: startAt ?? this.startAt,
       note: note ?? this.note,
       salonName: salonName ?? this.salonName,
+      serviceName: serviceName ?? this.serviceName,
       price: price ?? this.price,
       currency: currency ?? this.currency,
       durationMinutes:

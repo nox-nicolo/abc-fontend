@@ -110,7 +110,10 @@ class PushNotificationService {
       );
 
       final token = await FirebaseMessaging.instance.getToken();
-      if (token == null || token.isEmpty) return;
+      if (token == null || token.isEmpty) {
+        AppLogger.warning('FCM token is empty; phone cannot receive push yet');
+        return;
+      }
       await _registerToken(token);
     } catch (error, stackTrace) {
       AppLogger.warning(
@@ -146,6 +149,8 @@ class PushNotificationService {
         'Backend rejected FCM device token',
         error: response.statusCode,
       );
+    } else {
+      AppLogger.info('FCM device token registered with backend');
     }
   }
 

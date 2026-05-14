@@ -349,15 +349,15 @@ class _CustomerProfileSliverWidgetState
           SliverSpaceHeader(title: 'Beauty Hub'),
           SliverToBoxAdapter(child: _BeautyHubActions()),
 
-          // ── Sticky tab bar (Bookings | Reviews) ─────────────────────────
+          // ── Sticky tab bar ───────────────────────────────────────────────
           SliverPersistentHeader(
             pinned: true,
             delegate: _StickyTabBarDelegate(
               tabBar: TabBar(
                 controller: _tabController,
                 tabs: const [
-                  Tab(icon: Icon(Bootstrap.calendar_check), text: 'Bookings'),
-                  Tab(icon: Icon(Bootstrap.star), text: 'Reviews'),
+                  Tab(icon: Icon(Icons.auto_awesome), text: 'Style DNA'),
+                  Tab(icon: Icon(Bootstrap.graph_up), text: 'Beauty Pulse'),
                 ],
               ),
             ),
@@ -365,9 +365,9 @@ class _CustomerProfileSliverWidgetState
 
           // ── Tab content ──────────────────────────────────────────────────
           if (_selectedTabIndex == 0)
-            SliverToBoxAdapter(child: _BookingsTab())
+            SliverToBoxAdapter(child: _StyleDnaTab(profile: profile))
           else
-            const SliverToBoxAdapter(child: _ReviewsTab()),
+            SliverToBoxAdapter(child: _BeautyPulseTab(profile: profile)),
         ],
       ),
     );
@@ -398,70 +398,112 @@ class _CustomerProfileSliverWidgetState
   }
 }
 
-// ── Bookings tab ──────────────────────────────────────────────────────────────
+// ── Premium profile tabs ─────────────────────────────────────────────────────
 
-class _BookingsTab extends StatelessWidget {
-  const _BookingsTab();
+class _StyleDnaTab extends StatelessWidget {
+  final CustomerProfileModel profile;
+
+  const _StyleDnaTab({required this.profile});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    final styles = [
+      if (profile.gender != null && profile.gender!.isNotEmpty)
+        _InsightChip(icon: Icons.person_outline, label: _capitalize(profile.gender!)),
+      if (profile.city != null && profile.city!.isNotEmpty)
+        _InsightChip(icon: Icons.location_city_rounded, label: profile.city!),
+      const _InsightChip(icon: Icons.spa_rounded, label: 'Salon discovery'),
+      const _InsightChip(icon: Icons.auto_awesome_rounded, label: 'Fresh looks'),
+      const _InsightChip(icon: Icons.favorite_rounded, label: 'Saved inspiration'),
+    ];
+
+    return _PremiumTabSurface(
+      title: 'Style DNA',
+      subtitle: 'A profile-native snapshot of preferences that helps the app understand taste, location, and beauty intent.',
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Bootstrap.calendar_check,
-            size: 48,
-            color: Colors.pinkAccent,
+          Wrap(spacing: 10, runSpacing: 10, children: styles),
+          const SizedBox(height: 18),
+          const _PremiumMetricStrip(
+            items: [
+              _MetricItem(value: 'Smart', label: 'matching'),
+              _MetricItem(value: 'Private', label: 'taste map'),
+              _MetricItem(value: 'Local', label: 'salon fit'),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text('Your Bookings', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            'View and manage all your upcoming\nand past appointments.',
-            textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+          const SizedBox(height: 18),
+          _InsightRow(
+            icon: Icons.tune_rounded,
+            title: 'Recommendation signal',
+            subtitle:
+                'Saved salons, followed salons, and booked services can shape future discovery without turning the profile into a booking screen.',
           ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CustomerBookingPage()),
-              );
-            },
-            icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-            label: const Text('Go to Bookings'),
+          const SizedBox(height: 10),
+          _InsightRow(
+            icon: Icons.lock_outline_rounded,
+            title: 'Customer controlled',
+            subtitle:
+                'Preferences stay lightweight and personal; detailed booking history remains in the booking area.',
           ),
         ],
       ),
     );
   }
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 }
 
-// ── Reviews tab ───────────────────────────────────────────────────────────────
+class _BeautyPulseTab extends StatelessWidget {
+  final CustomerProfileModel profile;
 
-class _ReviewsTab extends StatelessWidget {
-  const _ReviewsTab();
+  const _BeautyPulseTab({required this.profile});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    return _PremiumTabSurface(
+      title: 'Beauty Pulse',
+      subtitle: 'A personal activity layer for progress, trust, and relationship signals across the beauty community.',
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Bootstrap.star, size: 48, color: Colors.amber[600]),
-          const SizedBox(height: 16),
-          Text('Your Reviews', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            'Reviews you leave after completed\nappointments will appear here.',
-            textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+          _PremiumMetricStrip(
+            items: [
+              _MetricItem(
+                value: '${profile.stats.followingCount}',
+                label: 'following',
+              ),
+              _MetricItem(
+                value: '${profile.stats.bookingsCount}',
+                label: 'visits',
+              ),
+              _MetricItem(
+                value: '${profile.stats.reviewsCount}',
+                label: 'reviews',
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          const _InsightRow(
+            icon: Icons.workspace_premium_rounded,
+            title: 'Beauty reputation',
+            subtitle:
+                'Completed visits, helpful reviews, and salon relationships can build a premium customer profile over time.',
+          ),
+          const SizedBox(height: 10),
+          const _InsightRow(
+            icon: Icons.timeline_rounded,
+            title: 'Journey timeline',
+            subtitle:
+                'Future highlights can show milestones like loyal customer, regular visitor, and style explorer.',
+          ),
+          const SizedBox(height: 10),
+          const _InsightRow(
+            icon: Icons.verified_rounded,
+            title: 'Trust signals',
+            subtitle:
+                'Keep operational actions in Bookings and use this tab to show profile-level credibility.',
           ),
         ],
       ),
@@ -470,6 +512,200 @@ class _ReviewsTab extends StatelessWidget {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+class _PremiumTabSurface extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  const _PremiumTabSurface({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.48),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: scheme.outlineVariant.withValues(alpha: 0.55),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 18),
+              child,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InsightChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _InsightChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: scheme.primary),
+          const SizedBox(width: 7),
+          Text(label, style: Theme.of(context).textTheme.labelMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _PremiumMetricStrip extends StatelessWidget {
+  final List<_MetricItem> items;
+
+  const _PremiumMetricStrip({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < items.length; i++) ...[
+          Expanded(child: _MetricTile(item: items[i])),
+          if (i != items.length - 1) const SizedBox(width: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _MetricItem {
+  final String value;
+  final String label;
+
+  const _MetricItem({required this.value, required this.label});
+}
+
+class _MetricTile extends StatelessWidget {
+  final _MetricItem item;
+
+  const _MetricTile({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          Text(
+            item.value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: scheme.primary,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            item.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InsightRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _InsightRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 18,
+          backgroundColor: scheme.secondary.withValues(alpha: 0.12),
+          child: Icon(icon, size: 18, color: scheme.secondary),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class _BeautyHubActions extends StatelessWidget {
   const _BeautyHubActions();

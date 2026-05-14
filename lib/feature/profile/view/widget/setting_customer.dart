@@ -1,6 +1,7 @@
 import 'package:africa_beuty/feature/profile/view/page/appointment_settings.dart';
 import 'package:africa_beuty/feature/profile/view/page/appointment_reminders.dart';
 import 'package:africa_beuty/feature/profile/view/page/edit_customer_profile.dart';
+import 'package:africa_beuty/feature/profile/view/page/settings/account_privacy_security.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 
@@ -41,17 +42,26 @@ class _CustomerSettingsState extends State<CustomerSettings> {
                 );
               },
               leading: Icon(Icons.edit, color: theme.colorScheme.secondary),
-              title: const Text('Edit'),
-              subtitle: const Text('Name, bio, city, country...'),
+              title: const Text('Profile'),
+              subtitle: const Text('Name, username, photo, bio, city, country'),
             ),
             const SizedBox(height: 10),
             ListTile(
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CustomerPrivacySettingsPage(),
+                  ),
+                );
+              },
               leading: Icon(
                 FontAwesome.lock_solid,
                 color: theme.colorScheme.secondary,
               ),
-              title: Text('Privacy'),
-              subtitle: Text('user data'),
+              title: const Text('Privacy'),
+              subtitle: const Text('Visibility, messages, blocked accounts'),
             ),
             const SizedBox(height: 10),
             ListTile(
@@ -68,17 +78,26 @@ class _CustomerSettingsState extends State<CustomerSettings> {
                 FontAwesome.calendar_check,
                 color: theme.colorScheme.secondary,
               ),
-              title: Text('Appointment'),
-              subtitle: Text('Reminders'),
+              title: const Text('Bookings'),
+              subtitle: const Text('Appointment rules, reminders, history'),
             ),
             const SizedBox(height: 10),
             ListTile(
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CustomerSecuritySettingsPage(),
+                  ),
+                );
+              },
               leading: Icon(
                 FontAwesome.shield_solid,
                 color: theme.colorScheme.secondary,
               ),
-              title: Text('Security'),
-              subtitle: Text('Two-factor authentication, Change password'),
+              title: const Text('Security'),
+              subtitle: const Text('Password, 2-step, devices, login alerts'),
             ),
             const SizedBox(height: 10),
             ListTile(
@@ -86,8 +105,8 @@ class _CustomerSettingsState extends State<CustomerSettings> {
                 FontAwesome.database_solid,
                 color: theme.colorScheme.secondary,
               ),
-              title: Text('Storage and Data'),
-              subtitle: Text('Network usage, Storage'),
+              title: const Text('Storage and Data'),
+              subtitle: const Text('Cache, media quality, network usage'),
             ),
             const SizedBox(height: 10),
             ListTile(
@@ -104,17 +123,26 @@ class _CustomerSettingsState extends State<CustomerSettings> {
                 FontAwesome.bell_solid,
                 color: theme.colorScheme.secondary,
               ),
-              title: Text('Notification'),
-              subtitle: Text('Notification preferences'),
+              title: const Text('Notifications'),
+              subtitle: const Text('Comments, replies, bookings, reminders'),
             ),
             const SizedBox(height: 10),
             ListTile(
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CustomerAccountSettingsPage(),
+                  ),
+                );
+              },
               leading: Icon(
                 FontAwesome.sliders_solid,
                 color: theme.colorScheme.secondary,
               ),
-              title: Text('Account'),
-              subtitle: Text('Delete, Manage contents'),
+              title: const Text('Account'),
+              subtitle: const Text('Saved salons, following, data, deletion'),
             ),
             const SizedBox(height: 10),
             ListTile(
@@ -122,8 +150,8 @@ class _CustomerSettingsState extends State<CustomerSettings> {
                 FontAwesome.globe_solid,
                 color: theme.colorScheme.secondary,
               ),
-              title: Text('Language'),
-              subtitle: Text('English, Device language'),
+              title: const Text('Language'),
+              subtitle: const Text('English, device language'),
             ),
 
             const SizedBox(height: 18),

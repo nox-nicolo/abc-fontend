@@ -425,7 +425,7 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                                           letterSpacing: 1.1,
                                           color: todaysHours.isOpen
                                               ? Colors.greenAccent
-                                              : Colors.redAccent,
+                                              : Colors.white,
                                           shadows: const [
                                             Shadow(
                                               blurRadius: 4,

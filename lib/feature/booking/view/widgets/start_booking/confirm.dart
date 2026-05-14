@@ -61,7 +61,7 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.check_circle, color: Colors.green, size: 60),
@@ -121,9 +121,12 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
     final draft = ref.watch(bookingDraftProvider);
     final loading = ref.watch(startBookingViewModelProvider).isLoading;
 
-    if (draft.style == null ||
+    final serviceName = draft.serviceName ?? draft.style?.name;
+
+    if (serviceName == null ||
         draft.startAt == null ||
         draft.salonServicePriceId == null ||
+        draft.salonName == null ||
         draft.price == null ||
         draft.currency == null) {
       return const Scaffold(
@@ -151,11 +154,13 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   )
@@ -169,7 +174,7 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
                     icon: Icons.storefront_outlined
                   ),
                   const Divider(height: 32, thickness: 0.8),
-                  _SummaryTile(label: 'Service', value: draft.style!.name, icon: Icons.content_cut_outlined),
+                  _SummaryTile(label: 'Service', value: serviceName, icon: Icons.content_cut_outlined),
                   const Divider(height: 32, thickness: 0.8),
                   _SummaryTile(
                     label: 'Date & Time',
@@ -198,7 +203,9 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
                 hintText: 'Add a note for the salon...',
                 // hintStyle: const TextStyle(color: Colors.grey),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.4),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide.none,
@@ -216,7 +223,7 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05), 
+              color: Colors.black.withValues(alpha: 0.05), 
               blurRadius: 10, offset: const Offset(0, -4)
            ),
           ],

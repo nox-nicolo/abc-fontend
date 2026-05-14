@@ -1,7 +1,9 @@
 import 'package:africa_beuty/feature/profile/view/page/following_page.dart';
 import 'package:africa_beuty/feature/booking/view/pages/customer_booking.dart';
+import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
 import 'package:africa_beuty/feature/saved/view/page/saved_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:icons_plus/icons_plus.dart';
 
 class ThreedotsCustomer extends StatefulWidget {
@@ -18,7 +20,7 @@ class _ThreedotsCustomerState extends State<ThreedotsCustomer> {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -41,7 +43,7 @@ class _ThreedotsCustomerState extends State<ThreedotsCustomer> {
             title: const Text('Following'),
             subtitle: const Text('Salons you follow'),
           ),
-          const SizedBox(height: 10),
+          const Divider(height: 1),
           ListTile(
             onTap: () {
               Navigator.pop(context);
@@ -54,9 +56,10 @@ class _ThreedotsCustomerState extends State<ThreedotsCustomer> {
               FontAwesome.calendar_check_solid,
               color: theme.colorScheme.secondary,
             ),
-            title: Text('Appointments'),
+            title: const Text('Bookings'),
+            subtitle: const Text('Upcoming, requested, and completed visits'),
           ),
-          const SizedBox(height: 10),
+          const Divider(height: 1),
           ListTile(
             onTap: () {
               Navigator.pop(context);
@@ -69,16 +72,44 @@ class _ThreedotsCustomerState extends State<ThreedotsCustomer> {
               Bootstrap.bookmark_fill,
               color: theme.colorScheme.secondary,
             ),
-            title: Text('Saved'),
+            title: const Text('Saved'),
+            subtitle: const Text('Saved salons, services, and styles'),
           ),
+          const Divider(height: 1),
           ListTile(
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChatsPage()),
+              );
+            },
+            leading: Icon(
+              FontAwesome.comment_dots_solid,
+              color: theme.colorScheme.secondary,
+            ),
+            title: const Text('Chats'),
+            subtitle: const Text('Messages with salons'),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            onTap: () async {
+              await Clipboard.setData(
+                const ClipboardData(text: 'African Beauty profile'),
+              );
+              if (!context.mounted) return;
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profile link copied')),
+              );
+            },
             leading: Icon(
               FontAwesome.share_nodes_solid,
               color: theme.colorScheme.secondary,
             ),
-            title: Text('Share Profile'),
+            title: const Text('Share profile'),
+            subtitle: const Text('Copy your profile link'),
           ),
-          const SizedBox(height: 10),
         ],
       ),
     );

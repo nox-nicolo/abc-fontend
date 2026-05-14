@@ -160,9 +160,100 @@ Add rate limiting for login, verification, comments, likes, booking actions.
 the username, profile picture is not load second time if it's being updated only we see the old version stored in the phone and It has to work like if updated then see update information. so this is most durring the registration so this information should stored when entering to the home screen since is the first place are going to be presented.  -->
 
 <!-- In Customer profile - Edit account for customer is not that premium (UI/UX) -->
-so in the setting about notification for customer part (like is wrong since customer will never post any post. Comment and Reply only yes because sometime salon will reply or customer comment, other are correct)
+<!-- so in the setting about notification for customer part (like is wrong since customer will never post any post. Comment and Reply only yes because sometime salon will reply or customer comment, other are correct) -->
 
-Setting  Account it has to be things relates with the customer and other for service 
+<!-- Setting  Account it has to be things relates with the customer and other for service 
 in the setting also explain about Privacy
-Security
-and int the customer profile page there is booking tab ans review tab, those are not like that sort off think of this the app also it has button for booking save following and chats also in the tabs have that feel me so those two tabs are not necessary try find something premium to put there. 
+Security -->
+
+
+
+and in the customer profile page there is booking tab and review tab, those are not like that sort off think of this the app also it has button for booking save following and chats also in the tabs have that feel me so those two tabs are not necessary try find something premium to put there. 
+
+<!-- So booking from other place not the booking page, it says the booking data incomplete.  -->
+
+<!-- the shimmery load for salon view profile is not that well as the other shimmery like.  -->
+
+<!-- the booking message look like come from the receiver and it has to be come from the sender (it has to be from the receiver if ) -->
+
+
+
+
+
+Release Blockers
+
+
+Android release config is still development-grade: android/app/build.gradle.kts (line 15) uses com.example.africa_beuty, and release signing still uses the debug key at line 32. This must become a real package name and real release keystore.
+
+<!-- Backend has secrets/database history in source: core/database.py (line 73) has a live-looking database fallback URL, plus old commented credentials. Remove all real credentials from code and rely only on env vars. -->
+
+The Firebase Admin key that was shared earlier should be rotated before launch. Treat it as exposed.
+
+<!-- Backend logs still print sensitive operational data, especially R2 bucket/key paths in core/r2_config.py (line 28). Replace print with structured logging and avoid exposing bucket keys. -->
+
+flutter analyze currently reports 66 issues. Most are lint/info, but some are release-relevant: async BuildContext usage, production print, unused code, deprecated API usage.
+
+<!-- Backend has almost no real automated tests. I found only test.py-style files, not a proper booking/auth/notification/profile test suite. -->
+
+<!-- Alembic migration is too rough for production: 20260512_0001_initial_schema.py (line 18) uses Base.metadata.create_all, and downgrade drops all tables. Before real users, migrations should be explicit and rollback-safe. -->
+
+
+High Priority Improvements
+
+
+Add real release environments: dev/staging/prod API URLs, Firebase projects, backend env files, and separate app IDs if needed.
+
+<!-- Finish booking as the backbone: clear booking state machine, cancel/reschedule/no-show flows, salon/customer reminders, timezone handling, and strong backend validation. -->
+
+Make notifications fully reliable: token cleanup, duplicate prevention, notification category routing, FCM test endpoint, and real-device background/terminated testing.
+
+Add backend-enforced privacy. Customer/salon profile visibility cannot only be UI behavior.
+
+Complete verification/premium as real systems: application/review flow, admin approval, proof upload, payment/subscription source of truth, expiration, and badge audit trail.
+
+Add moderation: report/block flow, content review queue, abusive message/post handling, and admin controls.
+
+Search/discover needs pagination polish. Backend already has a TODO for cursor pagination in service/search/search.py (line 36).
+
+
+Frontend Polish
+
+
+Remove all production print/debug logs.
+
+Fix async context warnings in post/profile flows because they can cause navigation/snackbar crashes after screen changes.
+
+Replace remaining placeholder values like "Not Set" with nullable fields or typed fallbacks.
+
+Make loading, empty, error, and offline states consistent across booking, salon profile, customer profile, chat, notifications, and search.
+
+Add app icon/splash review, permission rationale screens, notification permission retry UX, and first-run welcome flow polish.
+
+
+Backend Polish
+
+
+Add rate limits for login, OTP/email, registration, comments, likes, follow, booking, and chat.
+
+Add health/readiness endpoints for DB, R2, Firebase, Redis/Celery if used.
+
+Add request validation limits for image/video upload size, MIME type, dimensions, and content safety.
+
+Remove duplicate/legacy routes before final if old app builds are not needed, or document them clearly.
+
+Pin backend dependency versions in requirements.txt; current unpinned packages can break future deploys unexpectedly.
+
+Clean tracked/generated __pycache__/.pyc files from git history/worktree before release.
+
+
+Testing Needed Before Launch
+
+
+Flutter: auth/register/profile setup, booking from every entry point, chat booking card sender/receiver, FCM foreground/background/terminated, notification settings, salon owner/self-salon behavior, customer profile viewed by salon.
+
+Backend: auth/refresh token, role permissions, booking lifecycle, notification creation + FCM send, device token registration, salon verification eligibility, premium badge, privacy permissions.
+
+Real-device test matrix: at least Android 12, 13, 14, 15/16 behavior for notification permission and background delivery.
+
+
+My honest release call: feature direction is strong, but do one hardening sprint before final release. The biggest things are release signing/package name, secrets cleanup/rotation, booking reliability, notification real-device verification, backend tests, and production-safe migrations.

@@ -1,5 +1,6 @@
 import 'package:africa_beuty/core/widgets/activity_feed.dart';
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
@@ -22,7 +23,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ViewServiceProfilePage extends ConsumerStatefulWidget {
@@ -214,8 +214,9 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         ),
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.red.shade700,
+                            side: BorderSide(color: Colors.red.shade700),
                             minimumSize: const Size.fromHeight(44),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -531,26 +532,44 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
                   // DANGEROUS ACTIONS
                   if (salon.actions.canReport)
-                    ListTile(
-                      leading: const Icon(Icons.flag, color: Colors.red),
-                      title: const Text(
-                        'Report salon',
-                        style: TextStyle(color: Colors.red),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        tileColor: Colors.red.shade700,
+                        iconColor: Colors.white,
+                        textColor: Colors.white,
+                        leading: const Icon(Icons.flag),
+                        title: const Text(
+                          'Report salon',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        onTap: () {
+                          // report logic
+                        },
                       ),
-                      onTap: () {
-                        // report logic
-                      },
                     ),
                   if (salon.actions.canBlock)
-                    ListTile(
-                      leading: const Icon(Icons.block, color: Colors.red),
-                      title: const Text(
-                        'Block salon',
-                        style: TextStyle(color: Colors.red),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        tileColor: Colors.red.shade700,
+                        iconColor: Colors.white,
+                        textColor: Colors.white,
+                        leading: const Icon(Icons.block),
+                        title: const Text(
+                          'Block salon',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        onTap: () {
+                          // block logic
+                        },
                       ),
-                      onTap: () {
-                        // block logic
-                      },
                     ),
 
                   const SizedBox(height: 8),
@@ -586,6 +605,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
             ..selectSalonOffer(
               salonServicePriceId: service.id,
               salonName: salon.salon.name,
+              serviceName: service.name,
               price: (service.priceMin ?? 0).toDouble(),
               currency: service.currency,
               durationMinutes: service.durationMinutes ?? 60,
@@ -597,6 +617,174 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
           ).push(MaterialPageRoute(builder: (_) => const PickDateTimePage()));
         },
       ),
+    );
+  }
+
+  void _showVerificationSheet(
+    BuildContext context,
+    SalonViewProfileModel salon,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final earned = salon.salon.verificationReasons;
+    final missing = salon.salon.verificationMissing;
+
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: salon.salon.isVerified
+                        ? scheme.primary.withValues(alpha: 0.12)
+                        : scheme.surfaceContainerHighest,
+                    child: Icon(
+                      salon.salon.isVerified
+                          ? Icons.verified
+                          : Icons.verified_outlined,
+                      color: salon.salon.isVerified
+                          ? scheme.primary
+                          : scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          salon.salon.verificationLabel,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        Text(
+                          salon.salon.isVerified
+                              ? 'This salon earned the badge through trust and business signals.'
+                              : 'Complete the remaining trust signals to earn the salon badge.',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              if (earned.isNotEmpty) ...[
+                Text(
+                  'Earned signals',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                for (final item in earned.take(6))
+                  _VerificationSignalRow(
+                    icon: Icons.check_circle_rounded,
+                    color: scheme.primary,
+                    text: item,
+                  ),
+              ],
+              if (missing.isNotEmpty && salon.viewer.isOwner) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'To earn verification',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                for (final item in missing.take(6))
+                  _VerificationSignalRow(
+                    icon: Icons.radio_button_unchecked_rounded,
+                    color: scheme.onSurfaceVariant,
+                    text: item,
+                  ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPremiumSheet(BuildContext context, SalonViewProfileModel salon) {
+    final scheme = Theme.of(context).colorScheme;
+    final plan = salon.salon.premiumPlan;
+
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const CircleAvatar(
+                    backgroundColor: Color(0xFFFFECB3),
+                    child: Icon(
+                      Icons.workspace_premium,
+                      color: Color(0xFFB26A00),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          salon.salon.premiumLabel ?? 'Premium Member',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        Text(
+                          plan == null || plan.isEmpty
+                              ? 'This salon supports the platform with an active paid membership.'
+                              : 'Active ${plan.toUpperCase()} membership',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              const _VerificationSignalRow(
+                icon: Icons.favorite_rounded,
+                color: Color(0xFFB26A00),
+                text:
+                    'Shows the salon is invested in being active on African Beauty.',
+              ),
+              const _VerificationSignalRow(
+                icon: Icons.campaign_rounded,
+                color: Color(0xFFB26A00),
+                text:
+                    'May unlock premium visibility, campaigns, and business tools.',
+              ),
+              _VerificationSignalRow(
+                icon: Icons.verified_outlined,
+                color: scheme.onSurfaceVariant,
+                text:
+                    'Premium membership is separate from Verified Salon trust checks.',
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1134,7 +1322,14 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                                 fontWeight: FontWeight.w900,
                                                 color: todaysHours.isOpen
                                                     ? Colors.greenAccent
-                                                    : Colors.redAccent,
+                                                    : Colors.white,
+                                                shadows: const [
+                                                  Shadow(
+                                                    blurRadius: 5,
+                                                    color: Colors.black87,
+                                                    offset: Offset(0, 1),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ],
@@ -1266,33 +1461,121 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                               ],
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
+                          if (salon.salon.isVerified)
+                            InkWell(
                               borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.verified,
-                                  size: 18,
-                                  color: Color.fromARGB(255, 205, 250, 3),
+                              onTap: () =>
+                                  _showVerificationSheet(context, salon),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  "Certified",
-                                  style: Theme.of(context).textTheme.labelSmall,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.verified,
+                                      size: 18,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      salon.salon.verificationLabel,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else if (salon.viewer.isOwner)
+                            InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: () =>
+                                  _showVerificationSheet(context, salon),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.verified_outlined,
+                                      size: 18,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Earn badge',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelSmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                          if (salon.salon.isPremiumMember)
+                            InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: () => _showPremiumSheet(context, salon),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFFFFD54F,
+                                  ).withValues(alpha: 0.22),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.workspace_premium,
+                                      size: 18,
+                                      color: Color(0xFFB26A00),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      salon.salon.premiumLabel ??
+                                          'Premium Member',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -1625,152 +1908,202 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
   }
 
   Widget _buildLoadingShimmer() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
-      child: CustomScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        slivers: [
-          // HEADER SHIMMER (Cover + Avatar)
-          SliverAppBar(
-            automaticallyImplyLeading: false,
-            expandedHeight: 280,
-            pinned: true,
-            backgroundColor: Colors.white,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: Colors.grey[300],
-                child: Stack(
-                  children: [
-                    // Bottom gradient placeholder
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 140,
-                      child: Container(color: Colors.grey[350]),
-                    ),
+    final scheme = Theme.of(context).colorScheme;
 
-                    // Avatar placeholder
-                    Positioned(
-                      bottom: 24,
-                      left: 16,
-                      child: Container(
-                        width: 96,
-                        height: 96,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
+    return CustomScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      slivers: [
+        SliverAppBar(
+          automaticallyImplyLeading: false,
+          expandedHeight: 280,
+          pinned: true,
+          backgroundColor: scheme.surface,
+          flexibleSpace: FlexibleSpaceBar(
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                const Skeleton(
+                  width: double.infinity,
+                  height: double.infinity,
+                  borderRadius: BorderRadius.zero,
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 20,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Skeleton.circle(size: 96),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              SkeletonText(width: 190, height: 20),
+                              SizedBox(height: 10),
+                              SkeletonText(width: 120, height: 13),
+                              SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  SkeletonText(width: 56, height: 12),
+                                  SizedBox(width: 14),
+                                  SkeletonText(width: 56, height: 12),
+                                  SizedBox(width: 14),
+                                  SkeletonText(width: 56, height: 12),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-
-                    // Title + username placeholders
-                    Positioned(
-                      bottom: 48,
-                      left: 128,
-                      right: 16,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            height: 20,
-                            width: 180,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            height: 14,
-                            width: 120,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Row(
+                  children: [
+                    Expanded(
+                      child: SkeletonCard(
+                        width: double.infinity,
+                        height: 46,
+                        radius: 999,
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    SkeletonCard(width: 46, height: 46, radius: 999),
+                    SizedBox(width: 10),
+                    SkeletonCard(width: 46, height: 46, radius: 999),
+                  ],
+                ),
+                SizedBox(height: 22),
+                SkeletonText(width: double.infinity, height: 13),
+                SizedBox(height: 8),
+                SkeletonText(width: double.infinity, height: 13),
+                SizedBox(height: 8),
+                SkeletonText(width: 220, height: 13),
+                SizedBox(height: 22),
+                Row(
+                  children: [
+                    SkeletonCard(width: 96, height: 32, radius: 999),
+                    SizedBox(width: 10),
+                    SkeletonCard(width: 118, height: 32, radius: 999),
+                    SizedBox(width: 10),
+                    SkeletonCard(width: 86, height: 32, radius: 999),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 164,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: 4,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (_, _) =>
+                  const SkeletonCard(width: 136, height: 140, radius: 12),
+            ),
+          ),
+        ),
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _StickyTabBarDelegate(
+            tabBar: TabBar(
+              tabs: const [
+                Tab(icon: Icon(Bootstrap.grid_3x3_gap_fill)),
+                Tab(icon: Icon(Bootstrap.view_stacked)),
+                Tab(icon: Icon(Bootstrap.list_task)),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          sliver: SliverList.separated(
+            itemBuilder: (_, _) => const _SalonProfilePostSkeleton(),
+            separatorBuilder: (_, _) => const SizedBox(height: 14),
+            itemCount: 3,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-          // BIO SHIMMER
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+class _SalonProfilePostSkeleton extends StatelessWidget {
+  const _SalonProfilePostSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Skeleton.circle(size: 42),
+            SizedBox(width: 10),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    height: 14,
-                    width: double.infinity,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 14,
-                    width: double.infinity,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(height: 14, width: 220, color: Colors.white),
+                  SkeletonText(width: 150, height: 13),
+                  SizedBox(height: 7),
+                  SkeletonText(width: 92, height: 10),
                 ],
               ),
             ),
-          ),
+            SkeletonCard(width: 28, height: 28, radius: 999),
+          ],
+        ),
+        SizedBox(height: 12),
+        SkeletonCard(width: double.infinity, height: 210, radius: 8),
+        SizedBox(height: 12),
+        SkeletonText(width: double.infinity, height: 12),
+        SizedBox(height: 7),
+        SkeletonText(width: 240, height: 12),
+      ],
+    );
+  }
+}
 
-          // GALLERY SHIMMER
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 190,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: 4,
-                itemBuilder: (_, _) => Container(
-                  width: 150,
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-            ),
-          ),
+class _VerificationSignalRow extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String text;
 
-          // BOOK BUTTON SHIMMER
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: Container(
-                height: 54,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-          ),
+  const _VerificationSignalRow({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
 
-          // POSTS SHIMMER
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (_, _) => Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-              childCount: 3,
-            ),
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
       ),

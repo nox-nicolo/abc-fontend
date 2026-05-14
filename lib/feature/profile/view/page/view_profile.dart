@@ -846,6 +846,6 @@ class ViewProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return isServiceProfile
         ? ViewServiceProfilePage(salonId: userId)
-        : const ViewCustomerProfilePage();
+        : ViewCustomerProfilePage(userId: userId);
   }
 }

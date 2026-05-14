@@ -12,13 +12,14 @@ class BookingDraftNotifier extends _$BookingDraftNotifier {
 
   // STYLE
   void selectStyle(PostMinorCategoriesModel style) {
-    state = state.copyWith(style: style);
+    state = state.copyWith(style: style, serviceName: style.name);
   }
 
   // SALON OFFER (✅ THIS WAS MISSING)
   void selectSalonOffer({
     required String salonServicePriceId,
     required String salonName,
+    String? serviceName,
     required double price,
     required String currency,
     required int durationMinutes,
@@ -26,6 +27,7 @@ class BookingDraftNotifier extends _$BookingDraftNotifier {
     state = state.copyWith(
       salonServicePriceId: salonServicePriceId,
       salonName: salonName,
+      serviceName: serviceName,
       price: price,
       currency: currency,
       durationMinutes: durationMinutes,

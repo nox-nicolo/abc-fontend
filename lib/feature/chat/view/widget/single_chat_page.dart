@@ -190,9 +190,7 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final isMine =
-        message.isMine ||
-        (message.createdBySystem && message.senderRole == 'customer');
+    final isMine = message.isMine;
     final isBooking = message.messageType.startsWith('booking_');
 
     return Align(

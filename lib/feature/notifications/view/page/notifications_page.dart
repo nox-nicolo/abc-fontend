@@ -122,6 +122,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     if (!item.isRead) {
       vm.markRead(item.id);
     }
+
+    if (item.type == 'welcome') {
+      return;
+    }
+
     final bookingId = item.bookingId;
     if (bookingId != null && bookingId.isNotEmpty) {
       Navigator.push(
@@ -202,6 +207,8 @@ class _NotificationTile extends StatelessWidget {
     switch (type) {
       case 'like':
         return 'liked your post';
+      case 'welcome':
+        return 'Welcome to African Beauty';
       case 'comment':
         return 'commented on your post';
       case 'reply':
@@ -232,6 +239,8 @@ class _NotificationTile extends StatelessWidget {
       case 'like':
       case 'like_grouped':
         return Icons.favorite;
+      case 'welcome':
+        return Icons.auto_awesome;
       case 'comment':
       case 'reply':
         return Icons.mode_comment;
@@ -258,6 +267,8 @@ class _NotificationTile extends StatelessWidget {
       case 'like':
       case 'like_grouped':
         return scheme.error;
+      case 'welcome':
+        return scheme.primary;
       case 'comment':
       case 'reply':
       case 'message':
@@ -340,7 +351,16 @@ class _NotificationTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (item.isGrouped &&
+                  if (item.type == 'welcome')
+                    Text(
+                      _actionText(item.type),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  else if (item.isGrouped &&
                       item.preview != null &&
                       item.preview!.isNotEmpty)
                     Text(

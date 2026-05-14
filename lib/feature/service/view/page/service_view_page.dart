@@ -324,8 +324,11 @@ class _ServiceDetailsBody extends StatelessWidget {
             sliver: SliverList.separated(
               itemCount: data.salonDetails.length,
               separatorBuilder: (_, _) => const SizedBox(height: 14),
-              itemBuilder: (context, i) =>
-                  SalonServiceCard(salon: data.salonDetails[i]),
+              itemBuilder: (context, i) => SalonServiceCard(
+                salon: data.salonDetails[i],
+                serviceName:
+                    data.minorService?.name ?? data.majorService.name,
+              ),
             ),
           ),
         ],
@@ -626,7 +629,12 @@ class MinorServiceFocusedCard extends StatelessWidget {
 
 class SalonServiceCard extends ConsumerWidget {
   final SalonServiceModel salon;
-  const SalonServiceCard({super.key, required this.salon});
+  final String serviceName;
+  const SalonServiceCard({
+    super.key,
+    required this.salon,
+    required this.serviceName,
+  });
 
   String get _priceText {
     if (salon.priceMax != null && salon.currency != null) {
@@ -647,6 +655,7 @@ class SalonServiceCard extends ConsumerWidget {
       ..selectSalonOffer(
         salonServicePriceId: salon.salonServicePriceId!,
         salonName: salon.name,
+        serviceName: serviceName,
         price: (salon.priceMin ?? 0).toDouble(),
         currency: salon.currency ?? '',
         durationMinutes: salon.durationMinutes ?? 60,
