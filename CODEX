@@ -152,3 +152,17 @@ Add rate limiting for login, verification, comments, likes, booking actions.
         Keep Celery/Redis code as “production-ready foundation,” but don’t enable BACKGROUND_JOBS_ENABLED=true yet.
         Continue sending emails directly as fallback.
         When money/traffic arrives, add Redis through Render, Upstash, Railway, or another provider.
+
+<!-- in the home screen at top there is africa Beauty name and Icon but I want to replace that icone with the app icon (i.e, African Beauty Icon image).  -->
+
+<!-- Can't return to the choosing account if you goes for salon or customer returns gives blank screen.  -->
+<!-- 
+the username, profile picture is not load second time if it's being updated only we see the old version stored in the phone and It has to work like if updated then see update information. so this is most durring the registration so this information should stored when entering to the home screen since is the first place are going to be presented.  -->
+
+<!-- In Customer profile - Edit account for customer is not that premium (UI/UX) -->
+so in the setting about notification for customer part (like is wrong since customer will never post any post. Comment and Reply only yes because sometime salon will reply or customer comment, other are correct)
+
+Setting  Account it has to be things relates with the customer and other for service 
+in the setting also explain about Privacy
+Security
+and int the customer profile page there is booking tab ans review tab, those are not like that sort off think of this the app also it has button for booking save following and chats also in the tabs have that feel me so those two tabs are not necessary try find something premium to put there. 

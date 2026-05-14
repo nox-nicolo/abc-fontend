@@ -21,6 +21,16 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
+  void _returnToAccountChoice() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+
+    navigator.pushReplacementNamed('/select_account');
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -33,11 +43,10 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading =
-        ref.watch(signupViewModelProvider)?.isLoading == true;
+    final isLoading = ref.watch(signupViewModelProvider)?.isLoading == true;
 
-    final args = ModalRoute.of(context)?.settings.arguments
-        as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final bool isCustomer = args?['isCustomer'] ?? true;
 
     ref.listen(signupViewModelProvider, (_, next) {
@@ -45,9 +54,11 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
         data: (_) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
-            ..showSnackBar(const SnackBar(
-              content: Text('Check your email to verify your account'),
-            ));
+            ..showSnackBar(
+              const SnackBar(
+                content: Text('Check your email to verify your account'),
+              ),
+            );
           Navigator.pushReplacementNamed(context, '/verify');
         },
         error: (e, _) {
@@ -67,26 +78,24 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
           : SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 24),
+                  horizontal: 24,
+                  vertical: 24,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       IconButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: _returnToAccountChoice,
                         icon: const Icon(Icons.arrow_back),
                         padding: EdgeInsets.zero,
                       ),
                       const SizedBox(height: 16),
 
                       Text(
-                        isCustomer
-                            ? 'Create account'
-                            : 'Join as a Salon Owner',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
+                        isCustomer ? 'Create account' : 'Join as a Salon Owner',
+                        style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 6),
@@ -94,10 +103,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         isCustomer
                             ? 'Discover and book beauty services near you.'
                             : 'Your personal details — salon info is set up after.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: scheme.onSurfaceVariant),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 32),
 
@@ -106,10 +114,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         label: 'Full name',
                         icon: Icons.person_outline,
                         action: TextInputAction.next,
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty)
-                                ? 'Enter your full name'
-                                : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Enter your full name'
+                            : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -123,8 +130,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                           if (v == null || v.trim().isEmpty) {
                             return 'Enter your email';
                           }
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                              .hasMatch(v.trim())) {
+                          if (!RegExp(
+                            r'^[^@]+@[^@]+\.[^@]+',
+                          ).hasMatch(v.trim())) {
                             return 'Enter a valid email';
                           }
                           return null;
@@ -138,10 +146,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         icon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
                         action: TextInputAction.next,
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty)
-                                ? 'Enter your phone number'
-                                : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Enter your phone number'
+                            : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -152,11 +159,14 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         obscure: _obscurePassword,
                         action: TextInputAction.next,
                         suffix: IconButton(
-                          icon: Icon(_obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined),
-                          onPressed: () => setState(() =>
-                              _obscurePassword = !_obscurePassword),
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
                         ),
                         validator: (v) {
                           if (v == null || v.isEmpty) {
@@ -177,16 +187,18 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         obscure: _obscureConfirm,
                         action: TextInputAction.done,
                         suffix: IconButton(
-                          icon: Icon(_obscureConfirm
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined),
+                          icon: Icon(
+                            _obscureConfirm
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
                           onPressed: () => setState(
-                              () => _obscureConfirm = !_obscureConfirm),
+                            () => _obscureConfirm = !_obscureConfirm,
+                          ),
                         ),
-                        validator: (v) =>
-                            v != _passwordController.text
-                                ? 'Passwords do not match'
-                                : null,
+                        validator: (v) => v != _passwordController.text
+                            ? 'Passwords do not match'
+                            : null,
                       ),
                       const SizedBox(height: 32),
 
@@ -203,16 +215,16 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                                     email: _emailController.text.trim(),
                                     phone: _phoneController.text.trim(),
                                     password: _passwordController.text,
-                                    role: isCustomer
-                                        ? 'customer'
-                                        : 'service',
+                                    role: isCustomer ? 'customer' : 'service',
                                   );
                             }
                           },
                           child: const Text(
                             'Create account',
                             style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w700),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
@@ -221,18 +233,17 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                       Center(
                         child: GestureDetector(
                           onTap: () => Navigator.pushReplacementNamed(
-                              context, '/signin'),
+                            context,
+                            '/signin',
+                          ),
                           child: RichText(
                             text: TextSpan(
                               text: 'Already have an account?  ',
-                              style:
-                                  Theme.of(context).textTheme.bodyMedium,
+                              style: Theme.of(context).textTheme.bodyMedium,
                               children: [
                                 TextSpan(
                                   text: 'Sign in',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium!
+                                  style: Theme.of(context).textTheme.bodyMedium!
                                       .copyWith(
                                         color: scheme.primary,
                                         fontWeight: FontWeight.w700,
@@ -285,12 +296,9 @@ class _Field extends StatelessWidget {
         labelText: label,
         prefixIcon: Icon(icon),
         suffixIcon: suffix,
-        border:
-            OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         filled: true,
-        fillColor: Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest,
+        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
     );
   }

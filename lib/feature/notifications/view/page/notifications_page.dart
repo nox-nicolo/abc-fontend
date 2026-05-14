@@ -1,5 +1,6 @@
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/view/pages/customer_booking_detail.dart';
+import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
 import 'package:africa_beuty/feature/notifications/model/notification.dart';
 import 'package:africa_beuty/feature/notifications/view_model/notification.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
@@ -146,6 +147,14 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       return;
     }
 
+    if (item.type == 'message') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ChatsPage()),
+      );
+      return;
+    }
+
     final salonId = item.actor.salonId;
     if (item.actor.role == 'salon' && salonId != null && salonId.isNotEmpty) {
       Navigator.push(
@@ -197,6 +206,8 @@ class _NotificationTile extends StatelessWidget {
         return 'commented on your post';
       case 'reply':
         return 'replied to your comment';
+      case 'message':
+        return 'sent you a message';
       case 'booking_new':
         return 'booked your service';
       case 'booking_confirmed':
@@ -224,6 +235,8 @@ class _NotificationTile extends StatelessWidget {
       case 'comment':
       case 'reply':
         return Icons.mode_comment;
+      case 'message':
+        return Icons.chat_bubble;
       case 'booking_new':
         return Icons.event_available;
       case 'booking_confirmed':
@@ -247,6 +260,7 @@ class _NotificationTile extends StatelessWidget {
         return scheme.error;
       case 'comment':
       case 'reply':
+      case 'message':
         return scheme.primary;
       case 'booking_new':
       case 'booking_rescheduled':

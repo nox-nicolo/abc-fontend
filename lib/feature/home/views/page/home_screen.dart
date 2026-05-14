@@ -1,5 +1,6 @@
 import 'package:africa_beuty/core/page/bottom_nav.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
+import 'package:africa_beuty/feature/auth/view_model/me_viewmodel.dart';
 import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
 import 'package:africa_beuty/feature/home/view_model/post_like.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
@@ -29,6 +30,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController()..addListener(_onScroll);
+    Future.microtask(() {
+      if (mounted) {
+        ref.read(meViewModelProvider.notifier).getMeeData();
+      }
+    });
   }
 
   void _onScroll() {
@@ -53,6 +59,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     Future<void> refreshHome() async {
       await Future.wait([
+        ref.read(meViewModelProvider.notifier).getMeeData(),
         ref.read(topSalonViewModelProvider.notifier).refresh(),
         ref.read(feedViewModelProvider.notifier).refresh(),
       ]);
@@ -82,8 +89,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.face, size: 24),
-                              SizedBox(width: 10),
+                              Image.asset(
+                                'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png',
+                                width: 28,
+                                height: 28,
+                              ),
+                              const SizedBox(width: 10),
                               Text(
                                 'African Beauty',
                                 style: Theme.of(context).textTheme.titleLarge

@@ -144,6 +144,7 @@ flutter:
   #   - images/a_dot_burr.jpeg
       - assets/images/
       - assets/images/onboarding/
+      - android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
   #   - images/a_dot_ham.jpeg
 
 

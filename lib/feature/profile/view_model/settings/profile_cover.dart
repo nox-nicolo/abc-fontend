@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:africa_beuty/feature/auth/view_model/me_viewmodel.dart';
 import 'package:africa_beuty/feature/profile/model/settings/profile_cover.dart';
 import 'package:africa_beuty/feature/profile/providers/settings/salon_update.dart'; // Your update repository provider
 import 'package:africa_beuty/feature/profile/view_model/salon.dart'; // To invalidate main profile
@@ -31,10 +32,13 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
         state = AsyncValue.error(l.message, StackTrace.current);
       case Right(value: final r):
         state = AsyncValue.data(r);
-        
-        // IMPORTANT: We need to trigger the main profile refresh 
+
+        // IMPORTANT: We need to trigger the main profile refresh
         // and wait for it to complete.
-        await ref.read(salonProfileViewModelProvider.notifier).getSalonProfileData();
+        await ref.read(meViewModelProvider.notifier).getMeeData();
+        await ref
+            .read(salonProfileViewModelProvider.notifier)
+            .getSalonProfileData();
     }
   }
 
@@ -58,13 +62,15 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
         state = AsyncValue.error(l.message, StackTrace.current);
       case Right(value: final _):
         // On success, refresh the main salon profile so all screens update
-        await ref.read(salonProfileViewModelProvider.notifier).getSalonProfileData();
+        await ref
+            .read(salonProfileViewModelProvider.notifier)
+            .getSalonProfileData();
         state = const AsyncValue.data(null); // Reset update state
     }
   }
 
   // View Model for Contact and Locations
-  
+
   // Handle Contact & Location
   Future<void> updateContactLocation({
     required List<String> phoneNumbers,
@@ -78,7 +84,7 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
     double? longitude,
   }) async {
     state = const AsyncValue.loading();
-    
+
     final repository = ref.read(salonUpdateProvider);
     final result = await repository.updateContactLocation(
       phoneNumbers: phoneNumbers,
@@ -97,16 +103,20 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
         state = AsyncValue.error(l.message, StackTrace.current);
       case Right(value: final _):
         // Sync the main profile
-        await ref.read(salonProfileViewModelProvider.notifier).getSalonProfileData();
+        await ref
+            .read(salonProfileViewModelProvider.notifier)
+            .getSalonProfileData();
         state = const AsyncValue.data(null);
     }
   }
 
   // Working Hours:
 
-  Future<void> updateWorkingHours(List<Map<String, dynamic>> workingDays) async {
+  Future<void> updateWorkingHours(
+    List<Map<String, dynamic>> workingDays,
+  ) async {
     state = const AsyncValue.loading();
-    
+
     final repository = ref.read(salonUpdateProvider);
     final result = await repository.updateWorkingHours(workingDays);
 
@@ -114,7 +124,9 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
       case Left(value: final l):
         state = AsyncValue.error(l.message, StackTrace.current);
       case Right(value: _):
-        await ref.read(salonProfileViewModelProvider.notifier).getSalonProfileData();
+        await ref
+            .read(salonProfileViewModelProvider.notifier)
+            .getSalonProfileData();
         state = const AsyncValue.data(null);
     }
   }
@@ -137,7 +149,9 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
       case Left(value: final l):
         state = AsyncValue.error(l.message, StackTrace.current);
       case Right(value: _):
-        await ref.read(salonProfileViewModelProvider.notifier).getSalonProfileData();
+        await ref
+            .read(salonProfileViewModelProvider.notifier)
+            .getSalonProfileData();
         state = const AsyncValue.data(null);
     }
   }

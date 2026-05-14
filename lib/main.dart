@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/core/monitoring/error_monitor.dart';
 import 'package:africa_beuty/core/page/bottom_nav.dart';
+import 'package:africa_beuty/core/push/push_notification_service.dart';
 import 'package:africa_beuty/core/reminders/reminder_service.dart';
 import 'package:africa_beuty/core/theme/dark_theme.dart';
 import 'package:africa_beuty/core/theme/light_theme.dart';
@@ -40,18 +43,22 @@ Future<void> _bootstrap() async {
   final bool isFirstTime = await LocalStorageService.getIsFirstTime();
   final bool isLoggedIn = await LocalStorageService.isLoggedIn();
 
-  await ReminderService.instance.init();
-  if (isLoggedIn) {
-    // Fire-and-forget: refresh booking reminders in the background so app
-    // startup isn't blocked on network.
-    ReminderService.instance.syncFromServer();
-  }
-
   runApp(
     ProviderScope(
       child: MyApp(isFirstTime: isFirstTime, isLoggedIn: isLoggedIn),
     ),
   );
+
+  unawaited(_startPostLaunchServices(isLoggedIn: isLoggedIn));
+}
+
+Future<void> _startPostLaunchServices({required bool isLoggedIn}) async {
+  await ReminderService.instance.init();
+  await PushNotificationService.instance.init();
+  if (isLoggedIn) {
+    await PushNotificationService.instance.syncTokenIfPossible();
+    await ReminderService.instance.syncFromServer();
+  }
 }
 
 class MyApp extends StatelessWidget {

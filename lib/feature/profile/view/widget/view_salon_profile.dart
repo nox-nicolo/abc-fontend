@@ -206,7 +206,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                     ),
 
                     // ───── UNFOLLOW SALON BUTTON ─────
-                    if (salon.viewer.isFollowing)
+                    if (salon.actions.canUnfollow)
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 48,
@@ -360,7 +360,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
     BuildContext context,
     SalonViewProfileModel salon,
   ) {
-    bool notificationsOn = true;
+    bool notificationsOn = salon.viewer.notificationsEnabled;
 
     showModalBottomSheet(
       context: context,
@@ -530,26 +530,28 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                   const Divider(height: 1),
 
                   // DANGEROUS ACTIONS
-                  ListTile(
-                    leading: const Icon(Icons.flag, color: Colors.red),
-                    title: const Text(
-                      'Report salon',
-                      style: TextStyle(color: Colors.red),
+                  if (salon.actions.canReport)
+                    ListTile(
+                      leading: const Icon(Icons.flag, color: Colors.red),
+                      title: const Text(
+                        'Report salon',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      onTap: () {
+                        // report logic
+                      },
                     ),
-                    onTap: () {
-                      // report logic
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.block, color: Colors.red),
-                    title: const Text(
-                      'Block salon',
-                      style: TextStyle(color: Colors.red),
+                  if (salon.actions.canBlock)
+                    ListTile(
+                      leading: const Icon(Icons.block, color: Colors.red),
+                      title: const Text(
+                        'Block salon',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      onTap: () {
+                        // block logic
+                      },
                     ),
-                    onTap: () {
-                      // block logic
-                    },
-                  ),
 
                   const SizedBox(height: 8),
                 ],
@@ -626,8 +628,11 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
     final size = MediaQuery.of(context).size;
 
     //
-    final isFollowing = salon.viewer.isFollowing;
+    final isOwner = salon.viewer.isOwner;
     final isSaved = salon.viewer.isSaved;
+    final canFollow = salon.actions.canFollow && !isOwner;
+    final canUnfollow = salon.actions.canUnfollow && !isOwner;
+    final canShowViewerActions = !isOwner && !salon.viewer.isBlocked;
     final followLoading = ref.watch(salonFollowActionViewModelProvider);
     final followVM = ref.read(salonFollowActionViewModelProvider.notifier);
 
@@ -890,7 +895,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                     Row(
                                       children: [
                                         /// ---------------- FOLLOW / FOLLOWERS ----------------
-                                        if (!isFollowing)
+                                        if (canFollow)
                                           FilledButton.icon(
                                             style: FilledButton.styleFrom(
                                               backgroundColor: Theme.of(
@@ -977,7 +982,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                                         const SizedBox(width: 10),
 
                                         /// ---------------- MORE ACTIONS ----------------
-                                        if (isFollowing)
+                                        if (canUnfollow)
                                           Material(
                                             color: Colors.white.withValues(
                                               alpha: 0.12,
@@ -1000,92 +1005,101 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
                                         const SizedBox(width: 8),
 
-                                        Material(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.12,
-                                          ),
-                                          shape: const CircleBorder(),
-                                          clipBehavior: Clip.antiAlias,
-                                          child: IconButton(
-                                            tooltip: 'Chat',
-                                            icon: const Icon(
-                                              Icons.chat_bubble_outline,
-                                              color: Colors.white,
+                                        if (canShowViewerActions) ...[
+                                          Material(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.12,
                                             ),
-                                            onPressed: () {
-                                              Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      SingleChatPage(
-                                                        salonId: salon.salon.id,
-                                                        initialTitle:
-                                                            salon.salon.name,
-                                                      ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-
-                                        const SizedBox(width: 8),
-
-                                        Material(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.12,
-                                          ),
-                                          shape: const CircleBorder(),
-                                          clipBehavior: Clip.antiAlias,
-                                          child: IconButton(
-                                            tooltip: isSaved
-                                                ? 'Unsave salon'
-                                                : 'Save salon',
-                                            icon: Icon(
-                                              isSaved
-                                                  ? Icons.bookmark
-                                                  : Icons.bookmark_border,
-                                              color: Colors.white,
+                                            shape: const CircleBorder(),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: IconButton(
+                                              tooltip: 'Chat',
+                                              icon: const Icon(
+                                                Icons.chat_bubble_outline,
+                                                color: Colors.white,
+                                              ),
+                                              onPressed: () {
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        SingleChatPage(
+                                                          salonId:
+                                                              salon.salon.id,
+                                                          initialTitle:
+                                                              salon.salon.name,
+                                                        ),
+                                                  ),
+                                                );
+                                              },
                                             ),
-                                            onPressed: () async {
-                                              final notifier = ref.read(
-                                                salonViewProfileViewModelProvider(
-                                                  salon.salon.id,
-                                                ).notifier,
-                                              );
-                                              final previous = isSaved;
-                                              notifier.applyOptimisticSaved(
-                                                !previous,
-                                              );
-                                              final result = await ref
-                                                  .read(savedRepositoryProvider)
-                                                  .toggleSalon(salon.salon.id);
-                                              if (!context.mounted) return;
-                                              result.fold(
-                                                (failure) {
-                                                  notifier.applyOptimisticSaved(
-                                                    previous,
-                                                  );
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        failure.message,
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                                (saved) {
-                                                  notifier.applyOptimisticSaved(
-                                                    saved,
-                                                  );
-                                                  ref.invalidate(
-                                                    savedCollectionProvider,
-                                                  );
-                                                },
-                                              );
-                                            },
                                           ),
-                                        ),
+
+                                          const SizedBox(width: 8),
+
+                                          Material(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            shape: const CircleBorder(),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: IconButton(
+                                              tooltip: isSaved
+                                                  ? 'Unsave salon'
+                                                  : 'Save salon',
+                                              icon: Icon(
+                                                isSaved
+                                                    ? Icons.bookmark
+                                                    : Icons.bookmark_border,
+                                                color: Colors.white,
+                                              ),
+                                              onPressed: () async {
+                                                final notifier = ref.read(
+                                                  salonViewProfileViewModelProvider(
+                                                    salon.salon.id,
+                                                  ).notifier,
+                                                );
+                                                final previous = isSaved;
+                                                notifier.applyOptimisticSaved(
+                                                  !previous,
+                                                );
+                                                final result = await ref
+                                                    .read(
+                                                      savedRepositoryProvider,
+                                                    )
+                                                    .toggleSalon(
+                                                      salon.salon.id,
+                                                    );
+                                                if (!context.mounted) return;
+                                                result.fold(
+                                                  (failure) {
+                                                    notifier
+                                                        .applyOptimisticSaved(
+                                                          previous,
+                                                        );
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          failure.message,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  (saved) {
+                                                    notifier
+                                                        .applyOptimisticSaved(
+                                                          saved,
+                                                        );
+                                                    ref.invalidate(
+                                                      savedCollectionProvider,
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
 

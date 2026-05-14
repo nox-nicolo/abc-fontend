@@ -165,7 +165,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
 
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacementNamed(context, '/signup');
+                          Navigator.pushNamed(context, '/select_account');
                         },
                         child: RichText(
                           text: TextSpan(

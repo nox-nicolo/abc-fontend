@@ -20,16 +20,16 @@ class SelectAccount extends StatelessWidget {
               Text(
                 'How will you\nuse Africa Beauty?',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                    ),
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 'Choose your account type to get started.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
 
               const SizedBox(height: 40),
@@ -40,10 +40,9 @@ class SelectAccount extends StatelessWidget {
                 title: 'Customer',
                 subtitle:
                     'Discover salons, book services\nand track your appointments.',
-                onTap: () => Navigator.pushNamedAndRemoveUntil(
+                onTap: () => Navigator.pushNamed(
                   context,
                   '/signup',
-                  (route) => false,
                   arguments: {'isCustomer': true},
                 ),
               ),
@@ -56,10 +55,9 @@ class SelectAccount extends StatelessWidget {
                 title: 'Salon Owner',
                 subtitle:
                     'Manage your salon, set services\nand receive bookings.',
-                onTap: () => Navigator.pushNamedAndRemoveUntil(
+                onTap: () => Navigator.pushNamed(
                   context,
                   '/signup',
-                  (route) => false,
                   arguments: {'isCustomer': false},
                 ),
                 highlighted: true,
@@ -78,11 +76,11 @@ class SelectAccount extends StatelessWidget {
                       children: [
                         TextSpan(
                           text: 'Sign in',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                    color: scheme.primary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                color: scheme.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ],
                     ),
@@ -117,7 +115,9 @@ class _AccountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    final bg = highlighted ? scheme.primaryContainer : scheme.surfaceContainerHighest;
+    final bg = highlighted
+        ? scheme.primaryContainer
+        : scheme.surfaceContainerHighest;
     final fg = highlighted ? scheme.onPrimaryContainer : scheme.onSurface;
     final iconBg = highlighted ? scheme.primary : scheme.surfaceContainerLow;
     final iconFg = highlighted ? scheme.onPrimary : scheme.onSurfaceVariant;
@@ -149,24 +149,27 @@ class _AccountCard extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: fg,
-                          ),
+                        fontWeight: FontWeight.w700,
+                        color: fg,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: fg.withValues(alpha: 0.7),
-                            height: 1.4,
-                          ),
+                        color: fg.withValues(alpha: 0.7),
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.arrow_forward_ios_rounded,
-                  size: 16, color: fg.withValues(alpha: 0.5)),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: fg.withValues(alpha: 0.5),
+              ),
             ],
           ),
         ),
