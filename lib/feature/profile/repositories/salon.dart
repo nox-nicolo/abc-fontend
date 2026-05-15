@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
+
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
+import 'package:africa_beuty/core/http/response_body.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:africa_beuty/feature/profile/model/salon.dart';
 import 'package:africa_beuty/feature/profile/model/salon_activity.dart';
 import 'package:africa_beuty/feature/profile/model/salon_posts.dart';
-import 'package:africa_beuty/feature/profile/repositories/local_salon.dart';// Your local storage
+import 'package:africa_beuty/feature/profile/repositories/local_salon.dart'; // Your local storage
 import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 
@@ -14,7 +15,7 @@ class SalonProfileRepository {
   final http.Client _client;
 
   SalonProfileRepository({http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   /// NEW: Get data from local cache first for instant UI
   Future<Either<AppFailure, SalonProfileModel>> getCachedProfile() async {
@@ -36,21 +37,17 @@ class SalonProfileRepository {
 
     try {
       final response = await _client
-        .get(
-          uri,
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Accept': 'application/json',
-          },
-        )
-        .timeout(const Duration(seconds: 15));
-          
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body);
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
-        if (decoded is! Map<String, dynamic>) {
-          return Left(AppFailure('Unexpected server response'));
-        }
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = decodeMapOrThrow(response);
 
         final salonModel = SalonProfileModel.fromMap(decoded);
 
@@ -67,7 +64,7 @@ class SalonProfileRepository {
       // ADDED: If network fails, try to return cache instead of showing error
       final cached = await SalonProfileStorage.load();
       if (cached != null) return Right(cached);
-      
+
       return Left(AppFailure('Network error. Please try again.'));
     } on FormatException {
       return Left(AppFailure('Invalid server response'));
@@ -96,28 +93,27 @@ class SalonProfileRepository {
       'limit': limit.toString(),
     };
 
-    final uri = Uri.parse('${ServerConstants.serverUrl}/posts/profile/$profileUserId/posts')
-        .replace(queryParameters: queryParameters);
+    final uri = Uri.parse(
+      '${ServerConstants.serverUrl}/posts/profile/$profileUserId/posts',
+    ).replace(queryParameters: queryParameters);
 
     try {
-      final response = await _client.get(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await _client
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body);
-
-        if (decoded is! Map<String, dynamic>) {
-          return Left(AppFailure('Unexpected server response format'));
-        }
+        final decoded = decodeMapOrThrow(response);
 
         // Using the Model we created in the previous step
         final postResponse = PostResponseModel.fromMap(decoded);
-        
+
         return Right(postResponse);
       }
 
@@ -156,24 +152,23 @@ class SalonProfileRepository {
         ? '/profile/salon/$salonId/activity'
         : '/profile/salon/activity';
 
-    final uri = Uri.parse('${ServerConstants.serverUrl}$path')
-        .replace(queryParameters: queryParameters);
+    final uri = Uri.parse(
+      '${ServerConstants.serverUrl}$path',
+    ).replace(queryParameters: queryParameters);
 
     try {
-      final response = await _client.get(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await _client
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body);
-
-        if (decoded is! Map<String, dynamic>) {
-          return Left(AppFailure('Unexpected server response format'));
-        }
+        final decoded = decodeMapOrThrow(response);
 
         return Right(ActivityFeedResponse.fromMap(decoded));
       }
@@ -206,12 +201,10 @@ class SalonProfileRepository {
   }
 
   String _safeErrorMessage(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map && decoded['detail'] != null) {
-        return decoded['detail'].toString();
-      }
-    } catch (_) {}
+    final decoded = tryDecodeMap(body);
+    if (decoded != null && decoded['detail'] != null) {
+      return decoded['detail'].toString();
+    }
     return 'Failed to load profile';
   }
 }

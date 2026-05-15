@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
+import 'package:africa_beuty/core/http/response_body.dart';
 import 'package:africa_beuty/feature/chat/model/chat.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -27,7 +28,7 @@ class ChatRepositoryImpl implements ChatRepository {
       final uri = Uri.parse('${ServerConstants.serverUrl}/chat/conversations');
       final response = await ApiClient.instance.get(uri);
       if (response.statusCode == 200) {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final body = decodeMapOrThrow(response);
         final items = (body['items'] as List<dynamic>? ?? [])
             .map((e) => ChatConversation.fromMap(e as Map<String, dynamic>))
             .toList();
@@ -57,7 +58,7 @@ class ChatRepositoryImpl implements ChatRepository {
         body: jsonEncode({'salon_id': salonId}),
       );
       if (response.statusCode == 200) {
-        return Right(ChatConversation.fromMap(jsonDecode(response.body)));
+        return Right(ChatConversation.fromMap(decodeMapOrThrow(response)));
       }
       return Left(AppFailure(_detail(response.body, 'Failed to start chat')));
     } on SocketException {
@@ -79,7 +80,7 @@ class ChatRepositoryImpl implements ChatRepository {
       );
       final response = await ApiClient.instance.get(uri);
       if (response.statusCode == 200) {
-        return Right(ChatThread.fromMap(jsonDecode(response.body)));
+        return Right(ChatThread.fromMap(decodeMapOrThrow(response)));
       }
       return Left(
         AppFailure(_detail(response.body, 'Failed to load messages')),
@@ -110,7 +111,7 @@ class ChatRepositoryImpl implements ChatRepository {
         body: jsonEncode({'body': body}),
       );
       if (response.statusCode == 200) {
-        return Right(ChatMessage.fromMap(jsonDecode(response.body)));
+        return Right(ChatMessage.fromMap(decodeMapOrThrow(response)));
       }
       return Left(AppFailure(_detail(response.body, 'Failed to send message')));
     } on SocketException {
@@ -126,10 +127,6 @@ class ChatRepositoryImpl implements ChatRepository {
 }
 
 String _detail(String body, String fallback) {
-  try {
-    final decoded = jsonDecode(body) as Map<String, dynamic>;
-    return decoded['detail']?.toString() ?? fallback;
-  } catch (_) {
-    return fallback;
-  }
+  final decoded = tryDecodeMap(body);
+  return decoded?['detail']?.toString() ?? fallback;
 }

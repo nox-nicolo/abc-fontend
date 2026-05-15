@@ -3,12 +3,12 @@
 ------------------------------------------------------------- */
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
+import 'package:africa_beuty/core/http/response_body.dart';
 import 'package:africa_beuty/feature/home/model/categories.dart';
 import 'package:africa_beuty/feature/home/model/home_posts.dart';
 import 'package:africa_beuty/feature/home/model/post_like.dart';
@@ -54,14 +54,14 @@ class HomeRepositoryImpl implements HomeRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
-        Map<String, dynamic>? body;
-        try {
-          body = jsonDecode(response.body);
-        } catch (_) {}
-        return Left(AppFailure(body?['detail'] ?? 'Failed to load top salons'));
+        return Left(
+          AppFailure(
+            responseErrorMessage(response, 'Failed to load top salons'),
+          ),
+        );
       }
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = decodeMapOrThrow(response);
       final List results = decoded['results'] ?? [];
 
       final salons = results
@@ -95,14 +95,14 @@ class HomeRepositoryImpl implements HomeRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
-        Map<String, dynamic>? body;
-        try {
-          body = jsonDecode(response.body);
-        } catch (_) {}
-        return Left(AppFailure(body?['detail'] ?? 'Failed to load categories'));
+        return Left(
+          AppFailure(
+            responseErrorMessage(response, 'Failed to load categories'),
+          ),
+        );
       }
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = decodeMapOrThrow(response);
       final List services = decoded['selected_services'] ?? [];
 
       final categories = services
@@ -142,14 +142,12 @@ class HomeRepositoryImpl implements HomeRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
-        Map<String, dynamic>? body;
-        try {
-          body = jsonDecode(response.body);
-        } catch (_) {}
-        return Left(AppFailure(body?['detail'] ?? 'Failed to load posts'));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Failed to load posts')),
+        );
       }
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = decodeMapOrThrow(response);
 
       final List<PostModel> items = (decoded['items'] as List? ?? [])
           .map((e) => PostModel.fromMap(e as Map<String, dynamic>))
@@ -226,14 +224,12 @@ class HomeRepositoryImpl implements HomeRepository {
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
-        Map<String, dynamic>? body;
-        try {
-          body = jsonDecode(response.body) as Map<String, dynamic>;
-        } catch (_) {}
-        return Left(AppFailure(body?['detail'] ?? 'Failed to like post'));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Failed to like post')),
+        );
       }
 
-      final Map<String, dynamic> decodedData = jsonDecode(response.body);
+      final decodedData = decodeMapOrThrow(response);
       return Right(PostLikeModel.fromMap(decodedData));
     } on SocketException {
       return Left(AppFailure('No internet connection'));

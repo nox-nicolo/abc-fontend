@@ -5,6 +5,7 @@ import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/core/http/paginated_response.dart';
+import 'package:africa_beuty/core/http/response_body.dart';
 import 'package:africa_beuty/core/model/services.dart';
 import 'package:africa_beuty/feature/auth/model/me_model.dart';
 import 'package:africa_beuty/feature/auth/model/signin_model.dart';
@@ -36,12 +37,12 @@ class AuthRemoteRepository {
         }),
       );
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode != 201) {
-        // handle error
-        return Left(AppFailure(resBodyMap['detail']));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Signup failed')),
+        );
       }
+      final resBodyMap = decodeMapOrThrow(response);
       // if status is ok then convert json to a map
       return Right(SignupModel.fromMap(resBodyMap));
     } catch (e) {
@@ -60,12 +61,11 @@ class AuthRemoteRepository {
         body: {'username': email, 'password': password},
       );
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
       // so here I return the response from the data..
       if (response.statusCode != 200) {
-        // handle error
-        return Left(AppFailure(resBodyMap['detail']));
+        return Left(AppFailure(responseErrorMessage(response, 'Login failed')));
       }
+      final resBodyMap = decodeMapOrThrow(response);
       return Right(SigninModel.fromMap(resBodyMap));
     } catch (e) {
       return Left(AppFailure(e.toString()));
@@ -82,11 +82,12 @@ class AuthRemoteRepository {
         body: jsonEncode({"code": code}),
       );
 
-      final respBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode != 200) {
-        return Left(AppFailure(respBodyMap['detail']));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Could not request code')),
+        );
       }
+      final respBodyMap = decodeMapOrThrow(response);
 
       return Right(VerificationCodeModel.fromMap(respBodyMap));
     } catch (e) {
@@ -104,11 +105,12 @@ class AuthRemoteRepository {
         body: jsonEncode({"code": code}),
       );
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode != 200) {
-        return Left(AppFailure(resBodyMap['detail']));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Verification failed')),
+        );
       }
+      final resBodyMap = decodeMapOrThrow(response);
 
       return Right(VerificationModel.fromMap(resBodyMap));
     } catch (e) {
@@ -122,11 +124,12 @@ class AuthRemoteRepository {
         Uri.parse('${ServerConstants.serverUrl}/setup/setup_account'),
       );
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode != 200) {
-        return Left(AppFailure(resBodyMap['detail']));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Setup check failed')),
+        );
       }
+      final resBodyMap = decodeMapOrThrow(response);
 
       return Right(SetAccountModel.fromMap(resBodyMap));
     } on SessionExpiredException catch (e) {
@@ -170,11 +173,12 @@ class AuthRemoteRepository {
       // Response handling
       final response = await http.Response.fromStream(streamedResponse);
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode != 200) {
-        return Left(AppFailure(resBodyMap['detail']));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Account upload failed')),
+        );
       }
+      final resBodyMap = decodeMapOrThrow(response);
 
       return Right(UploadAccountModel.fromMap(resBodyMap));
     } catch (e) {
@@ -190,8 +194,9 @@ class AuthRemoteRepository {
       );
 
       if (response.statusCode != 200) {
-        final errorMap = jsonDecode(response.body);
-        return Left(AppFailure(errorMap['detail'] ?? 'Unknown error'));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Failed to load services')),
+        );
       }
 
       final resList = listFromPaginatedBody(jsonDecode(response.body));
@@ -218,11 +223,12 @@ class AuthRemoteRepository {
         body: jsonEncode({'service': selected}),
       );
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode != 200) {
-        return Left(AppFailure(resBodyMap['detail'] ?? 'Unknown error'));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Service upload failed')),
+        );
       }
+      final resBodyMap = decodeMapOrThrow(response);
 
       return Right(UploadServiceModel.fromMap(resBodyMap));
     } on SessionExpiredException catch (e) {
@@ -238,11 +244,12 @@ class AuthRemoteRepository {
         Uri.parse('${ServerConstants.serverUrl}/auth/me'),
       );
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode != 200) {
-        return Left(AppFailure(resBodyMap['detail']));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Failed to load account')),
+        );
       }
+      final resBodyMap = decodeMapOrThrow(response);
 
       return Right(MeModel.fromMap(resBodyMap));
     } on SessionExpiredException catch (e) {

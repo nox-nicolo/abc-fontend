@@ -1,8 +1,7 @@
-import 'dart:convert';
-
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
+import 'package:africa_beuty/core/http/response_body.dart';
 import 'package:africa_beuty/feature/auth/model/me_model.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -13,11 +12,12 @@ class MeRemoteRepository {
         Uri.parse('${ServerConstants.serverUrl}/auth/me'),
       );
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (response.statusCode != 200) {
-        return Left(AppFailure(resBodyMap['detail']));
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Failed to load account')),
+        );
       }
+      final resBodyMap = decodeMapOrThrow(response);
 
       return Right(MeModel.fromMap(resBodyMap));
     } on SessionExpiredException catch (e) {

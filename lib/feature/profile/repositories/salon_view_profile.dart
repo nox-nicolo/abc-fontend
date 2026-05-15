@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
+import 'package:africa_beuty/core/http/response_body.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:africa_beuty/feature/profile/model/salon_view_followers.dart';
 import 'package:africa_beuty/feature/profile/model/salon_view_profile.dart';
@@ -12,8 +12,7 @@ import 'package:http/http.dart' as http;
 class SalonRepository {
   final http.Client _client;
 
-  SalonRepository({http.Client? client})
-      : _client = client ?? http.Client();
+  SalonRepository({http.Client? client}) : _client = client ?? http.Client();
 
   // ------------------------------------------------------------------
   // Public: View Salon Profile
@@ -22,8 +21,9 @@ class SalonRepository {
     String salonId,
   ) async {
     final token = await LocalStorageService.getAccessToken();
-    final uri =
-        Uri.parse('${ServerConstants.serverUrl}/profile/salon/$salonId');
+    final uri = Uri.parse(
+      '${ServerConstants.serverUrl}/profile/salon/$salonId',
+    );
 
     try {
       final response = await _client
@@ -38,11 +38,7 @@ class SalonRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body);
-
-        if (decoded is! Map<String, dynamic>) {
-          return Left(AppFailure('Unexpected server response'));
-        }
+        final decoded = decodeMapOrThrow(response);
 
         return Right(SalonViewProfileModel.fromMap(decoded));
       }
@@ -87,11 +83,7 @@ class SalonRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body);
-
-        if (decoded is! Map<String, dynamic>) {
-          return Left(AppFailure('Unexpected server response'));
-        }
+        final decoded = decodeMapOrThrow(response);
 
         return Right(SalonFollowersResponseModel.fromMap(decoded));
       }
@@ -107,7 +99,7 @@ class SalonRepository {
       return Left(AppFailure('Mapping error: ${e.toString()}'));
     }
   }
-  
+
   // ------------------------------------------------------------------
   // Follow salon
   // ------------------------------------------------------------------
@@ -169,7 +161,6 @@ class SalonRepository {
   }
   // ------------------------------------------------------------------
 
-
   // ------------------------------------------------------------------
   // Error mapping (same philosophy as your example)
   // ------------------------------------------------------------------
@@ -190,12 +181,10 @@ class SalonRepository {
   }
 
   String _safeErrorMessage(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map && decoded['detail'] != null) {
-        return decoded['detail'].toString();
-      }
-    } catch (_) {}
+    final decoded = tryDecodeMap(body);
+    if (decoded != null && decoded['detail'] != null) {
+      return decoded['detail'].toString();
+    }
     return 'Request failed';
   }
 }

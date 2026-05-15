@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
+import 'package:africa_beuty/core/http/response_body.dart';
 import 'package:africa_beuty/feature/profile/model/customer_profile.dart';
 import 'package:africa_beuty/feature/profile/model/following.dart';
 import 'package:fpdart/fpdart.dart';
@@ -12,14 +13,13 @@ class CustomerProfileRepository {
   // ── GET /users/me/profile ─────────────────────────────────────────
   Future<Either<AppFailure, CustomerProfileModel>> getMyProfile() async {
     try {
-      final uri =
-          Uri.parse('${ServerConstants.serverUrl}/users/me/profile');
+      final uri = Uri.parse('${ServerConstants.serverUrl}/users/me/profile');
       final response = await ApiClient.instance
           .get(uri)
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        final decoded = decodeMapOrThrow(response);
         return Right(CustomerProfileModel.fromMap(decoded));
       }
       return Left(_detail(response.body, 'Failed to load profile'));
@@ -41,8 +41,7 @@ class CustomerProfileRepository {
     String? gender,
   }) async {
     try {
-      final uri =
-          Uri.parse('${ServerConstants.serverUrl}/users/me/profile');
+      final uri = Uri.parse('${ServerConstants.serverUrl}/users/me/profile');
       final body = <String, dynamic>{};
       if (name != null) body['name'] = name;
       if (bio != null) body['bio'] = bio;
@@ -55,7 +54,7 @@ class CustomerProfileRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        final decoded = decodeMapOrThrow(response);
         return Right(CustomerProfileModel.fromMap(decoded));
       }
       return Left(_detail(response.body, 'Failed to update profile'));
@@ -70,16 +69,18 @@ class CustomerProfileRepository {
 
   // ── GET /users/{user_id}/profile ──────────────────────────────────
   Future<Either<AppFailure, CustomerProfileModel>> getUserProfile(
-      String userId) async {
+    String userId,
+  ) async {
     try {
       final uri = Uri.parse(
-          '${ServerConstants.serverUrl}/users/$userId/profile');
+        '${ServerConstants.serverUrl}/users/$userId/profile',
+      );
       final response = await ApiClient.instance
           .get(uri)
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        final decoded = decodeMapOrThrow(response);
         return Right(CustomerProfileModel.fromMap(decoded));
       }
       return Left(_detail(response.body, 'Failed to load profile'));
@@ -101,7 +102,7 @@ class CustomerProfileRepository {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        final decoded = decodeMapOrThrow(response);
         final items = (decoded['items'] as List<dynamic>? ?? [])
             .map((e) => FollowedSalonModel.fromMap(e as Map<String, dynamic>))
             .toList();
@@ -121,7 +122,8 @@ class CustomerProfileRepository {
   Future<Either<AppFailure, void>> unfollowSalon(String salonId) async {
     try {
       final uri = Uri.parse(
-          '${ServerConstants.serverUrl}/profile/salon/$salonId/follow');
+        '${ServerConstants.serverUrl}/profile/salon/$salonId/follow',
+      );
       final response = await ApiClient.instance
           .delete(uri)
           .timeout(const Duration(seconds: 15));
@@ -140,11 +142,7 @@ class CustomerProfileRepository {
   }
 
   AppFailure _detail(String body, String fallback) {
-    try {
-      final decoded = jsonDecode(body);
-      return AppFailure(decoded['detail'] ?? fallback);
-    } catch (_) {
-      return AppFailure(fallback);
-    }
+    final decoded = tryDecodeMap(body);
+    return AppFailure(decoded?['detail']?.toString() ?? fallback);
   }
 }
