@@ -16,6 +16,8 @@ import 'package:africa_beuty/feature/post/view/widgets/view_post/sponsored_salon
 import 'package:africa_beuty/feature/post/view/widgets/view_post/stylist.dart';
 import 'package:africa_beuty/feature/post/view_model/single_post_view.dart';
 import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
+import 'package:africa_beuty/feature/search/model/search.dart';
+import 'package:africa_beuty/feature/search/repository/search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,8 +41,14 @@ class PostViewPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Post'),
         actions: [
-          const Icon(Icons.share_outlined),
-          const SizedBox(width: 4),
+          if (state.asData?.value.engagement.canShare ?? false) ...[
+            IconButton(
+              tooltip: 'Share',
+              onPressed: () => showPostShareSheet(context, ref, postId),
+              icon: const Icon(Icons.share_outlined),
+            ),
+            const SizedBox(width: 4),
+          ],
           _PostActionsMenu(
             postId: postId,
             isMyPost: state.asData?.value.post.viewerState.isMyPost ?? false,
@@ -248,6 +256,16 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           ),
         ),
 
+        if (data.engagement.canReact)
+          SliverToBoxAdapter(
+            child: _PostReactionsBar(
+              postId: post.id,
+              myReaction:
+                  data.engagement.myReaction ?? post.viewerState.reaction,
+              reactions: post.reactions,
+            ),
+          ),
+
         // ─────────── Description ───────────
         if (post.description.isNotEmpty)
           SliverToBoxAdapter(
@@ -433,6 +451,302 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
   String _locationLabel(AuthorLocationModel loc) {
     final parts = [loc.city, loc.country].where((s) => s.isNotEmpty).toList();
     return parts.join(', ');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reactions
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PostReactionsBar extends ConsumerWidget {
+  const _PostReactionsBar({
+    required this.postId,
+    required this.myReaction,
+    required this.reactions,
+  });
+
+  final String postId;
+  final String? myReaction;
+  final Map<String, int> reactions;
+
+  static const _items = [
+    ('love', 'Love', Icons.favorite_rounded),
+    ('wow', 'Wow', Icons.auto_awesome_rounded),
+    ('excited', 'Excited', Icons.sentiment_very_satisfied_rounded),
+    ('fire', 'Fire', Icons.local_fire_department_rounded),
+    ('beautiful', 'Beautiful', Icons.spa_rounded),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: _items.map((item) {
+            final selected = myReaction == item.$1;
+            final count = reactions[item.$1] ?? 0;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Tooltip(
+                message: item.$2,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () async {
+                    final result = await ref
+                        .read(postRemoteRepoProviderProvider)
+                        .reactToPost(postId: postId, reaction: item.$1);
+                    if (!context.mounted) return;
+                    result.match(
+                      (failure) => ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(failure.message))),
+                      (_) =>
+                          ref.invalidate(singlePostViewModelProvider(postId)),
+                    );
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? theme.colorScheme.primaryContainer
+                          : theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: selected
+                            ? theme.colorScheme.primary
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          item.$3,
+                          size: 18,
+                          color: selected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        if (count > 0) ...[
+                          const SizedBox(width: 5),
+                          Text(
+                            '$count',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> showPostShareSheet(
+  BuildContext context,
+  WidgetRef ref,
+  String postId,
+) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (_) => _PostShareSheet(parentRef: ref, postId: postId),
+  );
+}
+
+class _PostShareSheet extends StatefulWidget {
+  const _PostShareSheet({required this.parentRef, required this.postId});
+
+  final WidgetRef parentRef;
+  final String postId;
+
+  @override
+  State<_PostShareSheet> createState() => _PostShareSheetState();
+}
+
+class _PostShareSheetState extends State<_PostShareSheet> {
+  final _search = TextEditingController();
+  final _message = TextEditingController();
+  final _repo = SearchRepositoryImpl();
+  List<SearchUserResult> _users = const [];
+  final Set<String> _selected = {};
+  bool _loading = false;
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    _message.dispose();
+    super.dispose();
+  }
+
+  Future<void> _runSearch(String value) async {
+    final query = value.trim();
+    if (query.isEmpty) {
+      setState(() => _users = const []);
+      return;
+    }
+    setState(() => _loading = true);
+    final result = await _repo.search(query: query, limit: 12);
+    if (!mounted) return;
+    result.match(
+      (_) => setState(() {
+        _loading = false;
+        _users = const [];
+      }),
+      (items) => setState(() {
+        _loading = false;
+        _users = items.whereType<SearchUserResult>().toList();
+      }),
+    );
+  }
+
+  Future<void> _share() async {
+    if (_selected.isEmpty || _sending) return;
+    setState(() => _sending = true);
+    final result = await widget.parentRef
+        .read(postRemoteRepoProviderProvider)
+        .sharePost(
+          postId: widget.postId,
+          userIds: _selected.toList(),
+          message: _message.text,
+        );
+    if (!mounted) return;
+    setState(() => _sending = false);
+    result.match(
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (count) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(count == 0 ? 'Already shared' : 'Post shared'),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return FractionallySizedBox(
+      heightFactor: 0.82,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Share post',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            TextField(
+              controller: _search,
+              onChanged: _runSearch,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Search friends or users',
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _message,
+              maxLines: 2,
+              decoration: const InputDecoration(hintText: 'Add a message...'),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      itemCount: _users.length,
+                      itemBuilder: (_, index) {
+                        final user = _users[index];
+                        final selected = _selected.contains(user.id);
+                        return CheckboxListTile(
+                          value: selected,
+                          onChanged: (value) {
+                            setState(() {
+                              if (value == true) {
+                                _selected.add(user.id);
+                              } else {
+                                _selected.remove(user.id);
+                              }
+                            });
+                          },
+                          secondary: CircleAvatar(
+                            backgroundImage:
+                                user.avatarUrl != null &&
+                                    user.avatarUrl!.isNotEmpty
+                                ? NetworkImage(user.avatarUrl!)
+                                : null,
+                            child:
+                                user.avatarUrl == null ||
+                                    user.avatarUrl!.isEmpty
+                                ? const Icon(Icons.person)
+                                : null,
+                          ),
+                          title: Text(user.fullName ?? user.username),
+                          subtitle: Text('@${user.username}'),
+                        );
+                      },
+                    ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _selected.isEmpty || _sending ? null : _share,
+                icon: _sending
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send_rounded),
+                label: Text(
+                  _selected.isEmpty
+                      ? 'Select people'
+                      : 'Send to ${_selected.length}',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

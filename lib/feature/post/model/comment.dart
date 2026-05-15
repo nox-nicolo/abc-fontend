@@ -25,6 +25,8 @@ class CommentModel {
   final CommentAuthorModel author;
   final String? parentCommentId;
   final int replyCount;
+  final int likesCount;
+  final bool isLiked;
   final DateTime createdAt;
   final bool isMine;
   final bool isPending;
@@ -36,6 +38,8 @@ class CommentModel {
     required this.author,
     this.parentCommentId,
     required this.replyCount,
+    required this.likesCount,
+    required this.isLiked,
     required this.createdAt,
     required this.isMine,
     this.isPending = false,
@@ -48,6 +52,8 @@ class CommentModel {
     CommentAuthorModel? author,
     String? parentCommentId,
     int? replyCount,
+    int? likesCount,
+    bool? isLiked,
     DateTime? createdAt,
     bool? isMine,
     bool? isPending,
@@ -59,6 +65,8 @@ class CommentModel {
       author: author ?? this.author,
       parentCommentId: parentCommentId ?? this.parentCommentId,
       replyCount: replyCount ?? this.replyCount,
+      likesCount: likesCount ?? this.likesCount,
+      isLiked: isLiked ?? this.isLiked,
       createdAt: createdAt ?? this.createdAt,
       isMine: isMine ?? this.isMine,
       isPending: isPending ?? this.isPending,
@@ -73,6 +81,8 @@ class CommentModel {
       author: CommentAuthorModel.fromMap(map['author'] ?? {}),
       parentCommentId: map['parent_comment_id'],
       replyCount: map['reply_count'] ?? 0,
+      likesCount: map['likes_count'] ?? 0,
+      isLiked: map['is_liked'] ?? false,
       createdAt: DateTime.parse(map['created_at']),
       isMine: map['is_mine'] ?? false,
       isPending: false,

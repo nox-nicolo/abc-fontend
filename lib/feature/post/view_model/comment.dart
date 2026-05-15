@@ -113,15 +113,21 @@ class CommentsViewModel extends _$CommentsViewModel {
       ),
       parentCommentId: parentCommentId,
       replyCount: 0,
+      likesCount: 0,
+      isLiked: false,
       createdAt: DateTime.now().toUtc(),
       isMine: true,
       isPending: true,
     );
 
-    state = state.copyWith(
-      items: [optimisticComment, ...state.items],
-      clearError: true,
-    );
+    if (parentCommentId == null) {
+      state = state.copyWith(
+        items: [optimisticComment, ...state.items],
+        clearError: true,
+      );
+    } else {
+      state = state.copyWith(clearError: true);
+    }
 
     final res = await ref
         .read(commentRepositoryProvider)
@@ -142,9 +148,63 @@ class CommentsViewModel extends _$CommentsViewModel {
         return false;
       },
       (c) {
+        if (parentCommentId == null) {
+          state = state.copyWith(
+            items: state.items
+                .map((item) => item.id == tempId ? c : item)
+                .toList(),
+          );
+        } else {
+          state = state.copyWith(
+            items: state.items
+                .map(
+                  (item) => item.id == parentCommentId
+                      ? item.copyWith(replyCount: item.replyCount + 1)
+                      : item,
+                )
+                .toList(),
+          );
+        }
+        return true;
+      },
+    );
+  }
+
+  Future<bool> toggleLike(String commentId) async {
+    final snapshot = state.items;
+    state = state.copyWith(
+      items: state.items.map((c) {
+        if (c.id != commentId) return c;
+        return c.copyWith(
+          isLiked: !c.isLiked,
+          likesCount: c.likesCount + (c.isLiked ? -1 : 1),
+        );
+      }).toList(),
+      clearError: true,
+    );
+
+    final res = await ref
+        .read(commentRepositoryProvider)
+        .toggleLike(postId: postId, commentId: commentId);
+
+    if (!ref.mounted) return false;
+
+    return res.fold(
+      (f) {
+        state = state.copyWith(items: snapshot, error: f.message);
+        return false;
+      },
+      (value) {
         state = state.copyWith(
           items: state.items
-              .map((item) => item.id == tempId ? c : item)
+              .map(
+                (c) => c.id == commentId
+                    ? c.copyWith(
+                        isLiked: value.liked,
+                        likesCount: value.likesCount,
+                      )
+                    : c,
+              )
               .toList(),
         );
         return true;

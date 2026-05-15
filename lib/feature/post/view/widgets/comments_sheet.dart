@@ -1,5 +1,6 @@
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/post/model/comment.dart';
+import 'package:africa_beuty/feature/post/providers/comment.dart';
 import 'package:africa_beuty/feature/post/view_model/comment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,23 @@ Future<void> showCommentsSheet(BuildContext context, String postId) {
   );
 }
 
+Future<void> showRepliesSheet(
+  BuildContext context,
+  String postId,
+  CommentModel parent,
+) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (_) => _RepliesSheet(postId: postId, parent: parent),
+  );
+}
+
 class _CommentsSheet extends ConsumerStatefulWidget {
   final String postId;
   const _CommentsSheet({required this.postId});
@@ -26,9 +44,193 @@ class _CommentsSheet extends ConsumerStatefulWidget {
   ConsumerState<_CommentsSheet> createState() => _CommentsSheetState();
 }
 
+class _RepliesSheet extends ConsumerStatefulWidget {
+  const _RepliesSheet({required this.postId, required this.parent});
+
+  final String postId;
+  final CommentModel parent;
+
+  @override
+  ConsumerState<_RepliesSheet> createState() => _RepliesSheetState();
+}
+
+class _RepliesSheetState extends ConsumerState<_RepliesSheet> {
+  late Future<CommentListPage> _future;
+  final _controller = TextEditingController();
+  bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<CommentListPage> _load() async {
+    final result = await ref
+        .read(commentRepositoryProvider)
+        .list(postId: widget.postId, parentCommentId: widget.parent.id);
+    return result.fold((failure) => throw failure.message, (page) => page);
+  }
+
+  Future<void> _send() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _sending) return;
+    _controller.clear();
+    setState(() => _sending = true);
+    final result = await ref
+        .read(commentRepositoryProvider)
+        .create(
+          postId: widget.postId,
+          content: text,
+          parentCommentId: widget.parent.id,
+        );
+    if (!mounted) return;
+    setState(() {
+      _sending = false;
+      if (result.isRight()) _future = _load();
+    });
+    result.match(
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
+      (_) {},
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return FractionallySizedBox(
+      heightFactor: 0.82,
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.outlineVariant,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 8, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Replies to ${widget.parent.author.username}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: FutureBuilder<CommentListPage>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const _CommentsSkeletonList();
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text(snapshot.error.toString()));
+                }
+                final replies = snapshot.data?.items ?? const <CommentModel>[];
+                if (replies.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No replies yet',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.only(top: 8, bottom: 20),
+                  itemCount: replies.length,
+                  itemBuilder: (_, index) => _CommentTile(
+                    comment: replies[index],
+                    onLike: () async {
+                      final result = await ref
+                          .read(commentRepositoryProvider)
+                          .toggleLike(
+                            postId: widget.postId,
+                            commentId: replies[index].id,
+                          );
+                      if (!mounted) return;
+                      result.match(
+                        (failure) => ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(failure.message)),
+                        ),
+                        (_) => setState(() => _future = _load()),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              10,
+              16,
+              MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: 'Write a reply...',
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                IconButton.filled(
+                  onPressed: _sending ? null : _send,
+                  icon: _sending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.arrow_upward_rounded),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
   final _controller = TextEditingController();
   final _scrollCtrl = ScrollController();
+  CommentModel? _replyingTo;
   bool _sending = false;
 
   @override
@@ -57,9 +259,12 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
     setState(() => _sending = true);
     final ok = await ref
         .read(commentsViewModelProvider(widget.postId).notifier)
-        .add(content: text);
+        .add(content: text, parentCommentId: _replyingTo?.id);
     if (!mounted) return;
-    setState(() => _sending = false);
+    setState(() {
+      _sending = false;
+      if (ok) _replyingTo = null;
+    });
     if (ok) {
       // Scroll to bottom to see new comment
       _scrollCtrl.animateTo(
@@ -167,62 +372,89 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
           top: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5),
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              minLines: 1,
-              maxLines: 5,
-              style: theme.textTheme.bodyMedium,
-              decoration: InputDecoration(
-                hintText: 'Add a comment...',
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.7,
+          if (_replyingTo != null) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Replying to ${_replyingTo!.author.username}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.4,
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => setState(() => _replyingTo = null),
+                  icon: const Icon(Icons.close, size: 18),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-              ),
+              ],
             ),
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _send,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                shape: BoxShape.circle,
-              ),
-              child: _sending
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+            const SizedBox(height: 6),
+          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  minLines: 1,
+                  maxLines: 5,
+                  style: theme.textTheme.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: _replyingTo == null
+                        ? 'Add a comment...'
+                        : 'Write a reply...',
+                    hintStyle: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.7,
                       ),
-                    )
-                  : const Icon(
-                      Icons.arrow_upward_rounded,
-                      color: Colors.white,
-                      size: 20,
                     ),
-            ),
+                    filled: true,
+                    fillColor: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.4),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: _send,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: _sending
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.arrow_upward_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -269,6 +501,13 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
         return _CommentTile(
           comment: c,
           onDelete: c.isMine ? () => _confirmDelete(c) : null,
+          onLike: () => ref
+              .read(commentsViewModelProvider(widget.postId).notifier)
+              .toggleLike(c.id),
+          onReply: () => setState(() => _replyingTo = c),
+          onViewReplies: c.replyCount > 0
+              ? () => showRepliesSheet(context, widget.postId, c)
+              : null,
         );
       },
     );
@@ -293,8 +532,17 @@ class _CommentsSkeletonList extends StatelessWidget {
 class _CommentTile extends StatelessWidget {
   final CommentModel comment;
   final VoidCallback? onDelete;
+  final VoidCallback? onLike;
+  final VoidCallback? onReply;
+  final VoidCallback? onViewReplies;
 
-  const _CommentTile({required this.comment, this.onDelete});
+  const _CommentTile({
+    required this.comment,
+    this.onDelete,
+    this.onLike,
+    this.onReply,
+    this.onViewReplies,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -402,9 +650,47 @@ class _CommentTile extends StatelessWidget {
                             ),
                           ),
                         ],
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: onLike,
+                          child: Text(
+                            comment.isLiked ? 'Liked' : 'Like',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: comment.isLiked
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (comment.likesCount > 0) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            '${comment.likesCount}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: onReply,
+                          child: Text(
+                            'Reply',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
+                  if (onViewReplies != null)
+                    TextButton(
+                      onPressed: onViewReplies,
+                      child: Text('View ${comment.replyCount} replies'),
+                    ),
                 ],
               ),
             ),

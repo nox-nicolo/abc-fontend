@@ -7,37 +7,29 @@ import 'package:intl/intl.dart';
 class BookingDetailPage extends ConsumerStatefulWidget {
   final BookingListItem booking;
 
-  const BookingDetailPage({
-    super.key,
-    required this.booking,
-  });
+  const BookingDetailPage({super.key, required this.booking});
 
   @override
-  ConsumerState<BookingDetailPage> createState() =>
-      _BookingDetailPageState();
+  ConsumerState<BookingDetailPage> createState() => _BookingDetailPageState();
 }
 
-class _BookingDetailPageState
-    extends ConsumerState<BookingDetailPage> {
+class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
   @override
   void initState() {
     super.initState();
 
-    ref.listenManual(
-      bookingActionViewModelProvider,
-      (prev, next) {
-        next.whenOrNull(
-          error: (err, _) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(err.toString())),
-            );
-          },
-          data: (_) {
-            Navigator.pop(context);
-          },
-        );
-      },
-    );
+    ref.listenManual(bookingActionViewModelProvider, (prev, next) {
+      next.whenOrNull(
+        error: (err, _) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(err.toString())));
+        },
+        data: (_) {
+          Navigator.pop(context);
+        },
+      );
+    });
   }
 
   @override
@@ -139,16 +131,13 @@ class _BookingDetailPageState
                       ],
                     ),
 
-                    if (booking.note != null && booking.note!.trim().isNotEmpty) ...[
+                    if (booking.note != null &&
+                        booking.note!.trim().isNotEmpty) ...[
                       const SizedBox(height: 16),
                       _ModernSectionCard(
                         title: 'Note',
                         icon: Icons.sticky_note_2_outlined,
-                        children: [
-                          _MessageBox(
-                            text: booking.note!,
-                          ),
-                        ],
+                        children: [_MessageBox(text: booking.note!)],
                       ),
                     ],
 
@@ -176,14 +165,9 @@ class _BookingDetailPageState
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               decoration: BoxDecoration(
                 color: scheme.surface,
-                border: Border(
-                  top: BorderSide(color: scheme.outlineVariant),
-                ),
+                border: Border(top: BorderSide(color: scheme.outlineVariant)),
               ),
-              child: _ActionButtons(
-                booking: booking,
-                loading: isLoading,
-              ),
+              child: _ActionButtons(booking: booking, loading: isLoading),
             ),
           ],
         ),
@@ -202,7 +186,7 @@ class _BookingHeroCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    final status = _statusMeta(context, booking.status);
+    final status = _statusMeta(context, _effectiveBookingStatus(booking));
 
     return Container(
       width: double.infinity,
@@ -313,11 +297,7 @@ class _ModernSectionCard extends StatelessWidget {
                   color: scheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: scheme.onSecondaryContainer,
-                ),
+                child: Icon(icon, size: 20, color: scheme.onSecondaryContainer),
               ),
               const SizedBox(width: 12),
               Text(
@@ -364,11 +344,7 @@ class _InfoRow extends StatelessWidget {
             color: scheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: scheme.primary,
-          ),
+          child: Icon(icon, size: 18, color: scheme.primary),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -403,10 +379,7 @@ class _MessageBox extends StatelessWidget {
   final String text;
   final bool isDestructive;
 
-  const _MessageBox({
-    required this.text,
-    this.isDestructive = false,
-  });
+  const _MessageBox({required this.text, this.isDestructive = false});
 
   @override
   Widget build(BuildContext context) {
@@ -415,9 +388,7 @@ class _MessageBox extends StatelessWidget {
     final bg = isDestructive
         ? scheme.errorContainer
         : scheme.surfaceContainerHigh;
-    final fg = isDestructive
-        ? scheme.onErrorContainer
-        : scheme.onSurface;
+    final fg = isDestructive ? scheme.onErrorContainer : scheme.onSurface;
 
     return Container(
       width: double.infinity,
@@ -428,11 +399,7 @@ class _MessageBox extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(
-          fontSize: 14,
-          height: 1.45,
-          color: fg,
-        ),
+        style: TextStyle(fontSize: 14, height: 1.45, color: fg),
       ),
     );
   }
@@ -496,6 +463,13 @@ _StatusMeta _statusMeta(BuildContext context, String status) {
   final scheme = Theme.of(context).colorScheme;
 
   switch (status) {
+    case 'expired':
+      return _StatusMeta(
+        label: 'Expired',
+        bg: scheme.surfaceContainerHighest,
+        fg: scheme.onSurface,
+        icon: Icons.hourglass_disabled_rounded,
+      );
     case 'pending':
       return _StatusMeta(
         label: 'Pending',
@@ -538,17 +512,15 @@ class _ActionButtons extends ConsumerWidget {
   final BookingListItem booking;
   final bool loading;
 
-  const _ActionButtons({
-    required this.booking,
-    required this.loading,
-  });
+  const _ActionButtons({required this.booking, required this.loading});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vm =
-        ref.read(bookingActionViewModelProvider.notifier);
+    final vm = ref.read(bookingActionViewModelProvider.notifier);
 
-    switch (booking.status) {
+    switch (_effectiveBookingStatus(booking)) {
+      case 'expired':
+        return const SizedBox.shrink();
       case 'pending':
         return Row(
           children: [
@@ -585,4 +557,11 @@ class _ActionButtons extends ConsumerWidget {
         return const SizedBox.shrink();
     }
   }
+}
+
+String _effectiveBookingStatus(BookingListItem booking) {
+  if (booking.status == 'pending' && !booking.startAt.isAfter(DateTime.now())) {
+    return 'expired';
+  }
+  return booking.status;
 }

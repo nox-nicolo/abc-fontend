@@ -32,6 +32,15 @@ abstract class PostRepository {
 
   Future<Either<AppFailure, bool>> repost(String postId);
 
+  Future<Either<AppFailure, ({String? myReaction, Map<String, int> reactions})>>
+  reactToPost({required String postId, required String reaction});
+
+  Future<Either<AppFailure, int>> sharePost({
+    required String postId,
+    required List<String> userIds,
+    String? message,
+  });
+
   Future<Either<AppFailure, bool>> togglePin(String postId);
 
   Future<Either<AppFailure, bool>> toggleBookmark(String postId);
@@ -253,6 +262,74 @@ class PostRepositoryImpl implements PostRepository {
       return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure('Repost error: $e'));
+    }
+  }
+
+  @override
+  Future<Either<AppFailure, ({String? myReaction, Map<String, int> reactions})>>
+  reactToPost({required String postId, required String reaction}) async {
+    try {
+      final response = await ApiClient.instance
+          .post(
+            Uri.parse('${ServerConstants.serverUrl}/posts/$postId/reactions'),
+            extra: {'Content-Type': 'application/json'},
+            body: jsonEncode({'reaction': reaction}),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final body = _safeDecode(response.body) ?? {};
+        final reactions = (body['reactions'] as Map<String, dynamic>? ?? {})
+            .map((key, value) => MapEntry(key, (value as num?)?.toInt() ?? 0));
+        return Right((
+          myReaction: body['my_reaction'] as String?,
+          reactions: reactions,
+        ));
+      }
+      final body = _safeDecode(response.body);
+      return Left(AppFailure(body?['detail'] ?? 'Failed to react'));
+    } on SocketException {
+      return Left(AppFailure('No internet connection'));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
+    } catch (e) {
+      return Left(AppFailure('Reaction error: $e'));
+    }
+  }
+
+  @override
+  Future<Either<AppFailure, int>> sharePost({
+    required String postId,
+    required List<String> userIds,
+    String? message,
+  }) async {
+    try {
+      final response = await ApiClient.instance
+          .post(
+            Uri.parse('${ServerConstants.serverUrl}/posts/$postId/share'),
+            extra: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'user_ids': userIds,
+              if (message != null && message.trim().isNotEmpty)
+                'message': message.trim(),
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final body = _safeDecode(response.body) ?? {};
+        return Right((body['shared_count'] as num?)?.toInt() ?? 0);
+      }
+      final body = _safeDecode(response.body);
+      return Left(AppFailure(body?['detail'] ?? 'Failed to share post'));
+    } on SocketException {
+      return Left(AppFailure('No internet connection'));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
+    } catch (e) {
+      return Left(AppFailure('Share post error: $e'));
     }
   }
 

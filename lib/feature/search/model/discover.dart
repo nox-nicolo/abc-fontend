@@ -1,3 +1,19 @@
+String? _stringOrNull(Object? value) {
+  if (value == null) return null;
+  final text = value.toString();
+  return text.isEmpty ? null : text;
+}
+
+double? _doubleOrNull(Object? value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '');
+}
+
+int _intOrZero(Object? value) {
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
 class NearbySalonItem {
   final String id;
   final String title;
@@ -18,14 +34,16 @@ class NearbySalonItem {
   });
 
   factory NearbySalonItem.fromMap(Map<String, dynamic> m) => NearbySalonItem(
-        id: m['id'] as String,
-        title: m['title'] as String? ?? '',
-        coverImage: m['cover_image'] as String?,
-        city: m['city'] as String?,
-        distanceKm: (m['distance_km'] as num?)?.toDouble() ?? 0,
-        lat: (m['lat'] as num?)?.toDouble(),
-        lng: (m['lng'] as num?)?.toDouble(),
-      );
+    id: (m['id'] ?? m['salon_id'] ?? '').toString(),
+    title: (m['title'] ?? m['name'] ?? '').toString(),
+    coverImage: _stringOrNull(
+      m['cover_image'] ?? m['cover_url'] ?? m['logo_url'],
+    ),
+    city: _stringOrNull(m['city']),
+    distanceKm: _doubleOrNull(m['distance_km']) ?? 0,
+    lat: _doubleOrNull(m['lat'] ?? m['latitude']),
+    lng: _doubleOrNull(m['lng'] ?? m['longitude']),
+  );
 }
 
 class TopSalonItem {
@@ -44,12 +62,14 @@ class TopSalonItem {
   });
 
   factory TopSalonItem.fromMap(Map<String, dynamic> m) => TopSalonItem(
-        id: m['id'] as String,
-        title: m['title'] as String? ?? '',
-        coverImage: m['cover_image'] as String?,
-        city: m['city'] as String?,
-        bookingCount: m['booking_count'] as int? ?? 0,
-      );
+    id: (m['id'] ?? m['salon_id'] ?? '').toString(),
+    title: (m['title'] ?? m['name'] ?? '').toString(),
+    coverImage: _stringOrNull(
+      m['cover_image'] ?? m['cover_url'] ?? m['logo_url'],
+    ),
+    city: _stringOrNull(m['city']),
+    bookingCount: _intOrZero(m['booking_count']),
+  );
 }
 
 class TrendingStyleItem {
@@ -65,10 +85,11 @@ class TrendingStyleItem {
     required this.postCount,
   });
 
-  factory TrendingStyleItem.fromMap(Map<String, dynamic> m) => TrendingStyleItem(
-        id: m['id'] as String,
-        name: m['name'] as String? ?? '',
-        image: m['image'] as String?,
-        postCount: m['post_count'] as int? ?? 0,
+  factory TrendingStyleItem.fromMap(Map<String, dynamic> m) =>
+      TrendingStyleItem(
+        id: (m['id'] ?? '').toString(),
+        name: (m['name'] ?? '').toString(),
+        image: _stringOrNull(m['image']),
+        postCount: _intOrZero(m['post_count']),
       );
 }

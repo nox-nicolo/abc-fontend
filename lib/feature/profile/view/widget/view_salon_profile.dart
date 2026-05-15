@@ -8,6 +8,7 @@ import 'package:africa_beuty/feature/chat/view/widget/single_chat_page.dart';
 import 'package:africa_beuty/feature/mute/repository/mute_repository.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
+import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/booking.dart';
 import 'package:africa_beuty/feature/profile/model/salon_view_profile.dart';
 import 'package:africa_beuty/feature/profile/view/widget/salon_profile_view_services.dart';
@@ -1859,29 +1860,53 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
                     if (_selectedTabIndex == 0) {
                       // GRID TAB
+                      final servicePosts = posts
+                          .where(
+                            (post) =>
+                                post.postType.toLowerCase() == 'service' &&
+                                post.media.isNotEmpty,
+                          )
+                          .toList();
+                      if (servicePosts.isEmpty) {
+                        return const SliverFillRemaining(
+                          child: Center(child: Text('No service posts yet')),
+                        );
+                      }
                       return UniversalPostGrid(
-                        posts: posts,
-                        onPostTap: (post) {
-                          // Logic to navigate or switch to List view
-                        },
+                        posts: servicePosts,
+                        onPostTap: (post) => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => PostViewPage(postId: post.id),
+                          ),
+                        ),
                       );
                     } else {
                       // LIST TAB
                       return SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final post = posts[index];
-                          return Post(
-                            postId: post.id,
-                            aspectRatio: post.media.first.aspectRatio,
-                            username: post.author.username,
-                            profileImage: post.author.profilePicture,
-                            images: post.media.map((m) => m.url).toList(),
-                            likesCount: post.stats.likes,
-                            isLiked: post.viewerState.isLiked,
-                            sharesCount: post.stats.shares,
-                            commentsCount: post.stats.comments,
-                            description: post.caption,
-                            datePosted: post.createdAt,
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => PostViewPage(postId: post.id),
+                              ),
+                            ),
+                            child: Post(
+                              postId: post.id,
+                              aspectRatio: post.media.isNotEmpty
+                                  ? post.media.first.aspectRatio
+                                  : 1.0,
+                              username: post.author.username,
+                              profileImage: post.author.profilePicture,
+                              images: post.media.map((m) => m.url).toList(),
+                              likesCount: post.stats.likes,
+                              isLiked: post.viewerState.isLiked,
+                              sharesCount: post.stats.shares,
+                              commentsCount: post.stats.comments,
+                              description: post.caption,
+                              datePosted: post.createdAt,
+                            ),
                           );
                         }, childCount: posts.length),
                       );

@@ -7,11 +7,17 @@ class EngagementModel {
   final bool liked;
   final bool saved;
   final bool canComment;
+  final bool canShare;
+  final bool canReact;
+  final String? myReaction;
 
   const EngagementModel({
     required this.liked,
     required this.saved,
     required this.canComment,
+    required this.canShare,
+    required this.canReact,
+    this.myReaction,
   });
 
   factory EngagementModel.fromMap(Map<String, dynamic> map) {
@@ -19,6 +25,9 @@ class EngagementModel {
       liked: map['liked'] ?? false,
       saved: map['saved'] ?? false,
       canComment: map['can_comment'] ?? true,
+      canShare: map['can_share'] ?? true,
+      canReact: map['can_react'] ?? true,
+      myReaction: map['my_reaction'],
     );
   }
 }
@@ -217,11 +226,13 @@ class ViewerStateModel {
   final bool isLiked;
   final bool isSaved;
   final bool isMyPost;
+  final String? reaction;
 
   const ViewerStateModel({
     required this.isLiked,
     required this.isSaved,
     required this.isMyPost,
+    this.reaction,
   });
 
   factory ViewerStateModel.fromMap(Map<String, dynamic> map) {
@@ -229,6 +240,7 @@ class ViewerStateModel {
       isLiked: map['is_liked'] ?? false,
       isSaved: map['is_saved'] ?? false,
       isMyPost: map['is_my_post'] ?? false,
+      reaction: map['reaction'],
     );
   }
 }
@@ -244,6 +256,7 @@ class PostItemModel {
   final List<PostImageModel> images;
   final PostServiceMiniModel service;
   final PostStatsModel stats;
+  final Map<String, int> reactions;
   final ViewerStateModel viewerState;
   final DateTime createdAt;
 
@@ -255,6 +268,7 @@ class PostItemModel {
     required this.images,
     required this.service,
     required this.stats,
+    required this.reactions,
     required this.viewerState,
     required this.createdAt,
   });
@@ -270,6 +284,9 @@ class PostItemModel {
           .toList(),
       service: PostServiceMiniModel.fromMap(map['service'] ?? {}),
       stats: PostStatsModel.fromMap(map['stats'] ?? {}),
+      reactions: (map['reactions'] as Map<String, dynamic>? ?? {}).map(
+        (key, value) => MapEntry(key, (value as num?)?.toInt() ?? 0),
+      ),
       viewerState: ViewerStateModel.fromMap(map['viewer_state'] ?? {}),
       createdAt: DateTime.parse(map['created_at']),
     );

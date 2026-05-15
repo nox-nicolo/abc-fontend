@@ -23,6 +23,7 @@ class _CustomerBookingPageState extends ConsumerState<CustomerBookingPage> {
     ref.invalidate(myBookingsViewModelProvider('confirmed'));
     ref.invalidate(myBookingsViewModelProvider('completed'));
     ref.invalidate(myBookingsViewModelProvider('cancelled'));
+    ref.invalidate(myBookingsViewModelProvider('expired'));
   }
 
   @override
@@ -54,7 +55,7 @@ class _CustomerBookingPageState extends ConsumerState<CustomerBookingPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         body: CustomScrollView(
           slivers: [
@@ -70,6 +71,7 @@ class _CustomerBookingPageState extends ConsumerState<CustomerBookingPage> {
                   Tab(text: 'Pending'),
                   Tab(text: 'Confirmed'),
                   Tab(text: 'Completed'),
+                  Tab(text: 'Expired'),
                 ],
               ),
               actions: [
@@ -92,6 +94,7 @@ class _CustomerBookingPageState extends ConsumerState<CustomerBookingPage> {
                   _BookingTab(status: 'pending'),
                   _BookingTab(status: 'confirmed'),
                   _BookingTab(status: 'completed'),
+                  _BookingTab(status: 'expired'),
                 ],
               ),
             ),
@@ -242,6 +245,7 @@ class CustomerBookingCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final color = _statusColor(scheme);
+    final status = _effectiveBookingStatus(booking);
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -308,7 +312,7 @@ class CustomerBookingCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                _StatusBadge(status: booking.status, color: color),
+                _StatusBadge(status: status, color: color),
               ],
             ),
           ],
@@ -319,13 +323,15 @@ class CustomerBookingCard extends StatelessWidget {
 
   Color _statusColor(ColorScheme scheme) {
     final isLight = scheme.brightness == Brightness.light;
-    switch (booking.status) {
+    switch (_effectiveBookingStatus(booking)) {
       case 'pending':
         return isLight ? AppColors.warningLight : AppColors.warningDark;
       case 'confirmed':
         return scheme.primary;
       case 'completed':
         return isLight ? AppColors.successLight : AppColors.successDark;
+      case 'expired':
+        return scheme.outline;
       case 'cancelled':
       case 'rejected':
         return scheme.error;
@@ -335,13 +341,15 @@ class CustomerBookingCard extends StatelessWidget {
   }
 
   IconData _statusIcon() {
-    switch (booking.status) {
+    switch (_effectiveBookingStatus(booking)) {
       case 'pending':
         return Icons.pending_actions_rounded;
       case 'confirmed':
         return Icons.check_circle_outline_rounded;
       case 'completed':
         return Icons.task_alt_rounded;
+      case 'expired':
+        return Icons.hourglass_disabled_rounded;
       case 'cancelled':
         return Icons.cancel_outlined;
       case 'rejected':
@@ -350,6 +358,13 @@ class CustomerBookingCard extends StatelessWidget {
         return Icons.event_rounded;
     }
   }
+}
+
+String _effectiveBookingStatus(BookingListItem booking) {
+  if (booking.status == 'pending' && !booking.startAt.isAfter(DateTime.now())) {
+    return 'expired';
+  }
+  return booking.status;
 }
 
 class _StatusBadge extends StatelessWidget {

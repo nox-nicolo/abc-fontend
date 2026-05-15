@@ -683,8 +683,22 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
 
         if (widget.selectedTabIndex == 0) {
           // ── Grid view ──
+          final servicePosts = posts
+              .where(
+                (post) =>
+                    post.postType.toLowerCase() == 'service' &&
+                    post.media.isNotEmpty,
+              )
+              .toList();
+          if (servicePosts.isEmpty) {
+            return _emptyPostsSliver(
+              context,
+              icon: Icons.grid_off_rounded,
+              message: 'No service posts yet',
+            );
+          }
           return UniversalPostGrid(
-            posts: posts,
+            posts: servicePosts,
             onPostTap: (post) => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => PostViewPage(postId: post.id)),
             ),
@@ -775,6 +789,36 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
           );
         }
       },
+    );
+  }
+
+  SliverToBoxAdapter _emptyPostsSliver(
+    BuildContext context, {
+    required IconData icon,
+    required String message,
+  }) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 48,
+                color: Theme.of(context).colorScheme.outline,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

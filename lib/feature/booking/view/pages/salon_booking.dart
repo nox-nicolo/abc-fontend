@@ -1,5 +1,3 @@
-
-
 import 'package:africa_beuty/core/theme/colors_pallete.dart';
 import 'package:africa_beuty/feature/booking/model/booking_status.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/choose_style.dart';
@@ -24,6 +22,7 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
     ref.invalidate(bookingListViewModelProvider('pending'));
     ref.invalidate(bookingListViewModelProvider('completed'));
     ref.invalidate(bookingListViewModelProvider('cancelled'));
+    ref.invalidate(bookingListViewModelProvider('expired'));
   }
 
   @override
@@ -34,26 +33,23 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _invalidateAll());
 
     // Listen to accept/reject/complete results and refresh lists
-    ref.listenManual(
-      bookingActionViewModelProvider,
-      (prev, next) {
-        next.whenOrNull(
-          error: (err, _) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(err.toString())),
-            );
-          },
-          data: (_) {
-            _invalidateAll();
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Updated')),
-            );
-          },
-        );
-      },
-    );
+    ref.listenManual(bookingActionViewModelProvider, (prev, next) {
+      next.whenOrNull(
+        error: (err, _) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(err.toString())));
+        },
+        data: (_) {
+          _invalidateAll();
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Updated')));
+        },
+      );
+    });
   }
 
   @override
@@ -62,6 +58,7 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
     final pending = ref.watch(bookingListViewModelProvider('pending'));
     final completed = ref.watch(bookingListViewModelProvider('completed'));
     final cancelled = ref.watch(bookingListViewModelProvider('cancelled'));
+    final expired = ref.watch(bookingListViewModelProvider('expired'));
 
     final actionState = ref.watch(bookingActionViewModelProvider);
     final actionLoading = actionState.isLoading;
@@ -69,7 +66,7 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         body: Stack(
           children: [
@@ -107,10 +104,9 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                     ),
                     data: (list) {
                       final now = DateTime.now();
-                      final upcoming = list
-                          .where((b) => b.startAt.isAfter(now))
-                          .toList()
-                        ..sort((a, b) => a.startAt.compareTo(b.startAt));
+                      final upcoming =
+                          list.where((b) => b.startAt.isAfter(now)).toList()
+                            ..sort((a, b) => a.startAt.compareTo(b.startAt));
 
                       if (upcoming.isEmpty) {
                         return const Padding(
@@ -123,7 +119,10 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                         height: 140,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           itemCount: upcoming.length,
                           separatorBuilder: (_, _) => const SizedBox(width: 16),
                           itemBuilder: (_, i) => SizedBox(
@@ -134,9 +133,8 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => BookingDetailPage(
-                                      booking: upcoming[i],
-                                    ),
+                                    builder: (_) =>
+                                        BookingDetailPage(booking: upcoming[i]),
                                   ),
                                 );
                               },
@@ -163,7 +161,8 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        child: const Text('Start New Booking')),
+                        child: const Text('Start New Booking'),
+                      ),
                     ),
                   ),
                 ),
@@ -176,6 +175,7 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                       Tab(text: 'Confirmed'),
                       Tab(text: 'Completed'),
                       Tab(text: 'Cancelled'),
+                      Tab(text: 'Expired'),
                     ],
                   ),
                 ),
@@ -201,6 +201,11 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                       BookingTab(
                         state: cancelled,
                         empty: 'No cancelled bookings',
+                        actionLoading: actionLoading,
+                      ),
+                      BookingTab(
+                        state: expired,
+                        empty: 'No expired bookings',
                         actionLoading: actionLoading,
                       ),
                     ],
@@ -236,11 +241,7 @@ class NextBookingCard extends StatelessWidget {
   final BookingListItem booking;
   final VoidCallback? onTap;
 
-  const NextBookingCard({
-    super.key,
-    required this.booking,
-    this.onTap,
-  });
+  const NextBookingCard({super.key, required this.booking, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -250,8 +251,9 @@ class NextBookingCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color:
-              Theme.of(context).colorScheme.primaryContainer.withValues(alpha: .4),
+          color: Theme.of(
+            context,
+          ).colorScheme.primaryContainer.withValues(alpha: .4),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -324,7 +326,8 @@ class BookingTab extends ConsumerWidget {
         }
 
         // sort by date ascending
-        final sorted = [...list]..sort((a, b) => a.startAt.compareTo(b.startAt));
+        final sorted = [...list]
+          ..sort((a, b) => a.startAt.compareTo(b.startAt));
 
         return ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -332,6 +335,7 @@ class BookingTab extends ConsumerWidget {
           separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (_, i) {
             final booking = sorted[i];
+            final effectiveStatus = _effectiveBookingStatus(booking);
 
             return BookingCard(
               booking: booking,
@@ -344,15 +348,15 @@ class BookingTab extends ConsumerWidget {
                   ),
                 );
               },
-              onAccept: booking.status == 'pending' && !actionLoading
+              onAccept: effectiveStatus == 'pending' && !actionLoading
                   ? () => ref
-                      .read(bookingActionViewModelProvider.notifier)
-                      .accept(booking.id)
+                        .read(bookingActionViewModelProvider.notifier)
+                        .accept(booking.id)
                   : null,
-              onReject: booking.status == 'pending' && !actionLoading
+              onReject: effectiveStatus == 'pending' && !actionLoading
                   ? () => ref
-                      .read(bookingActionViewModelProvider.notifier)
-                      .reject(booking.id)
+                        .read(bookingActionViewModelProvider.notifier)
+                        .reject(booking.id)
                   : null,
             );
           },
@@ -380,7 +384,8 @@ class BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPending = booking.status == 'pending';
+    final status = _effectiveBookingStatus(booking);
+    final isPending = status == 'pending';
 
     return Slidable(
       enabled: isPending && !disabled,
@@ -420,13 +425,12 @@ class BookingCard extends StatelessWidget {
   }
 
   Widget _card(BuildContext context) {
-    final isCancelled = booking.status == 'cancelled';
+    final status = _effectiveBookingStatus(booking);
+    final isCancelled = status == 'cancelled';
 
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Opacity(
         opacity: disabled ? 0.7 : 1.0,
         child: Padding(
@@ -440,10 +444,7 @@ class BookingCard extends StatelessWidget {
                   color: _statusColor(context).withValues(alpha: .15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  _statusIcon(),
-                  color: _statusColor(context),
-                ),
+                child: Icon(_statusIcon(), color: _statusColor(context)),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -488,7 +489,7 @@ class BookingCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Chip(
                     label: Text(
-                      booking.status.toUpperCase(),
+                      status.toUpperCase(),
                       style: const TextStyle(fontSize: 11),
                     ),
                     visualDensity: VisualDensity.compact,
@@ -503,7 +504,9 @@ class BookingCard extends StatelessWidget {
   }
 
   IconData _statusIcon() {
-    switch (booking.status) {
+    switch (_effectiveBookingStatus(booking)) {
+      case 'expired':
+        return Icons.hourglass_disabled_outlined;
       case 'pending':
         return Icons.pending_actions;
       case 'confirmed':
@@ -520,7 +523,9 @@ class BookingCard extends StatelessWidget {
   Color _statusColor(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isLight = scheme.brightness == Brightness.light;
-    switch (booking.status) {
+    switch (_effectiveBookingStatus(booking)) {
+      case 'expired':
+        return scheme.outline;
       case 'pending':
         return isLight ? AppColors.warningLight : AppColors.warningDark;
       case 'confirmed':
@@ -535,3 +540,9 @@ class BookingCard extends StatelessWidget {
   }
 }
 
+String _effectiveBookingStatus(BookingListItem booking) {
+  if (booking.status == 'pending' && !booking.startAt.isAfter(DateTime.now())) {
+    return 'expired';
+  }
+  return booking.status;
+}

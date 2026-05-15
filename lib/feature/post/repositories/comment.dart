@@ -26,6 +26,11 @@ abstract class CommentRepository {
     required String postId,
     required String commentId,
   });
+
+  Future<Either<AppFailure, ({bool liked, int likesCount})>> toggleLike({
+    required String postId,
+    required String commentId,
+  });
 }
 
 class CommentRepositoryImpl implements CommentRepository {
@@ -86,8 +91,7 @@ class CommentRepositoryImpl implements CommentRepository {
             extra: const {'Content-Type': 'application/json'},
             body: jsonEncode({
               'content': content,
-              if (parentCommentId != null)
-                'parent_comment_id': parentCommentId,
+              if (parentCommentId != null) 'parent_comment_id': parentCommentId,
             }),
           )
           .timeout(const Duration(seconds: 15));
@@ -136,6 +140,41 @@ class CommentRepositoryImpl implements CommentRepository {
       return Left(AppFailure(e.toString()));
     } catch (e) {
       return Left(AppFailure('Delete comment error: $e'));
+    }
+  }
+
+  @override
+  Future<Either<AppFailure, ({bool liked, int likesCount})>> toggleLike({
+    required String postId,
+    required String commentId,
+  }) async {
+    try {
+      final uri = Uri.parse(
+        '${ServerConstants.serverUrl}/posts/$postId/comments/$commentId/like',
+      );
+
+      final response = await ApiClient.instance
+          .post(uri)
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        return Right((
+          liked: body['liked'] as bool? ?? false,
+          likesCount: (body['likes_count'] as num?)?.toInt() ?? 0,
+        ));
+      }
+
+      final body = _safeDecode(response.body);
+      return Left(AppFailure(body?['detail'] ?? 'Failed to like comment'));
+    } on SocketException {
+      return Left(AppFailure('No internet connection'));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } on SessionExpiredException catch (e) {
+      return Left(AppFailure(e.toString()));
+    } catch (e) {
+      return Left(AppFailure('Like comment error: $e'));
     }
   }
 }
