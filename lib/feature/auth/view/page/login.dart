@@ -41,17 +41,16 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     ref.listen(signinViewModelProvider, (_, next) {
       next?.when(
         data: (data) {
-          final user = ref.watch(currentUserProvider);
+          final user = ref.read(currentUserProvider);
+          final username = user?.username;
 
-          if (user != null) {
-            final username = user.username;
-
+          if (context.mounted) {
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
               ..showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Welcome $username',
+                    username == null ? 'Welcome back' : 'Welcome $username',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -72,7 +71,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   duration: Duration(seconds: 5),
                 ),
               );
-            Navigator.pushReplacementNamed(context, '/page0');
+            Navigator.pushNamedAndRemoveUntil(context, '/page0', (_) => false);
           }
         },
         error: (error, str) {

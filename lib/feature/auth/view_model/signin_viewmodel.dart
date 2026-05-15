@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:africa_beuty/core/push/push_notification_service.dart';
 import 'package:africa_beuty/core/providers/user_provider.dart';
 import 'package:africa_beuty/feature/auth/model/signin_model.dart';
@@ -41,19 +43,17 @@ class SigninViewModel extends _$SigninViewModel {
 
         // Get the user data and update the global state
         final meData = ref.read(meViewModelProvider.notifier);
-        await meData.getMeeData();
+        final userData = await meData.getMeeData();
 
         // Get user data and update the global state
-        final userData = await LocalStorageService.getuserData();
-
         if (userData != null) {
           ref.read(currentUserProvider.notifier).setUser(userData);
         }
 
-        await PushNotificationService.instance.syncTokenIfPossible();
-
         // After successful login and fetching user data
         state = AsyncValue.data(r);
+
+        unawaited(PushNotificationService.instance.syncTokenIfPossible());
     }
   }
 

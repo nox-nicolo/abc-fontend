@@ -60,39 +60,65 @@ class SalonProfileModel {
       title: map['title']?.toString() ?? '',
       slogan: map['slogan']?.toString() ?? '',
       description: map['description']?.toString() ?? '',
-      displayAds: map['displayAds']?.toString() ?? '',
-      profileCompletion: (map['profileCompletion'] as num?)?.toDouble() ?? 0.0,
-      profilePicture: map['profilePicture']?.toString() ?? '',
-      
+      displayAds:
+          map['displayAds']?.toString() ?? map['display_ads']?.toString() ?? '',
+      profileCompletion:
+          (map['profileCompletion'] as num?)?.toDouble() ??
+          (map['profile_completion'] as num?)?.toDouble() ??
+          0.0,
+      profilePicture:
+          map['profilePicture']?.toString() ??
+          map['profile_picture']?.toString() ??
+          '',
+
       // Fixed: Casting nested map
-      location: map['location'] != null 
-        ? LocationModel.fromMap(Map<String, dynamic>.from(map['location'] as Map)) 
-        : null,
+      location: map['location'] != null
+          ? LocationModel.fromMap(
+              Map<String, dynamic>.from(map['location'] as Map),
+            )
+          : null,
 
       // Fixed: Cleaning nested lists for Hive compatibility
-      contacts: map['contacts'] is List 
-          ? (map['contacts'] as List).map((x) => 
-              ContactModel.fromMap(Map<String, dynamic>.from(x as Map))).toList()
+      contacts: map['contacts'] is List
+          ? (map['contacts'] as List)
+                .map(
+                  (x) =>
+                      ContactModel.fromMap(Map<String, dynamic>.from(x as Map)),
+                )
+                .toList()
           : [],
 
-      workingHours: map['workingHours'] is List 
-          ? (map['workingHours'] as List).map((x) => 
-              WorkingHourModel.fromMap(Map<String, dynamic>.from(x as Map))).toList()
+      workingHours: (map['workingHours'] ?? map['working_hours']) is List
+          ? ((map['workingHours'] ?? map['working_hours']) as List)
+                .map(
+                  (x) => WorkingHourModel.fromMap(
+                    Map<String, dynamic>.from(x as Map),
+                  ),
+                )
+                .toList()
           : [],
 
-      gallery: map['gallery'] is List 
-          ? (map['gallery'] as List).map((x) => 
-              GalleryModel.fromMap(Map<String, dynamic>.from(x as Map))).toList()
+      gallery: map['gallery'] is List
+          ? (map['gallery'] as List)
+                .map(
+                  (x) =>
+                      GalleryModel.fromMap(Map<String, dynamic>.from(x as Map)),
+                )
+                .toList()
           : [],
-          
-      // Fixed: Backend sends "SalonFollower"
-      followers: (map['SalonFollower'] as num?)?.toInt() ?? 0,
+
+      // Accept both the old backend key and the normalized schema key.
+      followers:
+          (map['followers'] as num?)?.toInt() ??
+          (map['SalonFollower'] as num?)?.toInt() ??
+          0,
       rated: (map['rated'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   String toJson() => json.encode(toMap());
-  factory SalonProfileModel.fromJson(String source) => SalonProfileModel.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory SalonProfileModel.fromJson(String source) =>
+      SalonProfileModel.fromMap(json.decode(source) as Map<String, dynamic>);
 }
 
 // --- Sub-Models aligned with Backend Keys ---
@@ -105,9 +131,23 @@ class LocationModel {
   final double? latitude;
   final double? longitude;
 
-  LocationModel({required this.country, required this.city, required this.street, required this.region, this.latitude, this.longitude});
+  LocationModel({
+    required this.country,
+    required this.city,
+    required this.street,
+    required this.region,
+    this.latitude,
+    this.longitude,
+  });
 
-  Map<String, dynamic> toMap() => {'country': country, 'city': city, 'street': street, 'region': region, 'latitude': latitude, 'longitude': longitude};
+  Map<String, dynamic> toMap() => {
+    'country': country,
+    'city': city,
+    'street': street,
+    'region': region,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
 
   factory LocationModel.fromMap(Map<String, dynamic> map) {
     return LocationModel(
@@ -127,9 +167,19 @@ class ContactModel {
   final String value;
   final bool isPrimary;
 
-  ContactModel({required this.id, required this.type, required this.value, required this.isPrimary});
+  ContactModel({
+    required this.id,
+    required this.type,
+    required this.value,
+    required this.isPrimary,
+  });
 
-  Map<String, dynamic> toMap() => {'id': id, 'type': type, 'value': value, 'is_primary': isPrimary};
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'type': type,
+    'value': value,
+    'is_primary': isPrimary,
+  };
 
   factory ContactModel.fromMap(Map<String, dynamic> map) {
     return ContactModel(
@@ -147,16 +197,27 @@ class WorkingHourModel {
   final String openTime;
   final String closeTime;
 
-  WorkingHourModel({required this.dayOfWeek, required this.isOpen, required this.openTime, required this.closeTime});
+  WorkingHourModel({
+    required this.dayOfWeek,
+    required this.isOpen,
+    required this.openTime,
+    required this.closeTime,
+  });
 
-  Map<String, dynamic> toMap() => {'day_of_week': dayOfWeek, 'is_open': isOpen, 'open_time': openTime, 'close_time': closeTime};
+  Map<String, dynamic> toMap() => {
+    'day_of_week': dayOfWeek,
+    'is_open': isOpen,
+    'open_time': openTime,
+    'close_time': closeTime,
+  };
 
   factory WorkingHourModel.fromMap(Map<String, dynamic> map) {
     return WorkingHourModel(
-      dayOfWeek: (map['day_of_week'] as num?)?.toInt() ?? 0, // Backend uses snake_case
-      isOpen: map['is_open'] ?? false,                      // Backend uses snake_case
-      openTime: map['open_time']?.toString() ?? '',         // Backend uses snake_case
-      closeTime: map['close_time']?.toString() ?? '',       // Backend uses snake_case
+      dayOfWeek:
+          (map['day_of_week'] as num?)?.toInt() ?? 0, // Backend uses snake_case
+      isOpen: map['is_open'] ?? false, // Backend uses snake_case
+      openTime: map['open_time']?.toString() ?? '', // Backend uses snake_case
+      closeTime: map['close_time']?.toString() ?? '', // Backend uses snake_case
     );
   }
 }

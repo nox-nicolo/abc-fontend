@@ -8,30 +8,28 @@ part 'me_viewmodel.g.dart';
 
 @Riverpod(keepAlive: true)
 class MeViewModel extends _$MeViewModel {
-  
-  @override 
+  @override
   AsyncValue<MeModel>? build() {
     return null;
   }
 
-  Future<void> getMeeData() async {
-    
+  Future<MeModel?> getMeeData() async {
     state = const AsyncValue.loading();
 
     final authRepo = ref.read(authRemoteRepositoryProvider);
 
     final res = await authRepo.me();
 
-    if (!ref.mounted) return;
+    if (!ref.mounted) return null;
 
-    final val = switch(res) {
-      Left(value: final l) => state = AsyncValue.error(l.message, StackTrace.current),
-      Right(value: final r) => {
-        state = AsyncValue.data(r), 
-        // Save user data to local storage
-        LocalStorageService.saveUserData(r),
-      },
-    };
-    val;
+    switch (res) {
+      case Left(value: final l):
+        state = AsyncValue.error(l.message, StackTrace.current);
+        return null;
+      case Right(value: final r):
+        await LocalStorageService.saveUserData(r);
+        state = AsyncValue.data(r);
+        return r;
+    }
   }
 }

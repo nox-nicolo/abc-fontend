@@ -4,15 +4,13 @@ import 'package:africa_beuty/feature/home/views/page/home_screen.dart';
 import 'package:africa_beuty/feature/profile/view/page/profile.dart';
 import 'package:africa_beuty/feature/search/view/page/search.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:icons_plus/icons_plus.dart';
 
 class BottomNavigationPage extends StatefulWidget {
   final int? initialIndex;
 
-  const BottomNavigationPage({
-    super.key,
-    this.initialIndex,
-  });
+  const BottomNavigationPage({super.key, this.initialIndex});
 
   @override
   State<BottomNavigationPage> createState() => _BottomNavigationPageState();
@@ -24,11 +22,13 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
 
   late int _index;
   Key _bookingKey = UniqueKey();
+  DateTime? _lastBackPressedAt;
 
   @override
   void initState() {
     super.initState();
-    _index = (widget.initialIndex != null &&
+    _index =
+        (widget.initialIndex != null &&
             widget.initialIndex! >= 0 &&
             widget.initialIndex! < 4)
         ? widget.initialIndex!
@@ -66,7 +66,7 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: _index == 0,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
 
@@ -74,7 +74,29 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
           setState(() {
             _index = 0;
           });
+          _lastBackPressedAt = null;
+          return;
         }
+
+        final now = DateTime.now();
+        final shouldExit =
+            _lastBackPressedAt != null &&
+            now.difference(_lastBackPressedAt!) < const Duration(seconds: 2);
+
+        if (shouldExit) {
+          SystemNavigator.pop();
+          return;
+        }
+
+        _lastBackPressedAt = now;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit'),
+              duration: Duration(seconds: 2),
+            ),
+          );
       },
       child: Scaffold(
         body: IndexedStack(
