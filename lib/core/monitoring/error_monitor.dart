@@ -27,6 +27,11 @@ class ErrorMonitor {
   );
   static bool _bugfenderEnabled = false;
 
+  static const int _maxMessageLength = 500;
+  static const int _maxErrorLength = 4000;
+  static const int _maxStackLength = 12000;
+  static const int _maxContextLength = 200;
+
   static Future<void> init() async {
     if (_bugfenderKey.isEmpty) {
       AppLogger.info('Remote Flutter error monitoring disabled');
@@ -102,10 +107,17 @@ class ErrorMonitor {
             uri,
             headers: const {'Content-Type': 'application/json'},
             body: jsonEncode({
-              'message': context ?? 'Unhandled Flutter error',
-              'error': error.toString(),
-              'stack_trace': stackTrace?.toString(),
-              'context': context,
+              'message': _truncate(
+                context ?? 'Unhandled Flutter error',
+                _maxMessageLength,
+              ),
+              'error': _truncate(error.toString(), _maxErrorLength),
+              'stack_trace': stackTrace == null
+                  ? null
+                  : _truncate(stackTrace.toString(), _maxStackLength),
+              'context': context == null
+                  ? null
+                  : _truncate(context, _maxContextLength),
               'platform': _platformLabel(),
               'app_version': _appVersion,
               'build_number': _buildNumber,
@@ -132,5 +144,10 @@ class ErrorMonitor {
   static String _platformLabel() {
     if (kIsWeb) return 'web';
     return defaultTargetPlatform.name;
+  }
+
+  static String _truncate(String value, int maxLength) {
+    if (value.length <= maxLength) return value;
+    return value.substring(0, maxLength);
   }
 }

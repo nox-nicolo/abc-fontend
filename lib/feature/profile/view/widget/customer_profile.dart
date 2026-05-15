@@ -46,7 +46,7 @@ class _CustomerProfileSliverWidgetState
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = ref.read(myCustomerProfileViewModelProvider);
-      if (state is! AsyncData || state.value == null) {
+      if (state.hasError) {
         ref.read(myCustomerProfileViewModelProvider.notifier).refresh();
       }
     });
@@ -409,17 +409,27 @@ class _StyleDnaTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final styles = [
       if (profile.gender != null && profile.gender!.isNotEmpty)
-        _InsightChip(icon: Icons.person_outline, label: _capitalize(profile.gender!)),
+        _InsightChip(
+          icon: Icons.person_outline,
+          label: _capitalize(profile.gender!),
+        ),
       if (profile.city != null && profile.city!.isNotEmpty)
         _InsightChip(icon: Icons.location_city_rounded, label: profile.city!),
       const _InsightChip(icon: Icons.spa_rounded, label: 'Salon discovery'),
-      const _InsightChip(icon: Icons.auto_awesome_rounded, label: 'Fresh looks'),
-      const _InsightChip(icon: Icons.favorite_rounded, label: 'Saved inspiration'),
+      const _InsightChip(
+        icon: Icons.auto_awesome_rounded,
+        label: 'Fresh looks',
+      ),
+      const _InsightChip(
+        icon: Icons.favorite_rounded,
+        label: 'Saved inspiration',
+      ),
     ];
 
     return _PremiumTabSurface(
       title: 'Style DNA',
-      subtitle: 'A profile-native snapshot of preferences that helps the app understand taste, location, and beauty intent.',
+      subtitle:
+          'A profile-native snapshot of preferences that helps the app understand taste, location, and beauty intent.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -464,7 +474,8 @@ class _BeautyPulseTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return _PremiumTabSurface(
       title: 'Beauty Pulse',
-      subtitle: 'A personal activity layer for progress, trust, and relationship signals across the beauty community.',
+      subtitle:
+          'A personal activity layer for progress, trust, and relationship signals across the beauty community.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

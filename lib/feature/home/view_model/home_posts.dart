@@ -10,6 +10,7 @@ class FeedViewModel extends _$FeedViewModel {
   late final HomeRepository _repository;
   String? _cursor;
   bool _isLoadingMore = false;
+  int _requestId = 0;
 
   bool get hasMore => _cursor != null;
   bool get isLoadingMore => _isLoadingMore;
@@ -25,19 +26,18 @@ class FeedViewModel extends _$FeedViewModel {
   // INITIAL LOAD
   // ----------------------------------------------------------
   Future<void> _load() async {
-    final res = await _repository.getFeed(
-      limit: 20,
-      cursor: _cursor,
-    );
+    final requestId = ++_requestId;
+    final res = await _repository.getFeed(limit: 20, cursor: _cursor);
 
-    if (!ref.mounted) return;
+    if (!ref.mounted || requestId != _requestId) return;
 
     state = res.fold(
-      (failure) =>
-          AsyncError(failure.message, StackTrace.current),
+      (failure) => state.hasValue
+          ? state
+          : AsyncError(failure.message, StackTrace.current),
       (response) {
-        _cursor = response.nextCursor;     
-        return AsyncData(response.items);  
+        _cursor = response.nextCursor;
+        return AsyncData(response.items);
       },
     );
   }
@@ -49,20 +49,17 @@ class FeedViewModel extends _$FeedViewModel {
     if (_isLoadingMore || _cursor == null || state.value == null) return;
     _isLoadingMore = true;
 
-    final res = await _repository.getFeed(
-      limit: 20,
-      cursor: _cursor,
-    );
+    final res = await _repository.getFeed(limit: 20, cursor: _cursor);
 
     res.fold(
       (_) {
         _isLoadingMore = false;
       },
       (response) {
-        _cursor = response.nextCursor;       // ✅ advance cursor
+        _cursor = response.nextCursor; // ✅ advance cursor
         state = AsyncData([
           ...state.value!,
-          ...response.items,                 // ✅ append items
+          ...response.items, // ✅ append items
         ]);
         _isLoadingMore = false;
       },
@@ -74,7 +71,9 @@ class FeedViewModel extends _$FeedViewModel {
   // ----------------------------------------------------------
   Future<void> refresh() async {
     _cursor = null;
-    state = const AsyncLoading();
+    if (!state.hasValue) {
+      state = const AsyncLoading();
+    }
     await _load();
   }
 }

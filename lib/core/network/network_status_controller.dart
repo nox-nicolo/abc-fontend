@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
+import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 enum NetworkConnectionState { online, offline, checking, recovered }
 
@@ -12,6 +13,7 @@ class NetworkStatusController extends ChangeNotifier {
 
   NetworkConnectionState _state = NetworkConnectionState.online;
   Timer? _recoveredTimer;
+  int _failureCount = 0;
 
   NetworkConnectionState get state => _state;
   bool get isOffline => _state == NetworkConnectionState.offline;
@@ -19,6 +21,7 @@ class NetworkStatusController extends ChangeNotifier {
   bool get isRecovered => _state == NetworkConnectionState.recovered;
 
   void reportOnline() {
+    _failureCount = 0;
     if (_state == NetworkConnectionState.online) return;
     _setState(NetworkConnectionState.recovered);
     _recoveredTimer?.cancel();
@@ -28,6 +31,10 @@ class NetworkStatusController extends ChangeNotifier {
   }
 
   void reportOffline() {
+    _failureCount += 1;
+    if (_failureCount < 2 && _state == NetworkConnectionState.online) {
+      return;
+    }
     _recoveredTimer?.cancel();
     _setState(NetworkConnectionState.offline);
   }
@@ -37,13 +44,9 @@ class NetworkStatusController extends ChangeNotifier {
     _setState(NetworkConnectionState.checking);
 
     try {
-      final lookup = await InternetAddress.lookup(
-        'example.com',
-      ).timeout(const Duration(seconds: 5));
-      final hasConnection =
-          lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty;
-
-      if (hasConnection) {
+      final uri = Uri.parse(ServerConstants.apiBaseUrl);
+      final response = await http.head(uri).timeout(const Duration(seconds: 8));
+      if (response.statusCode < 500) {
         reportOnline();
         return true;
       }

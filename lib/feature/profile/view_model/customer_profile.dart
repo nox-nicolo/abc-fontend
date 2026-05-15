@@ -8,6 +8,8 @@ part 'customer_profile.g.dart';
 // ── Own profile ───────────────────────────────────────────────────────────────
 @riverpod
 class MyCustomerProfileViewModel extends _$MyCustomerProfileViewModel {
+  int _requestId = 0;
+
   @override
   AsyncValue<CustomerProfileModel> build() {
     _fetch();
@@ -15,11 +17,17 @@ class MyCustomerProfileViewModel extends _$MyCustomerProfileViewModel {
   }
 
   Future<void> _fetch() async {
+    final requestId = ++_requestId;
     final repo = ref.read(customerProfileRepositoryProvider);
     final res = await repo.getMyProfile();
+
+    if (!ref.mounted || requestId != _requestId) return;
+
     switch (res) {
       case Left(value: final l):
-        state = AsyncValue.error(l.message, StackTrace.current);
+        if (!state.hasValue) {
+          state = AsyncValue.error(l.message, StackTrace.current);
+        }
       case Right(value: final r):
         state = AsyncValue.data(r);
     }

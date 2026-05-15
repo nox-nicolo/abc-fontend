@@ -9,6 +9,7 @@ part 'category.g.dart';
 @riverpod
 class HomeCategoriesViewModel extends _$HomeCategoriesViewModel {
   late final HomeRepository _repository;
+  int _requestId = 0;
 
   @override
   AsyncValue<List<SelectedServiceModel>> build() {
@@ -21,16 +22,18 @@ class HomeCategoriesViewModel extends _$HomeCategoriesViewModel {
   // LOAD SELECTED CATEGORIES
   // ----------------------------------------------------------
   Future<void> _load() async {
+    final requestId = ++_requestId;
     final res = await _repository.getCategories();
 
-    if (!ref.mounted) return;
+    if (!ref.mounted || requestId != _requestId) return;
 
     state = switch (res) {
       Left(value: final failure) =>
-        AsyncError(failure.message, StackTrace.current),
+        state.hasValue
+            ? state
+            : AsyncError(failure.message, StackTrace.current),
 
-      Right(value: final categories) =>
-        AsyncData(categories),
+      Right(value: final categories) => AsyncData(categories),
     };
   }
 
@@ -38,7 +41,9 @@ class HomeCategoriesViewModel extends _$HomeCategoriesViewModel {
   // REFRESH
   // ----------------------------------------------------------
   Future<void> refresh() async {
-    state = const AsyncLoading();
+    if (!state.hasValue) {
+      state = const AsyncLoading();
+    }
     await _load();
   }
 }
