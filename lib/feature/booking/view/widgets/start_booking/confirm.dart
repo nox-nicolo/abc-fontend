@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/page/bottom_nav.dart';
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/feature/booking/model/booking_draft.dart';
 import 'package:africa_beuty/feature/booking/model/start_booking.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
@@ -11,8 +12,7 @@ class ConfirmBookingPage extends ConsumerStatefulWidget {
   const ConfirmBookingPage({super.key});
 
   @override
-  ConsumerState<ConfirmBookingPage> createState() =>
-      _ConfirmBookingPageState();
+  ConsumerState<ConfirmBookingPage> createState() => _ConfirmBookingPageState();
 }
 
 class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
@@ -22,28 +22,25 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
   void initState() {
     super.initState();
 
-    ref.listenManual(
-      startBookingViewModelProvider,
-      (prev, next) {
-        next.whenOrNull(
-          error: (err, _) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(err.toString()),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          },
-          data: (booking) {
-            if (booking != null) {
-              ref.read(bookingDraftProvider.notifier).reset();
-              _showSuccessDialog(context);
-            }
-          },
-        );
-      },
-    );
+    ref.listenManual(startBookingViewModelProvider, (prev, next) {
+      next.whenOrNull(
+        error: (err, _) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(err.toString()),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        },
+        data: (booking) {
+          if (booking != null) {
+            ref.read(bookingDraftProvider.notifier).reset();
+            _showSuccessDialog(context);
+          }
+        },
+      );
+    });
   }
 
   void _showSuccessDialog(BuildContext context) {
@@ -52,7 +49,9 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -64,7 +63,11 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
                     color: Colors.green.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.check_circle, color: Colors.green, size: 60),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 60,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -85,18 +88,27 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
                     style: ElevatedButton.styleFrom(
                       // backgroundColor: Colors.black,
                       // foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const BottomNavigationPage(initialIndex: 2),
+                          builder: (_) =>
+                              const BottomNavigationPage(initialIndex: 2),
                         ),
                         (_) => false,
                       );
                     },
-                    child: const Text("Awesome!", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      "Awesome!",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -113,7 +125,9 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
       startAt: draft.startAt!,
       note: draft.note,
     );
-    ref.read(startBookingViewModelProvider.notifier).createBooking(request: request);
+    ref
+        .read(startBookingViewModelProvider.notifier)
+        .createBooking(request: request);
   }
 
   @override
@@ -130,15 +144,23 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
         draft.price == null ||
         draft.currency == null) {
       return const Scaffold(
-        body: Center(child: Text('Booking data incomplete')),
+        body: AppEmptyState(
+          icon: Icons.event_busy_rounded,
+          title: 'Booking data incomplete',
+          message: 'Choose a style, salon, and time before confirming.',
+        ),
       );
     }
 
-    final canConfirm = !loading && draft.salonServicePriceId != null && draft.startAt != null;
+    final canConfirm =
+        !loading && draft.salonServicePriceId != null && draft.startAt != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Review Booking', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Review Booking',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         elevation: 0,
       ),
@@ -147,9 +169,12 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Booking Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "Booking Summary",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
-            
+
             // SUMMARY CARD
             Container(
               padding: const EdgeInsets.all(20),
@@ -163,39 +188,49 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
                     color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
-                  )
+                  ),
                 ],
               ),
               child: Column(
                 children: [
                   _SummaryTile(
-                    label: 'Salon', 
-                    value: draft.salonName!, 
-                    icon: Icons.storefront_outlined
+                    label: 'Salon',
+                    value: draft.salonName!,
+                    icon: Icons.storefront_outlined,
                   ),
                   const Divider(height: 32, thickness: 0.8),
-                  _SummaryTile(label: 'Service', value: serviceName, icon: Icons.content_cut_outlined),
+                  _SummaryTile(
+                    label: 'Service',
+                    value: serviceName,
+                    icon: Icons.content_cut_outlined,
+                  ),
                   const Divider(height: 32, thickness: 0.8),
                   _SummaryTile(
                     label: 'Date & Time',
-                    value: DateFormat('EEEE, dd MMM • HH:mm').format(draft.startAt!),
+                    value: DateFormat(
+                      'EEEE, dd MMM • HH:mm',
+                    ).format(draft.startAt!),
                     icon: Icons.calendar_today_outlined,
                   ),
                   const Divider(height: 32, thickness: 0.8),
                   _SummaryTile(
                     label: 'Total Price',
-                    value: '${draft.currency} ${draft.price!.toStringAsFixed(0)}',
+                    value:
+                        '${draft.currency} ${draft.price!.toStringAsFixed(0)}',
                     icon: Icons.payments_outlined,
                     isPrice: true,
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            const Text("Special Instructions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "Special Instructions",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
-            
+
             TextField(
               controller: _noteController,
               maxLines: 4,
@@ -212,7 +247,8 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
                 ),
                 contentPadding: const EdgeInsets.all(16),
               ),
-              onChanged: (v) => ref.read(bookingDraftProvider.notifier).setNote(v),
+              onChanged: (v) =>
+                  ref.read(bookingDraftProvider.notifier).setNote(v),
             ),
             const SizedBox(height: 100), // Space for bottom button
           ],
@@ -223,9 +259,10 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05), 
-              blurRadius: 10, offset: const Offset(0, -4)
-           ),
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
           ],
         ),
         child: SizedBox(
@@ -234,12 +271,24 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
           child: ElevatedButton(
             onPressed: canConfirm ? () => _confirm(draft) : null,
             style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               elevation: 0,
             ),
             child: loading
-                ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Confirm Appointment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Confirm Appointment',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
           ),
         ),
       ),
@@ -267,11 +316,7 @@ class _SummaryTile extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 22,
-          color: color,
-        ),
+        Icon(icon, size: 22, color: color),
         const SizedBox(width: 12),
 
         // Left side label

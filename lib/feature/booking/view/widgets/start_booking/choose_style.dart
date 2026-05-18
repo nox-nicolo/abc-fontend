@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/model/services.dart';
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/core/view_model/getminor_viewmodel.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
@@ -43,11 +44,26 @@ class _DiscoverStylePageState extends ConsumerState<DiscoverStylePage> {
           Expanded(
             child: stylesState.when(
               loading: () => const _StyleGridSkeleton(),
-              error: (err, _) => Center(child: Text(err.toString())),
+              error: (err, _) => AppErrorState(
+                message: err,
+                onRetry: () => ref.invalidate(getMinorServiceViewModelProvider),
+              ),
               data: (styles) {
                 final filtered = styles.where((s) {
                   return s.name.toLowerCase().contains(_query.toLowerCase());
                 }).toList();
+
+                if (filtered.isEmpty) {
+                  return AppEmptyState(
+                    icon: Icons.content_cut_outlined,
+                    title: _query.trim().isEmpty
+                        ? 'No styles available'
+                        : 'No matching styles',
+                    message: _query.trim().isEmpty
+                        ? 'Styles will appear here when they are available.'
+                        : 'Try a different search term.',
+                  );
+                }
 
                 return GridView.builder(
                   padding: const EdgeInsets.all(16),

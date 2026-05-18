@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/feature/booking/model/availability.dart';
 import 'package:africa_beuty/feature/booking/provider/availability.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
@@ -56,7 +57,11 @@ class _PickDateTimePageState extends ConsumerState<PickDateTimePage> {
     if (salonServicePriceId == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Select Date & Time')),
-        body: const Center(child: Text('Please select a salon first')),
+        body: const AppEmptyState(
+          icon: Icons.storefront_outlined,
+          title: 'Select a salon first',
+          message: 'Choose a salon before picking an appointment time.',
+        ),
       );
     }
 
@@ -73,9 +78,9 @@ class _PickDateTimePageState extends ConsumerState<PickDateTimePage> {
         centerTitle: true,
       ),
       body: availability.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _ErrorState(
-          message: error.toString(),
+        loading: () => const AppLoadingState(),
+        error: (error, _) => AppErrorState(
+          message: error,
           onRetry: () => ref.invalidate(availabilityProvider(request)),
         ),
         data: (days) {
@@ -312,34 +317,6 @@ class _NoSlots extends StatelessWidget {
             ? 'No available times for this day.'
             : 'No available times: $reason',
         textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try again'),
-            ),
-          ],
-        ),
       ),
     );
   }

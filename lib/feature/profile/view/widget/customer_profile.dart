@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/booking/view/pages/customer_booking.dart';
 import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
@@ -69,7 +70,11 @@ class _CustomerProfileSliverWidgetState
 
     return profileState.when(
       loading: () => _buildShimmer(),
-      error: (e, _) => Center(child: Text(e.toString())),
+      error: (e, _) => AppErrorState(
+        message: e,
+        onRetry: () =>
+            ref.read(myCustomerProfileViewModelProvider.notifier).refresh(),
+      ),
       data: (profile) => _buildContent(context, profile),
     );
   }

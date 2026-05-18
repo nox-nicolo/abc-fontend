@@ -19,9 +19,7 @@ class SalonProfileStorage {
       final box = await _openBox();
       // We store the result of toMap() so Hive handles it as a standard Map
       await box.put(_key, salon.toMap());
-    } catch (e) {
-      print('Hive Save Error: $e');
-    }
+    } catch (_) {}
   }
 
   /// Load salon profile from local cache
@@ -34,11 +32,8 @@ class SalonProfileStorage {
 
       // Cast the Hive dynamic Map to a typed Map for the factory.
       // We use 'as Map' first because Hive returns a _Map<dynamic, dynamic>
-      return SalonProfileModel.fromMap(
-        Map<String, dynamic>.from(raw as Map),
-      );
-    } catch (e) {
-      print('Hive Load Error: $e'); 
+      return SalonProfileModel.fromMap(Map<String, dynamic>.from(raw as Map));
+    } catch (_) {
       // If data is corrupted or schema changed, clear it to prevent infinite crashes
       await clear();
       return null;
@@ -50,8 +45,6 @@ class SalonProfileStorage {
     try {
       final box = await _openBox();
       await box.delete(_key);
-    } catch (e) {
-      print('Hive Clear Error: $e');
-    }
+    } catch (_) {}
   }
 }

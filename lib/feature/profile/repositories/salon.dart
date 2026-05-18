@@ -194,17 +194,13 @@ class SalonProfileRepository {
       case 500:
       case 502:
       case 503:
-        return AppFailure('Server error. Please try later.');
+        return AppFailure(
+          responseErrorMessage(response, 'Failed to load profile'),
+        );
       default:
-        return AppFailure(_safeErrorMessage(response.body));
+        return AppFailure(
+          responseErrorMessage(response, 'Failed to load profile'),
+        );
     }
-  }
-
-  String _safeErrorMessage(String body) {
-    final decoded = tryDecodeMap(body);
-    if (decoded != null && decoded['detail'] != null) {
-      return decoded['detail'].toString();
-    }
-    return 'Failed to load profile';
   }
 }

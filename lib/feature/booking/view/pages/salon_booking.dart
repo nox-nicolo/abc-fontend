@@ -1,4 +1,6 @@
 import 'package:africa_beuty/core/theme/colors_pallete.dart';
+import 'package:africa_beuty/core/widgets/app_state.dart';
+import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/model/booking_status.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/choose_style.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/view_booking.dart';
@@ -96,11 +98,16 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                   child: confirmed.when(
                     loading: () => const SizedBox(
                       height: 140,
-                      child: Center(child: CircularProgressIndicator()),
+                      child: _NextAppointmentSkeleton(),
                     ),
-                    error: (e, _) => const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Failed to load upcoming appointments'),
+                    error: (e, _) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: AppErrorState(
+                        message: e,
+                        onRetry: () => ref.invalidate(
+                          bookingListViewModelProvider('confirmed'),
+                        ),
+                      ),
                     ),
                     data: (list) {
                       final now = DateTime.now();
@@ -109,9 +116,13 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
                             ..sort((a, b) => a.startAt.compareTo(b.startAt));
 
                       if (upcoming.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text('No upcoming appointments'),
+                        return const SizedBox(
+                          height: 140,
+                          child: AppEmptyState(
+                            icon: Icons.event_available_outlined,
+                            title: 'No upcoming appointments',
+                            message: 'Confirmed bookings will appear here.',
+                          ),
                         );
                       }
 
@@ -318,11 +329,15 @@ class BookingTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return state.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text(empty)),
+      loading: () => const _BookingListSkeleton(),
+      error: (e, _) => AppErrorState(message: e),
       data: (list) {
         if (list.isEmpty) {
-          return Center(child: Text(empty));
+          return AppEmptyState(
+            icon: Icons.event_busy_rounded,
+            title: empty,
+            message: 'Bookings with this status will appear here.',
+          );
         }
 
         // sort by date ascending
@@ -362,6 +377,43 @@ class BookingTab extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _NextAppointmentSkeleton extends StatelessWidget {
+  const _NextAppointmentSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: 2,
+      separatorBuilder: (_, _) => const SizedBox(width: 16),
+      itemBuilder: (_, _) => SizedBox(
+        width: MediaQuery.sizeOf(context).width * .9,
+        child: const SkeletonCard(width: double.infinity, height: 124),
+      ),
+    );
+  }
+}
+
+class _BookingListSkeleton extends StatelessWidget {
+  const _BookingListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: 6,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (_, _) => const SkeletonListTile(
+        roundLeading: false,
+        leadingSize: 48,
+        trailingWidth: 70,
+        padding: EdgeInsets.all(12),
+      ),
     );
   }
 }

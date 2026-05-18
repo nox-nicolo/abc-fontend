@@ -1,25 +1,14 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
-
-enum SearchEntityType {
-  user,
-  salon,
-  service,
-  hashtag,
-}
-
+enum SearchEntityType { user, salon, service, hashtag }
 
 sealed class SearchResult {
   final String id;
   final SearchEntityType entity;
   final double? score;
 
-  const SearchResult({
-    required this.id,
-    required this.entity,
-    this.score,
-  });
+  const SearchResult({required this.id, required this.entity, this.score});
 
   /// Polymorphic factory
   factory SearchResult.fromMap(Map<String, dynamic> map) {
@@ -38,7 +27,6 @@ sealed class SearchResult {
 
   String toJson() => json.encode(toMap());
 }
-
 
 class SearchUserResult extends SearchResult {
   final String username;
@@ -111,7 +99,6 @@ class SearchUserResult extends SearchResult {
       avatarUrl.hashCode;
 }
 
-
 class SearchSalonResult extends SearchResult {
   final String slogan;
   final String? title;
@@ -153,11 +140,11 @@ class SearchSalonResult extends SearchResult {
     return SearchSalonResult(
       id: map['id'] ?? '',
       score: (map['score'] as num?)?.toDouble(),
-      slogan: map['slogan'] ?? '',
-      title: map['title'],
-      coverImage: map['coverImage'],
+      slogan: _textOrEmpty(map['slogan']),
+      title: _textOrNull(map['title']),
+      coverImage: _textOrNull(map['coverImage']),
       isVerified: map['isVerified'] ?? false,
-      ownerName: map['ownerName'] ?? '',
+      ownerName: _textOrEmpty(map['ownerName']),
     );
   }
 
@@ -199,6 +186,14 @@ class SearchSalonResult extends SearchResult {
       ownerName.hashCode;
 }
 
+String _textOrEmpty(Object? value) => _textOrNull(value) ?? '';
+
+String? _textOrNull(Object? value) {
+  if (value == null) return null;
+  final text = value.toString().trim();
+  if (text.isEmpty || text.toLowerCase() == 'not set') return null;
+  return text;
+}
 
 class SearchServiceResult extends SearchResult {
   final String serviceName;
@@ -295,7 +290,6 @@ class SearchServiceResult extends SearchResult {
       imageUrl.hashCode;
 }
 
-
 class SearchHashtagResult extends SearchResult {
   final String tag;
   final int postCount;
@@ -353,8 +347,5 @@ class SearchHashtagResult extends SearchResult {
 
   @override
   int get hashCode =>
-      id.hashCode ^
-      score.hashCode ^
-      tag.hashCode ^
-      postCount.hashCode;
+      id.hashCode ^ score.hashCode ^ tag.hashCode ^ postCount.hashCode;
 }

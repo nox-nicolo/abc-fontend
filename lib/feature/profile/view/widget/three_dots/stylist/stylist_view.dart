@@ -1,4 +1,3 @@
-
 import 'package:africa_beuty/feature/profile/model/three_dots/stylists/view_single_stylists.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots/stylist/stylist_edit.dart';
 import 'package:africa_beuty/feature/profile/view_model/stylist/edit_stylist.dart';
@@ -8,17 +7,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 
 class StylistDetailPage extends ConsumerWidget {
-  const StylistDetailPage({
-    super.key,
-    required this.stylistId,
-  });
+  const StylistDetailPage({super.key, required this.stylistId});
 
   final String stylistId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final stylistState = ref.watch(salonStylistDetailViewModelProvider(stylistId));
+    final stylistState = ref.watch(
+      salonStylistDetailViewModelProvider(stylistId),
+    );
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -32,7 +30,7 @@ class StylistDetailPage extends ConsumerWidget {
               onPressed: () async {
                 // final user = stylist.user;
 
-                final result = await EditSalonStylistSheet.open(
+                await EditSalonStylistSheet.open(
                   context,
                   name: stylist.user?.name ?? '',
                   username: stylist.user?.username ?? '',
@@ -44,15 +42,16 @@ class StylistDetailPage extends ConsumerWidget {
                   onSubmit: (req) async {
                     final updated = await ref
                         .read(editStylistViewModelProvider.notifier)
-                        .editStylist(
-                          stylistId: stylist.id,
-                          request: req,
-                        );
+                        .editStylist(stylistId: stylist.id, request: req);
 
                     if (!context.mounted) return;
 
                     ref
-                        .read(salonStylistDetailViewModelProvider(stylist.id).notifier)
+                        .read(
+                          salonStylistDetailViewModelProvider(
+                            stylist.id,
+                          ).notifier,
+                        )
                         .getSalonStylistDetail(stylist.id);
 
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -92,10 +91,18 @@ class StylistDetailPage extends ConsumerWidget {
                         behavior: SnackBarBehavior.floating,
                         elevation: 8,
                         // shadowColor: Colors.black.withOpacity(0.2),
-                        margin: const EdgeInsets.fromLTRB(20, 0, 20, 40), // Floats above the bottom
+                        margin: const EdgeInsets.fromLTRB(
+                          20,
+                          0,
+                          20,
+                          40,
+                        ), // Floats above the bottom
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+                          side: BorderSide(
+                            color: Colors.grey.withOpacity(0.1),
+                            width: 1,
+                          ),
                         ),
                         duration: const Duration(seconds: 3),
                       ),
@@ -113,11 +120,11 @@ class StylistDetailPage extends ConsumerWidget {
             onSelected: (action) async {
               if (action == _MenuAction.refresh) {
                 await ref
-                    .read(salonStylistDetailViewModelProvider(stylistId).notifier)
+                    .read(
+                      salonStylistDetailViewModelProvider(stylistId).notifier,
+                    )
                     .getSalonStylistDetail(stylistId);
-              }
-
-              if (action == _MenuAction.delete) {
+              } else if (action == _MenuAction.delete) {
                 final ok = await _confirmDelete(context);
                 if (!context.mounted) return;
 
@@ -126,7 +133,11 @@ class StylistDetailPage extends ConsumerWidget {
                     SnackBar(
                       content: Row(
                         children: [
-                          const Icon(Icons.info_outline, color: Colors.orangeAccent, size: 20),
+                          const Icon(
+                            Icons.info_outline,
+                            color: Colors.orangeAccent,
+                            size: 20,
+                          ),
                           const SizedBox(width: 12),
                           const Text(
                             "Delete not implemented",
@@ -334,10 +345,7 @@ class _DetailBody extends StatelessWidget {
 }
 
 class _DetailErrorView extends StatelessWidget {
-  const _DetailErrorView({
-    required this.message,
-    required this.onRetry,
-  });
+  const _DetailErrorView({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -359,10 +367,7 @@ class _DetailErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-            ),
+            Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 12),
             FilledButton.tonalIcon(
               onPressed: onRetry,
@@ -395,10 +400,7 @@ class _HeroHeaderCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            cs.surface.withOpacity(0.40),
-            cs.surface.withOpacity(0.18),
-          ],
+          colors: [cs.surface.withOpacity(0.40), cs.surface.withOpacity(0.18)],
         ),
         border: Border.all(color: cs.onSurface.withOpacity(0.06)),
         boxShadow: [
@@ -407,7 +409,7 @@ class _HeroHeaderCard extends StatelessWidget {
             spreadRadius: -10,
             color: Colors.black.withOpacity(0.18),
             offset: const Offset(0, 14),
-          )
+          ),
         ],
       ),
       child: Padding(
@@ -427,8 +429,8 @@ class _HeroHeaderCard extends StatelessWidget {
                   Text(
                     u?.name.isNotEmpty == true ? u!.name : 'Unknown stylist',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -437,18 +439,20 @@ class _HeroHeaderCard extends StatelessWidget {
                     (u?.username ?? '').startsWith("@")
                         ? (u?.username ?? '')
                         : "@${u?.username ?? ''}",
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    stylist.title.trim().isEmpty ? "Stylist" : stylist.title.trim(),
+                    stylist.title.trim().isEmpty
+                        ? "Stylist"
+                        : stylist.title.trim(),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
+                      color: cs.onSurfaceVariant,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -479,18 +483,12 @@ class _PillsRow extends StatelessWidget {
           text: stylist.isActive ? "Active" : "Inactive",
         ),
         if (stylist.isOwner)
-          const _Pill(
-            icon: FontAwesome.crown_solid,
-            text: "Owner",
-          ),
+          const _Pill(icon: FontAwesome.crown_solid, text: "Owner"),
         _Pill(
           icon: Icons.badge_outlined,
           text: stylist.title.trim().isEmpty ? "Stylist" : stylist.title.trim(),
         ),
-        const _Pill(
-          icon: Icons.person_outline,
-          text: "User linked",
-        ),
+        const _Pill(icon: Icons.person_outline, text: "User linked"),
       ],
     );
   }
@@ -518,9 +516,9 @@ class _Pill extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             text,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -529,10 +527,7 @@ class _Pill extends StatelessWidget {
 }
 
 class _GlassSection extends StatelessWidget {
-  const _GlassSection({
-    required this.title,
-    required this.child,
-  });
+  const _GlassSection({required this.title, required this.child});
 
   final String title;
   final Widget child;
@@ -599,18 +594,18 @@ class _InfoRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
                 maxLines: maxLines,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),

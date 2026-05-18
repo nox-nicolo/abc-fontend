@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/theme/colors_pallete.dart';
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/model/booking_status.dart';
 import 'package:africa_beuty/feature/booking/view/pages/customer_booking_detail.dart';
@@ -116,38 +117,18 @@ class _BookingTab extends ConsumerWidget {
 
     return state.when(
       loading: () => const _BookingsSkeletonList(),
-      error: (e, _) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(e.toString()),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () =>
-                  ref.invalidate(myBookingsViewModelProvider(status)),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (e, _) => AppErrorState(
+        message: e,
+        onRetry: () => ref.invalidate(myBookingsViewModelProvider(status)),
       ),
       data: (list) {
         if (list.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.event_busy_rounded,
-                  size: 56,
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  status.isEmpty ? 'No bookings yet' : 'No $status bookings',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ],
-            ),
+          return AppEmptyState(
+            icon: Icons.event_busy_rounded,
+            title: status.isEmpty ? 'No bookings yet' : 'No $status bookings',
+            message: status.isEmpty
+                ? 'Your appointments will appear here once you book a salon.'
+                : 'Bookings with this status will appear here.',
           );
         }
 

@@ -38,7 +38,6 @@ class HashtagRepositoryImpl implements HashtagRepository {
     int limit = 24,
   }) async {
     try {
-
       // Get access token
       final token = await LocalStorageService.getAccessToken();
       if (token == null) {
@@ -63,7 +62,6 @@ class HashtagRepositoryImpl implements HashtagRepository {
             },
           )
           .timeout(const Duration(seconds: 15));
-      print(response.body);
       // Handle non-200 responses
       if (response.statusCode != 200) {
         Map<String, dynamic>? body;
@@ -71,14 +69,11 @@ class HashtagRepositoryImpl implements HashtagRepository {
           body = jsonDecode(response.body);
         } catch (_) {}
 
-        return Left(
-          AppFailure(body?['detail'] ?? 'Failed to load hashtag'),
-        );
+        return Left(AppFailure(body?['detail'] ?? 'Failed to load hashtag'));
       }
 
       // Decode JSON (NO NORMALIZATION)
-      final decoded =
-          jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
 
       // Parse directly into model
       final model = HashtagGridModel.fromMap(decoded);

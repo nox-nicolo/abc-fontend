@@ -1,3 +1,5 @@
+import 'package:africa_beuty/core/widgets/app_state.dart';
+import 'package:africa_beuty/core/push/push_notification_service.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/view/pages/customer_booking_detail.dart';
 import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
@@ -73,15 +75,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       return ListView(
         children: [
           const SizedBox(height: 120),
-          Center(
-            child: Column(
-              children: [
-                Text(state.error!),
-                const SizedBox(height: 12),
-                OutlinedButton(onPressed: vm.load, child: const Text('Retry')),
-              ],
-            ),
-          ),
+          AppErrorState(message: state.error!, onRetry: vm.load),
         ],
       );
     }
@@ -89,26 +83,34 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     if (state.items.isEmpty) {
       return ListView(
         children: const [
+          _NotificationPermissionPrompt(),
           SizedBox(height: 120),
-          Center(child: Text('No notifications yet')),
+          AppEmptyState(
+            icon: Icons.notifications_none_rounded,
+            title: 'No notifications yet',
+            message: 'Updates about bookings, posts, and messages show here.',
+          ),
         ],
       );
     }
 
     return ListView.separated(
       controller: _scrollController,
-      itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+      itemCount: state.items.length + (state.isLoadingMore ? 1 : 0) + 1,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
-        if (index >= state.items.length) {
+        if (index == 0) return const _NotificationPermissionPrompt();
+
+        final itemIndex = index - 1;
+        if (itemIndex >= state.items.length) {
           return const Padding(
             padding: EdgeInsets.all(16),
             child: SkeletonListTile(trailingWidth: 36),
           );
         }
         return _NotificationTile(
-          item: state.items[index],
-          onTap: () => _onTap(context, vm, state.items[index]),
+          item: state.items[itemIndex],
+          onTap: () => _onTap(context, vm, state.items[itemIndex]),
         );
       },
     );
@@ -181,6 +183,120 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         ),
       );
     }
+  }
+}
+
+class _NotificationPermissionPrompt extends StatefulWidget {
+  const _NotificationPermissionPrompt();
+
+  @override
+  State<_NotificationPermissionPrompt> createState() =>
+      _NotificationPermissionPromptState();
+}
+
+class _NotificationPermissionPromptState
+    extends State<_NotificationPermissionPrompt> {
+  PushPermissionResult? _status;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final status = await PushNotificationService.instance
+        .notificationPermissionStatus();
+    if (!mounted) return;
+    setState(() {
+      _status = status;
+      _loading = false;
+    });
+  }
+
+  Future<void> _request() async {
+    setState(() => _loading = true);
+    final status = await PushNotificationService.instance
+        .requestNotificationPermission();
+    if (!mounted) return;
+    setState(() {
+      _status = status;
+      _loading = false;
+    });
+  }
+
+  Future<void> _openSettings() async {
+    await PushNotificationService.instance.openNotificationSettings();
+    await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final status = _status;
+    if (_loading || status == null || status == PushPermissionResult.granted) {
+      return const SizedBox.shrink();
+    }
+
+    final scheme = Theme.of(context).colorScheme;
+    final permanentlyDenied = status == PushPermissionResult.permanentlyDenied;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: scheme.primaryContainer.withValues(alpha: 0.48),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.notifications_active_outlined, color: scheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Turn on notification alerts',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    permanentlyDenied
+                        ? 'Notifications are disabled in system settings.'
+                        : 'Get booking, message, and salon updates as they happen.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: permanentlyDenied ? _openSettings : _request,
+                      icon: Icon(
+                        permanentlyDenied
+                            ? Icons.settings_outlined
+                            : Icons.refresh_rounded,
+                      ),
+                      label: Text(
+                        permanentlyDenied ? 'Open settings' : 'Try again',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

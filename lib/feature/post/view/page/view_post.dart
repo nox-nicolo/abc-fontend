@@ -561,12 +561,19 @@ Future<void> showPostShareSheet(
   BuildContext context,
   WidgetRef ref,
   String postId,
-) {
-  return showModalBottomSheet<void>(
+) async {
+  final sharedCount = await showModalBottomSheet<int>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     builder: (_) => _PostShareSheet(parentRef: ref, postId: postId),
+  );
+
+  if (!context.mounted || sharedCount == null) return;
+
+  await showDialog<void>(
+    context: context,
+    builder: (_) => _PostSharedDialog(sharedCount: sharedCount),
   );
 }
 
@@ -634,12 +641,7 @@ class _PostShareSheetState extends State<_PostShareSheet> {
         context,
       ).showSnackBar(SnackBar(content: Text(failure.message))),
       (count) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(count == 0 ? 'Already shared' : 'Post shared'),
-          ),
-        );
+        Navigator.pop(context, count);
       },
     );
   }
@@ -746,6 +748,50 @@ class _PostShareSheetState extends State<_PostShareSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PostSharedDialog extends StatelessWidget {
+  const _PostSharedDialog({required this.sharedCount});
+
+  final int sharedCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final alreadyShared = sharedCount == 0;
+
+    return AlertDialog(
+      icon: CircleAvatar(
+        radius: 28,
+        backgroundColor: alreadyShared
+            ? colorScheme.surfaceContainerHighest
+            : colorScheme.primaryContainer,
+        child: Icon(
+          alreadyShared ? Icons.check_circle_outline : Icons.send_rounded,
+          color: alreadyShared
+              ? colorScheme.onSurfaceVariant
+              : colorScheme.onPrimaryContainer,
+        ),
+      ),
+      title: Text(alreadyShared ? 'Already shared' : 'Post shared'),
+      content: Text(
+        alreadyShared
+            ? 'You already shared this post with the selected people.'
+            : sharedCount == 1
+            ? 'Your post was sent to 1 person.'
+            : 'Your post was sent to $sharedCount people.',
+        textAlign: TextAlign.center,
+      ),
+      actionsAlignment: MainAxisAlignment.center,
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Done'),
+        ),
+      ],
     );
   }
 }

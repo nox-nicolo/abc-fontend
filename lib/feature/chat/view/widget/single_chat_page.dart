@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/providers/user_provider.dart';
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/feature/chat/model/chat.dart';
 import 'package:africa_beuty/feature/chat/provider/chat_provider.dart';
 import 'package:flutter/material.dart';
@@ -81,21 +82,12 @@ class _SingleChatPageState extends ConsumerState<SingleChatPage> {
     if (conversationId == null) {
       return Scaffold(
         appBar: AppBar(title: Text(widget.initialTitle ?? 'Chat')),
-        body: Center(
-          child: _startError == null
-              ? const CircularProgressIndicator()
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_startError!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _starting ? null : _start,
-                      child: const Text('Try again'),
-                    ),
-                  ],
-                ),
-        ),
+        body: _startError == null
+            ? const AppLoadingState()
+            : AppErrorState(
+                message: _startError!,
+                onRetry: _starting ? null : _start,
+              ),
       );
     }
 
@@ -118,8 +110,12 @@ class _SingleChatPageState extends ConsumerState<SingleChatPage> {
         children: [
           Expanded(
             child: threadState.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text(error.toString())),
+              loading: () => const AppLoadingState(),
+              error: (error, _) => AppErrorState(
+                message: error,
+                onRetry: () =>
+                    ref.invalidate(chatThreadProvider(conversationId)),
+              ),
               data: (thread) => _MessageList(messages: thread.items),
             ),
           ),
@@ -167,7 +163,11 @@ class _MessageList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (messages.isEmpty) {
-      return const Center(child: Text('Start the conversation'));
+      return const AppEmptyState(
+        icon: Icons.chat_bubble_outline_rounded,
+        title: 'Start the conversation',
+        message: 'Send the first message below.',
+      );
     }
 
     return ListView.builder(

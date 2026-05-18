@@ -33,29 +33,32 @@ class SalonOfferModel {
 
   factory SalonOfferModel.fromMap(Map<String, dynamic> map) {
     return SalonOfferModel(
-      salonServicePriceId:
-          map['salon_service_price_id']?.toString() ?? '',
+      salonServicePriceId: map['salon_service_price_id']?.toString() ?? '',
 
       salonId: map['salon_id']?.toString() ?? '',
-      salonName: map['salon_name']?.toString() ?? '',
-      salonCity: map['salon_city']?.toString() ?? '',
-      salonImage: map['salon_image']?.toString() ?? '',
+      salonName: _textOrEmpty(map['salon_name']),
+      salonCity: _textOrEmpty(map['salon_city']),
+      salonImage: _textOrEmpty(map['salon_image']),
 
       subServiceId: map['sub_service_id']?.toString() ?? '',
       subServiceName: map['sub_service_name']?.toString() ?? '',
 
       price: (map['price'] as num?)?.toDouble() ?? 0,
       currency: map['currency']?.toString() ?? '',
-      durationMinutes:
-          (map['duration_minutes'] as num?)?.toInt() ?? 0,
+      durationMinutes: (map['duration_minutes'] as num?)?.toInt() ?? 0,
 
       rated: (map['rated'] as num?)?.toDouble(),
     );
   }
 
   static List<SalonOfferModel> listFromJson(List list) {
-    return list
-        .map((e) => SalonOfferModel.fromMap(e))
-        .toList();
+    return list.map((e) => SalonOfferModel.fromMap(e)).toList();
   }
+}
+
+String _textOrEmpty(Object? value) {
+  if (value == null) return '';
+  final text = value.toString().trim();
+  if (text.isEmpty || text.toLowerCase() == 'not set') return '';
+  return text;
 }

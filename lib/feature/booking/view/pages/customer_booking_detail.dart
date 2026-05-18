@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/feature/booking/model/start_booking.dart';
 import 'package:africa_beuty/feature/booking/view_modal/customer_booking.dart';
 import 'package:flutter/material.dart';
@@ -45,8 +46,12 @@ class _CustomerBookingDetailPageState
     return Scaffold(
       appBar: AppBar(title: const Text('Booking Details'), centerTitle: true),
       body: detailState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => const AppLoadingState(),
+        error: (e, _) => AppErrorState(
+          message: e,
+          onRetry: () =>
+              ref.invalidate(bookingDetailViewModelProvider(widget.bookingId)),
+        ),
         data: (booking) => Column(
           children: [
             Expanded(

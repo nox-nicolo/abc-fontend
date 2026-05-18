@@ -5,7 +5,6 @@ import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/core/http/paginated_response.dart';
 import 'package:africa_beuty/feature/profile/model/notification_preferences.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -29,20 +28,13 @@ class ReminderService {
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
     const settings = InitializationSettings(android: androidInit, iOS: iosInit);
 
     await _plugin.initialize(settings);
-
-    // Android 13+ runtime permission for POST_NOTIFICATIONS.
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-    await android?.requestNotificationsPermission();
 
     _initialized = true;
   }
@@ -89,11 +81,7 @@ class ReminderService {
           now: now,
         );
       }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('ReminderService.syncFromServer failed: $e');
-      }
-    }
+    } catch (_) {}
   }
 
   Future<void> cancelAll() async {

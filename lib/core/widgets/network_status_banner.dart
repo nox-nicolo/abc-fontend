@@ -16,6 +16,7 @@ class NetworkStatusBanner extends StatelessWidget {
       builder: (context, _) {
         final showBanner =
             statusController.isOffline ||
+            statusController.isServerUnreachable ||
             statusController.isChecking ||
             statusController.isRecovered;
 
@@ -79,7 +80,9 @@ class _NetworkBannerContent extends StatelessWidget {
                     ? 'Back online'
                     : isChecking
                     ? 'Checking connection...'
-                    : 'You are offline',
+                    : controller.isOffline
+                    ? 'You are offline'
+                    : 'Connection problem',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,

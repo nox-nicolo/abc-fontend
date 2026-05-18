@@ -9,13 +9,10 @@ class PostSettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     final settingsAsync = ref.watch(postSettingsViewModelProvider);
 
-    print(settingsAsync);
-
     final notifier = ref.read(postSettingsViewModelProvider.notifier);
-    
+
     final textTheme = Theme.of(context).textTheme;
 
     return settingsAsync.when(
@@ -27,12 +24,11 @@ class PostSettingsPage extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
 
             children: [
-
               SizedBox(
                 width: double.infinity,
                 child: Text(
-                  "Post Settings", 
-                  style: textTheme.headlineSmall, 
+                  "Post Settings",
+                  style: textTheme.headlineSmall,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -53,7 +49,7 @@ class PostSettingsPage extends ConsumerWidget {
                   if (value != null) notifier.setVisibility(value);
                 },
               ),
-              
+
               const SizedBox(height: 24),
 
               Text("Engagement", style: textTheme.titleLarge),
@@ -61,21 +57,24 @@ class PostSettingsPage extends ConsumerWidget {
               const SizedBox(height: 8),
 
               _buildSwitch(
-                "Show Likes Count", 
-                Bootstrap.eye_fill, 
-                settings.showLikes, notifier.toggleLikes
+                "Show Likes Count",
+                Bootstrap.eye_fill,
+                settings.showLikes,
+                notifier.toggleLikes,
               ),
 
               _buildSwitch(
-                "Enable Comments", 
-                Bootstrap.chat_dots_fill, 
-                settings.enableComments, notifier.toggleComments
-                ),
+                "Enable Comments",
+                Bootstrap.chat_dots_fill,
+                settings.enableComments,
+                notifier.toggleComments,
+              ),
 
               _buildSwitch(
-                "Allow Sharing", 
-                Bootstrap.share_fill, 
-                settings.allowSharing, notifier.toggleSharing
+                "Allow Sharing",
+                Bootstrap.share_fill,
+                settings.allowSharing,
+                notifier.toggleSharing,
               ),
 
               const SizedBox(height: 24),
@@ -85,17 +84,17 @@ class PostSettingsPage extends ConsumerWidget {
               const SizedBox(height: 8),
 
               _buildSwitch(
-                "Show Location", 
-                Bootstrap.geo_alt_fill, 
-                settings.showLocation, 
-                notifier.toggleLocation
+                "Show Location",
+                Bootstrap.geo_alt_fill,
+                settings.showLocation,
+                notifier.toggleLocation,
               ),
 
               _buildSwitch(
-                "Pinned", 
-                Bootstrap.pin, 
-                settings.pinned, 
-                notifier.togglePinned
+                "Pinned",
+                Bootstrap.pin,
+                settings.pinned,
+                notifier.togglePinned,
               ),
 
               const SizedBox(height: 24),
@@ -105,7 +104,7 @@ class PostSettingsPage extends ConsumerWidget {
               const SizedBox(height: 8),
 
               Text("Age Restriction", style: textTheme.titleMedium),
-              
+
               DropdownButtonFormField<String>(
                 initialValue: settings.ageRestriction,
                 // decoration: _inputDecoration("Age Restriction"),
@@ -141,7 +140,12 @@ class PostSettingsPage extends ConsumerWidget {
   //   );
   // }
 
-  Widget _buildSwitch(String title, IconData icon, bool value, Function(bool) onChanged) {
+  Widget _buildSwitch(
+    String title,
+    IconData icon,
+    bool value,
+    Function(bool) onChanged,
+  ) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon),

@@ -21,21 +21,23 @@ class _ProfileCoverPhotoState extends ConsumerState<ProfileCoverPhoto> {
 
   Future<void> _pickAndCropImage(ImageSource source, bool isCover) async {
     final XFile? pickedFile = await _picker.pickImage(source: source);
+    if (!mounted) return;
 
     if (pickedFile != null) {
+      final colorScheme = Theme.of(context).colorScheme;
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: pickedFile.path,
-        aspectRatio: isCover 
-            ? const CropAspectRatio(ratioX: 640, ratioY: 420) 
+        aspectRatio: isCover
+            ? const CropAspectRatio(ratioX: 640, ratioY: 420)
             : const CropAspectRatio(ratioX: 1, ratioY: 1),
         compressQuality: 100,
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Crop ${isCover ? "Cover" : "Profile"} Photo',
-            toolbarColor: Theme.of(context).colorScheme.surface,
+            toolbarColor: colorScheme.surface,
             toolbarWidgetColor: Colors.black,
-            initAspectRatio: isCover 
-                ? CropAspectRatioPreset.original 
+            initAspectRatio: isCover
+                ? CropAspectRatioPreset.original
                 : CropAspectRatioPreset.square,
             lockAspectRatio: true,
           ),
@@ -104,19 +106,29 @@ class _ProfileCoverPhotoState extends ConsumerState<ProfileCoverPhoto> {
           updateState.maybeWhen(
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
             ),
             orElse: () => TextButton(
-              onPressed: (_localProfileImage == null && _localCoverImage == null)
+              onPressed:
+                  (_localProfileImage == null && _localCoverImage == null)
                   ? null
                   : () async {
-                      await ref.read(salonUpdateViewModelProvider.notifier).updateAccountMedia(
+                      await ref
+                          .read(salonUpdateViewModelProvider.notifier)
+                          .updateAccountMedia(
                             profileImage: _localProfileImage,
                             coverImage: _localCoverImage,
                           );
-                      
+
+                      if (!context.mounted) return;
                       // Check state again after async call
-                      if (ref.read(salonUpdateViewModelProvider).hasValue && mounted) {
+                      if (ref.read(salonUpdateViewModelProvider).hasValue) {
                         Navigator.of(context).pop();
                       }
                     },
@@ -188,7 +200,8 @@ class _ImagePickerBox extends StatelessWidget {
           CachedNetworkImage(
             imageUrl: networkUrl,
             fit: BoxFit.cover,
-            errorWidget: (context, url, error) => Icon(isSquare ? Icons.person : Icons.image, size: 50),
+            errorWidget: (context, url, error) =>
+                Icon(isSquare ? Icons.person : Icons.image, size: 50),
           ),
         Container(
           color: Colors.black.withOpacity(0.3),
@@ -203,7 +216,9 @@ class _ImagePickerBox extends StatelessWidget {
           ? Container(
               width: 150,
               height: 150,
-              decoration: BoxDecoration(border: Border.all(color: outlineColor)),
+              decoration: BoxDecoration(
+                border: Border.all(color: outlineColor),
+              ),
               child: content,
             )
           : AspectRatio(

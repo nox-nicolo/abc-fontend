@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart' as permissions;
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _pushChannelId = 'abc_high_importance';
@@ -56,7 +57,7 @@ class PushNotificationService {
     try {
       await Firebase.initializeApp();
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-      await _ensureLocalNotificationsInitialized(requestPermission: true);
+      await _ensureLocalNotificationsInitialized();
       await FirebaseMessaging.instance
           .setForegroundNotificationPresentationOptions(
             alert: true,
@@ -103,12 +104,6 @@ class PushNotificationService {
     if (!_initialized) return;
 
     try {
-      await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null || token.isEmpty) {
         AppLogger.warning('FCM token is empty; phone cannot receive push yet');
@@ -122,6 +117,73 @@ class PushNotificationService {
         stackTrace: stackTrace,
       );
     }
+  }
+
+  Future<PushPermissionResult> requestNotificationPermission() async {
+    await init();
+    if (!_initialized) return PushPermissionResult.unavailable;
+
+    try {
+      await _ensureLocalNotificationsInitialized();
+
+      final android = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      final androidGranted = await android?.requestNotificationsPermission();
+
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      final firebaseGranted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+      final granted = androidGranted ?? firebaseGranted;
+
+      if (granted) {
+        await syncTokenIfPossible();
+        return PushPermissionResult.granted;
+      }
+
+      final status = await permissions.Permission.notification.status;
+      if (status.isPermanentlyDenied) {
+        return PushPermissionResult.permanentlyDenied;
+      }
+      return PushPermissionResult.denied;
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Notification permission request failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return PushPermissionResult.unavailable;
+    }
+  }
+
+  Future<PushPermissionResult> notificationPermissionStatus() async {
+    try {
+      final status = await permissions.Permission.notification.status;
+      if (status.isGranted) return PushPermissionResult.granted;
+      if (status.isPermanentlyDenied) {
+        return PushPermissionResult.permanentlyDenied;
+      }
+      if (status.isDenied) return PushPermissionResult.denied;
+      return PushPermissionResult.unavailable;
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Notification permission status check failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return PushPermissionResult.unavailable;
+    }
+  }
+
+  Future<void> openNotificationSettings() async {
+    await permissions.openAppSettings();
   }
 
   Future<void> _registerToken(String token) async {
@@ -164,6 +226,8 @@ class PushNotificationService {
     return '${_platformLabel()}-${DateTime.now().microsecondsSinceEpoch}-$randomPart';
   }
 }
+
+enum PushPermissionResult { granted, denied, permanentlyDenied, unavailable }
 
 Future<void> _showLocalNotification(RemoteMessage message) async {
   await _ensureLocalNotificationsInitialized();
@@ -210,9 +274,9 @@ Future<void> _ensureLocalNotificationsInitialized({
 
   const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
   const iosInit = DarwinInitializationSettings(
-    requestAlertPermission: true,
-    requestBadgePermission: true,
-    requestSoundPermission: true,
+    requestAlertPermission: false,
+    requestBadgePermission: false,
+    requestSoundPermission: false,
   );
 
   await _localNotifications.initialize(
@@ -223,9 +287,7 @@ Future<void> _ensureLocalNotificationsInitialized({
       .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin
       >();
-  if (requestPermission) {
-    await android?.requestNotificationsPermission();
-  }
+  if (requestPermission) await android?.requestNotificationsPermission();
   await android?.createNotificationChannel(
     const AndroidNotificationChannel(
       _pushChannelId,

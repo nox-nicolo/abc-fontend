@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
@@ -22,18 +23,15 @@ class TopSalonsSection extends ConsumerWidget {
           height: 180,
           child: state.when(
             loading: () => const _SalonCardsSkeleton(),
-            error: (e, _) => Center(
-              child: Text(
-                e.toString(),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+            error: (e, _) => AppErrorState(
+              message: e,
+              onRetry: () => ref.invalidate(topSalonsProvider),
             ),
             data: (salons) => salons.isEmpty
-                ? Center(
-                    child: Text(
-                      'No data yet',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                ? const AppEmptyState(
+                    icon: Icons.storefront_outlined,
+                    title: 'No salons yet',
+                    message: 'Top salons will appear here.',
                   )
                 : ListView.separated(
                     scrollDirection: Axis.horizontal,

@@ -1,5 +1,6 @@
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:africa_beuty/feature/welcome/view/widget/aim.dart';
+import 'package:africa_beuty/feature/welcome/view/widget/permissions.dart';
 import 'package:africa_beuty/feature/welcome/view/widget/show.dart';
 import 'package:africa_beuty/feature/welcome/view/widget/solve.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ class WelcomePage extends StatefulWidget {
 
 class _WelcomePageState extends State<WelcomePage> {
   final PageController _controller = PageController();
+  static const _pageCount = 4;
   bool isLastPage = false;
 
   @override
@@ -40,6 +42,8 @@ class _WelcomePageState extends State<WelcomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -47,13 +51,14 @@ class _WelcomePageState extends State<WelcomePage> {
             controller: _controller,
             onPageChanged: (index) {
               setState(() {
-                isLastPage = index == 2;
+                isLastPage = index == _pageCount - 1;
               });
             },
             children: const [
               ScreenPageOne(),
               ScreenPageTwo(),
               ScreenPageThree(),
+              WelcomePermissionsPage(),
             ],
           ),
 
@@ -76,53 +81,57 @@ class _WelcomePageState extends State<WelcomePage> {
           ),
 
           Positioned(
-            bottom: 60,
-            left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SmoothPageIndicator(
-                  controller: _controller,
-                  count: 3,
-                  effect: ExpandingDotsEffect(
-                    dotHeight: 8,
-                    dotWidth: 8,
-                    expansionFactor: 4,
-                    spacing: 8,
-                    dotColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                    activeDotColor: Theme.of(context).colorScheme.primary,
-                  ),
+            bottom: 34,
+            left: 16,
+            right: 16,
+            child: SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (isLastPage) {
-                      await _finishWelcomeFlow();
-                    } else {
-                      await _controller.nextPage(
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeInOut,
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 5,
-                  ),
-                  child: Text(
-                    isLastPage ? 'Get Started' : 'Next',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                decoration: BoxDecoration(
+                  color: scheme.surface.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: scheme.outlineVariant),
                 ),
-              ],
+                child: Row(
+                  children: [
+                    SmoothPageIndicator(
+                      controller: _controller,
+                      count: _pageCount,
+                      effect: ExpandingDotsEffect(
+                        dotHeight: 8,
+                        dotWidth: 8,
+                        expansionFactor: 4,
+                        spacing: 8,
+                        dotColor: scheme.outlineVariant,
+                        activeDotColor: scheme.primary,
+                      ),
+                    ),
+                    const Spacer(),
+                    FilledButton.icon(
+                      onPressed: () async {
+                        if (isLastPage) {
+                          await _finishWelcomeFlow();
+                        } else {
+                          await _controller.nextPage(
+                            duration: const Duration(milliseconds: 420),
+                            curve: Curves.easeOutCubic,
+                          );
+                        }
+                      },
+                      icon: Icon(
+                        isLastPage
+                            ? Icons.check_rounded
+                            : Icons.arrow_forward_rounded,
+                      ),
+                      label: Text(isLastPage ? 'Continue' : 'Next'),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

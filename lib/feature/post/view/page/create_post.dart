@@ -72,6 +72,8 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
   Future<void> pickImages() async {
     try {
       final images = await picker.pickMultiImage();
+      if (!mounted) return;
+
       if (images.isEmpty) {
         ScaffoldMessenger.of(
           context,
@@ -102,6 +104,8 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
         }
       }
 
+      if (!mounted) return;
+
       if (missingFiles.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -117,6 +121,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
         editedImages.addAll(newEdited);
       });
     } on Exception catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Unable to access gallery: $e')));
@@ -128,6 +133,8 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
 
     try {
       final image = await picker.pickImage(source: ImageSource.camera);
+      if (!mounted) return;
+
       if (image == null) {
         ScaffoldMessenger.of(
           context,
@@ -137,6 +144,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
 
       final file = File(image.path);
       if (!await file.exists()) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cannot access captured image.')),
         );
@@ -150,6 +158,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
         );
       });
     } on Exception catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Unable to access camera: $e')));
@@ -178,6 +187,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
         ),
       );
 
+      if (!mounted) return;
       if (result == null || result.isEmpty) return;
 
       final newSelected = <XFile>[];
@@ -193,6 +203,8 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
           missingFiles.add(file.path);
         }
       }
+
+      if (!mounted) return;
 
       if (missingFiles.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -215,6 +227,7 @@ class _CreatePostPageState extends ConsumerState<CreatePostPage> {
           ..addAll(newSelected);
       });
     } on Exception catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to edit image: $e')));

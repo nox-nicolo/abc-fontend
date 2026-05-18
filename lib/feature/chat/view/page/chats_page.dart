@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/providers/user_provider.dart';
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/feature/chat/model/chat.dart';
 import 'package:africa_beuty/feature/chat/provider/chat_provider.dart';
 import 'package:africa_beuty/feature/chat/view/widget/single_chat_page.dart';
@@ -29,19 +30,26 @@ class ChatsPage extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(chatConversationsProvider),
         child: state.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const AppLoadingState(),
           error: (error, _) => ListView(
             children: [
-              const SizedBox(height: 160),
-              Center(child: Text(error.toString())),
+              SizedBox(height: MediaQuery.sizeOf(context).height * 0.16),
+              AppErrorState(
+                message: error,
+                onRetry: () => ref.invalidate(chatConversationsProvider),
+              ),
             ],
           ),
           data: (items) {
             if (items.isEmpty) {
               return ListView(
                 children: const [
-                  SizedBox(height: 160),
-                  Center(child: Text('No messages yet')),
+                  SizedBox(height: 120),
+                  AppEmptyState(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    title: 'No messages yet',
+                    message: 'Your conversations will appear here.',
+                  ),
                 ],
               );
             }

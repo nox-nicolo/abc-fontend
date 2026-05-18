@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/widgets/activity_feed.dart';
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
 import 'package:africa_beuty/feature/notifications/view/widget/notifications_bell.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
@@ -76,7 +77,12 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
 
     return salonState.when(
       loading: () => _buildLoadingShimmer(),
-      error: (e, _) => Center(child: Text(e.toString())),
+      error: (e, _) => AppErrorState(
+        message: e,
+        onRetry: () => ref
+            .read(salonProfileViewModelProvider.notifier)
+            .getSalonProfileData(),
+      ),
       data: (salon) => _buildContent(context, salon),
     );
   }
@@ -490,9 +496,13 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
           SliverSpaceHeader(title: 'Visuals'),
           SliverToBoxAdapter(
             child: salon.gallery.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: Text('No visuals uploaded')),
+                ? const SizedBox(
+                    height: 160,
+                    child: AppEmptyState(
+                      icon: Icons.image_outlined,
+                      title: 'No visuals uploaded',
+                      message: 'Salon gallery photos will appear here.',
+                    ),
                   )
                 : SizedBox(
                     height: 160, // Set the height for your horizontal gallery
@@ -642,42 +652,19 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
     final postsState = ref.watch(profilePostsViewModelProvider(widget.salonId));
 
     return postsState.when(
-      loading: () => const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      ),
-      error: (e, _) => SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Center(child: Text(e.toString())),
-        ),
+      loading: () => const AppSliverLoadingState(),
+      error: (e, _) => AppSliverErrorState(
+        message: e,
+        onRetry: () => ref
+            .read(profilePostsViewModelProvider(widget.salonId).notifier)
+            .getInitialPosts(),
       ),
       data: (posts) {
         if (posts.isEmpty) {
-          return SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.photo_library_outlined,
-                      size: 48,
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No posts yet',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          return const AppSliverEmptyState(
+            icon: Icons.photo_library_outlined,
+            title: 'No posts yet',
+            message: 'Posts from this salon will appear here.',
           );
         }
 
@@ -692,7 +679,6 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
               .toList();
           if (servicePosts.isEmpty) {
             return _emptyPostsSliver(
-              context,
               icon: Icons.grid_off_rounded,
               message: 'No service posts yet',
             );
@@ -737,45 +723,19 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
             salonActivityViewModelProvider(widget.salonId),
           );
           return activityState.when(
-            loading: () => const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            ),
-            error: (e, _) => SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Center(child: Text(e.toString())),
-              ),
+            loading: () => const AppSliverLoadingState(),
+            error: (e, _) => AppSliverErrorState(
+              message: e,
+              onRetry: () => ref
+                  .read(salonActivityViewModelProvider(widget.salonId).notifier)
+                  .getInitialActivity(),
             ),
             data: (activities) {
               if (activities.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.notifications_none,
-                            size: 48,
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'No activity yet',
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                return const AppSliverEmptyState(
+                  icon: Icons.notifications_none,
+                  title: 'No activity yet',
+                  message: 'Recent activity from this salon will appear here.',
                 );
               }
 
@@ -792,33 +752,11 @@ class _PostTabContentState extends ConsumerState<_PostTabContent> {
     );
   }
 
-  SliverToBoxAdapter _emptyPostsSliver(
-    BuildContext context, {
-    required IconData icon,
-    required String message,
-  }) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                size: 48,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                message,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+  Widget _emptyPostsSliver({required IconData icon, required String message}) {
+    return AppSliverEmptyState(
+      icon: icon,
+      title: message,
+      message: 'Service posts from this salon will appear here.',
     );
   }
 }

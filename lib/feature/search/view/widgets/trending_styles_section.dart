@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/search/model/discover.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
@@ -22,17 +23,20 @@ class TrendingStylesSection extends ConsumerWidget {
         const SizedBox(height: 12),
         state.when(
           loading: () => const _TrendingStylesSkeleton(),
-          error: (e, _) => Center(
-            child: Text(
-              e.toString(),
-              style: Theme.of(context).textTheme.bodySmall,
+          error: (e, _) => SizedBox(
+            height: 140,
+            child: AppErrorState(
+              message: e,
+              onRetry: () => ref.invalidate(trendingStylesProvider),
             ),
           ),
           data: (items) => items.isEmpty
-              ? Center(
-                  child: Text(
-                    'Nothing trending yet',
-                    style: Theme.of(context).textTheme.bodySmall,
+              ? const SizedBox(
+                  height: 140,
+                  child: AppEmptyState(
+                    icon: Icons.auto_awesome_outlined,
+                    title: 'Nothing trending yet',
+                    message: 'Popular styles will appear here.',
                   ),
                 )
               : SizedBox(

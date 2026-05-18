@@ -49,11 +49,11 @@ class TopSalonModel {
   factory TopSalonModel.fromMap(Map<String, dynamic> map) {
     return TopSalonModel(
       salonId: map['salon_id'] ?? '',
-      name: map['name'] ?? '',
-      logoUrl: map['logo_url'] ?? '',
-      coverUrl: map['cover_url'] ?? '',
-      city: map['city'] ?? '',
-      tagline: map['tagline'] ?? '',
+      name: _textOrEmpty(map['name']),
+      logoUrl: _textOrEmpty(map['logo_url']),
+      coverUrl: _textOrEmpty(map['cover_url']),
+      city: _textOrEmpty(map['city']),
+      tagline: _textOrEmpty(map['tagline']),
     );
   }
 
@@ -88,4 +88,11 @@ class TopSalonModel {
         city.hashCode ^
         tagline.hashCode;
   }
+}
+
+String _textOrEmpty(Object? value) {
+  if (value == null) return '';
+  final text = value.toString().trim();
+  if (text.isEmpty || text.toLowerCase() == 'not set') return '';
+  return text;
 }

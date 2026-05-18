@@ -4,19 +4,37 @@ import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-enum NetworkConnectionState { online, offline, checking, recovered }
+enum NetworkConnectionState {
+  online,
+  offline,
+  serverUnreachable,
+  checking,
+  recovered,
+}
 
 class NetworkStatusController extends ChangeNotifier {
-  NetworkStatusController();
+  NetworkStatusController({
+    http.Client? client,
+    Uri? serverProbeUri,
+    Uri? internetProbeUri,
+  }) : _client = client ?? http.Client(),
+       _serverProbeUri =
+           serverProbeUri ?? Uri.parse(ServerConstants.apiBaseUrl),
+       _internetProbeUri = internetProbeUri ?? Uri.parse('https://example.com');
 
   static final NetworkStatusController instance = NetworkStatusController();
 
+  final http.Client _client;
+  final Uri _serverProbeUri;
+  final Uri _internetProbeUri;
   NetworkConnectionState _state = NetworkConnectionState.online;
   Timer? _recoveredTimer;
   int _failureCount = 0;
 
   NetworkConnectionState get state => _state;
   bool get isOffline => _state == NetworkConnectionState.offline;
+  bool get isServerUnreachable =>
+      _state == NetworkConnectionState.serverUnreachable;
   bool get isChecking => _state == NetworkConnectionState.checking;
   bool get isRecovered => _state == NetworkConnectionState.recovered;
 
@@ -36,26 +54,45 @@ class NetworkStatusController extends ChangeNotifier {
       return;
     }
     _recoveredTimer?.cancel();
-    _setState(NetworkConnectionState.offline);
+    _setState(NetworkConnectionState.serverUnreachable);
   }
 
   Future<bool> retry() async {
     _recoveredTimer?.cancel();
     _setState(NetworkConnectionState.checking);
 
-    try {
-      final uri = Uri.parse(ServerConstants.apiBaseUrl);
-      final response = await http.head(uri).timeout(const Duration(seconds: 8));
-      if (response.statusCode < 500) {
-        reportOnline();
-        return true;
-      }
-    } on Object {
-      // Keep the UI in the offline state if the connectivity probe fails.
+    if (await _probe(_serverProbeUri)) {
+      reportOnline();
+      return true;
     }
 
-    reportOffline();
+    if (await _probe(_internetProbeUri)) {
+      _failureCount = 0;
+      _setState(NetworkConnectionState.serverUnreachable);
+      return false;
+    }
+
+    _failureCount = 0;
+    _setState(NetworkConnectionState.offline);
     return false;
+  }
+
+  Future<bool> _probe(Uri uri) async {
+    try {
+      final response = await _client
+          .head(uri)
+          .timeout(const Duration(seconds: 8));
+      return response.statusCode < 500;
+    } on Object {
+      try {
+        final response = await _client
+            .get(uri)
+            .timeout(const Duration(seconds: 8));
+        return response.statusCode < 500;
+      } on Object {
+        return false;
+      }
+    }
   }
 
   void _setState(NetworkConnectionState value) {
@@ -67,6 +104,7 @@ class NetworkStatusController extends ChangeNotifier {
   @override
   void dispose() {
     _recoveredTimer?.cancel();
+    _client.close();
     super.dispose();
   }
 }

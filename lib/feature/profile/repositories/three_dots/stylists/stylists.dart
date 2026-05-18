@@ -9,7 +9,6 @@ import 'package:africa_beuty/feature/profile/model/three_dots/stylists/edit_styl
 import 'package:africa_beuty/feature/profile/model/three_dots/stylists/search_stylists.dart';
 import 'package:africa_beuty/feature/profile/model/three_dots/stylists/view_single_stylists.dart';
 import 'package:africa_beuty/feature/profile/model/three_dots/stylists/view_stylists.dart';
-import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 
@@ -17,7 +16,7 @@ class SalonStylistRepository {
   final http.Client _client;
 
   SalonStylistRepository({http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   Future<Either<AppFailure, StylistListResponse>> getSalonStylists({
     int limit = 20,
@@ -31,11 +30,11 @@ class SalonStylistRepository {
 
     final uri = Uri.parse('${ServerConstants.serverUrl}/profile/stylists')
         .replace(
-      queryParameters: {
-        'limit': limit.toString(),
-        'offset': offset.toString(),
-      },
-    );
+          queryParameters: {
+            'limit': limit.toString(),
+            'offset': offset.toString(),
+          },
+        );
 
     try {
       final response = await _client
@@ -78,13 +77,7 @@ class SalonStylistRepository {
     final trimmedQuery = query.trim();
 
     if (trimmedQuery.isEmpty) {
-      return const Right(
-        StylistSearchResponse(
-          items: [],
-          query: '',
-          count: 0,
-        ),
-      );
+      return const Right(StylistSearchResponse(items: [], query: '', count: 0));
     }
 
     final token = await LocalStorageService.getAccessToken();
@@ -95,12 +88,7 @@ class SalonStylistRepository {
 
     final uri = Uri.parse(
       '${ServerConstants.serverUrl}/profile/stylists/search-users',
-    ).replace(
-      queryParameters: {
-        'q': trimmedQuery,
-        'limit': limit.toString(),
-      },
-    );
+    ).replace(queryParameters: {'q': trimmedQuery, 'limit': limit.toString()});
 
     try {
       final response = await _client
@@ -121,7 +109,6 @@ class SalonStylistRepository {
         }
 
         final result = StylistSearchResponse.fromJson(decoded);
-        debugPrint('SEARCH COUNT => ${result.items.length}');
 
         return Right(result);
       }

@@ -219,15 +219,15 @@ Search/discover needs pagination polish. Backend already has a TODO for cursor p
 Frontend Polish
 
 
-Remove all production print/debug logs.
+<!-- Remove all production print/debug logs. -->
 
-Fix async context warnings in post/profile flows because they can cause navigation/snackbar crashes after screen changes.
+<!-- Fix async context warnings in post/profile flows because they can cause navigation/snackbar crashes after screen changes. -->
 
-Replace remaining placeholder values like "Not Set" with nullable fields or typed fallbacks.
+<!-- Replace remaining placeholder values like "Not Set" with nullable fields or typed fallbacks. -->
 
-Make loading, empty, error, and offline states consistent across booking, salon profile, customer profile, chat, notifications, and search.
+<!-- Make loading, empty, error, and offline states consistent across booking, salon profile, customer profile, chat, notifications, and search. -->
 
-Add app icon/splash review, permission rationale screens, notification permission retry UX, and first-run welcome flow polish.
+<!-- Add app icon/splash review, permission rationale screens, notification permission retry UX, and first-run welcome flow polish. -->
 
 
 Backend Polish
@@ -235,7 +235,7 @@ Backend Polish
 
 Add rate limits for login, OTP/email, registration, comments, likes, follow, booking, and chat.
 
-Add health/readiness endpoints for DB, R2, Firebase, Redis/Celery if used.
+<!-- Add health/readiness endpoints for DB, R2, Firebase, Redis/Celery if used. -->
 
 Add request validation limits for image/video upload size, MIME type, dimensions, and content safety.
 

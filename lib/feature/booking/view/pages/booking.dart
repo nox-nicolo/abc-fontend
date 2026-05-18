@@ -1,4 +1,4 @@
-
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
 import 'package:africa_beuty/feature/booking/view/pages/customer_booking.dart';
 import 'package:africa_beuty/feature/booking/view/pages/salon_booking.dart';
@@ -32,11 +32,8 @@ class _BookingPageState extends State<BookingPage> {
 
   @override
   Widget build(BuildContext context) {
-
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: AppLoadingState());
     }
 
     switch (_role) {
@@ -48,8 +45,10 @@ class _BookingPageState extends State<BookingPage> {
 
       default:
         return const Scaffold(
-          body: Center(
-            child: Text('Unknown user role'),
+          body: AppEmptyState(
+            icon: Icons.account_circle_outlined,
+            title: 'Account type unavailable',
+            message: 'Please sign in again to continue.',
           ),
         );
     }

@@ -22,7 +22,9 @@ class CustomerProfileRepository {
         final decoded = decodeMapOrThrow(response);
         return Right(CustomerProfileModel.fromMap(decoded));
       }
-      return Left(_detail(response.body, 'Failed to load profile'));
+      return Left(
+        AppFailure(responseErrorMessage(response, 'Failed to load profile')),
+      );
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
     } on SessionExpiredException catch (e) {
@@ -57,7 +59,9 @@ class CustomerProfileRepository {
         final decoded = decodeMapOrThrow(response);
         return Right(CustomerProfileModel.fromMap(decoded));
       }
-      return Left(_detail(response.body, 'Failed to update profile'));
+      return Left(
+        AppFailure(responseErrorMessage(response, 'Failed to update profile')),
+      );
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
     } on SessionExpiredException catch (e) {
@@ -83,7 +87,9 @@ class CustomerProfileRepository {
         final decoded = decodeMapOrThrow(response);
         return Right(CustomerProfileModel.fromMap(decoded));
       }
-      return Left(_detail(response.body, 'Failed to load profile'));
+      return Left(
+        AppFailure(responseErrorMessage(response, 'Failed to load profile')),
+      );
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
     } on SessionExpiredException catch (e) {
@@ -108,7 +114,9 @@ class CustomerProfileRepository {
             .toList();
         return Right(items);
       }
-      return Left(_detail(response.body, 'Failed to load following'));
+      return Left(
+        AppFailure(responseErrorMessage(response, 'Failed to load following')),
+      );
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
     } on SessionExpiredException catch (e) {
@@ -131,7 +139,9 @@ class CustomerProfileRepository {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return const Right(null);
       }
-      return Left(_detail(response.body, 'Failed to unfollow'));
+      return Left(
+        AppFailure(responseErrorMessage(response, 'Failed to unfollow')),
+      );
     } on TimeoutException {
       return Left(AppFailure('Request timed out'));
     } on SessionExpiredException catch (e) {
@@ -139,10 +149,5 @@ class CustomerProfileRepository {
     } catch (e) {
       return Left(AppFailure(e.toString()));
     }
-  }
-
-  AppFailure _detail(String body, String fallback) {
-    final decoded = tryDecodeMap(body);
-    return AppFailure(decoded?['detail']?.toString() ?? fallback);
   }
 }

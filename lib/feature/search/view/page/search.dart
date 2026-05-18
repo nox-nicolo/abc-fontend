@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/search/model/search.dart';
 import 'package:africa_beuty/feature/search/view/widgets/nearby_salons_section.dart';
@@ -68,15 +69,18 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
     return searchAsync.when(
       loading: () => const _SearchResultsSkeleton(),
-      error: (e, _) => Center(
-        child: Text(
-          e.toString(),
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+      error: (e, _) => AppErrorState(
+        message: e,
+        onRetry: () =>
+            ref.read(searchViewModelProvider.notifier).onQueryChanged(query),
       ),
       data: (results) {
         if (results.isEmpty) {
-          return const Center(child: Text('No results found'));
+          return const AppEmptyState(
+            icon: Icons.search_off_rounded,
+            title: 'No results found',
+            message: 'Try a different name, salon, style, or hashtag.',
+          );
         }
         return SearchResultList(results: results);
       },

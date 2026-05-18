@@ -1,7 +1,8 @@
 String? _stringOrNull(Object? value) {
   if (value == null) return null;
-  final text = value.toString();
-  return text.isEmpty ? null : text;
+  final text = value.toString().trim();
+  if (text.isEmpty || text.toLowerCase() == 'not set') return null;
+  return text;
 }
 
 double? _doubleOrNull(Object? value) {

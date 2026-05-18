@@ -8,12 +8,12 @@ void main() {
     expect(tryDecodeMap('   '), isNull);
   });
 
-  test('responseErrorMessage uses fallback for empty error bodies', () {
+  test('responseErrorMessage adds context for empty server error bodies', () {
     final response = http.Response('', 502);
 
     expect(
       responseErrorMessage(response, 'Login failed'),
-      'Login failed. Server returned an empty response.',
+      'Login failed. The server is having trouble right now. Please try again.',
     );
   });
 
@@ -23,6 +23,27 @@ void main() {
     expect(
       responseErrorMessage(response, 'Login failed'),
       'Invalid credentials',
+    );
+  });
+
+  test('responseErrorMessage adds context for generic server errors', () {
+    final response = http.Response(
+      '{"detail":"Server error. Please try again later"}',
+      500,
+    );
+
+    expect(
+      responseErrorMessage(response, 'Failed to load posts'),
+      'Failed to load posts. The server is having trouble right now. Please try again.',
+    );
+  });
+
+  test('responseErrorMessage keeps specific server errors', () {
+    final response = http.Response('{"detail":"Image upload failed"}', 500);
+
+    expect(
+      responseErrorMessage(response, 'Account upload failed'),
+      'Image upload failed',
     );
   });
 

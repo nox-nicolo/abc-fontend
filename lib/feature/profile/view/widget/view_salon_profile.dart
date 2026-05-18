@@ -1790,7 +1790,6 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
               ),
 
               //   if (_selectedTabIndex == 0)
-              //     UniversalPostGrid(posts: const [], onPostTap: (post) => print(post))
               //   else if (_selectedTabIndex == 1)
               //     SliverList(
               //       delegate: SliverChildBuilderDelegate(

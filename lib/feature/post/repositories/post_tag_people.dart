@@ -40,7 +40,6 @@ class TagPeopleRepositoryImpl implements TagPeopleRepository {
       final request = Uri.parse(
         '${ServerConstants.serverUrl}/users/tags/search?query=${Uri.encodeQueryComponent(query)}',
       );
-      print(request);
 
       final response = await http.get(
         request,

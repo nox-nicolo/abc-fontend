@@ -43,7 +43,8 @@ class _PostHashTagPageState extends ConsumerState<PostHashTagPage> {
     final theme = Theme.of(context);
 
     return vmState.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, st) => Scaffold(body: Center(child: Text('Error: $err'))),
       data: (state) {
         final recent = state.recent;
@@ -62,13 +63,21 @@ class _PostHashTagPageState extends ConsumerState<PostHashTagPage> {
                 onPressed: () async {
                   // persist selected to recent and return selected
                   await vm.persistSelectedAsRecent();
+                  if (!context.mounted) return;
 
                   // read latest provider selection and return that
-                  final latestSelected = ref.read(hashtagViewModelProvider).value?.selected ?? [];
+                  final latestSelected =
+                      ref.read(hashtagViewModelProvider).value?.selected ?? [];
                   Navigator.of(context).pop(latestSelected);
                 },
-                child: Text('Done', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
-              )
+                child: Text(
+                  'Done',
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
           body: Padding(
@@ -80,7 +89,9 @@ class _PostHashTagPageState extends ConsumerState<PostHashTagPage> {
                   decoration: InputDecoration(
                     hintText: 'Search hashtags…',
                     prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onChanged: (q) => vm.search(q),
                 ),
@@ -91,7 +102,9 @@ class _PostHashTagPageState extends ConsumerState<PostHashTagPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                      color: theme.colorScheme.primaryContainer.withValues(
+                        alpha: 0.2,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Wrap(
@@ -117,23 +130,31 @@ class _PostHashTagPageState extends ConsumerState<PostHashTagPage> {
                 const SizedBox(height: 12),
 
                 // Allow adding new hashtag if search text present and not in selected
-                Builder(builder: (ctx) {
-                  final q = _searchController.text.trim();
-                  final formatted = q.isEmpty ? '' : (q.startsWith('#') ? q : '#$q');
-                  final canAdd = formatted.length > 1 && !selected.any((s) => s.toLowerCase() == formatted.toLowerCase());
-                  if (!canAdd) return const SizedBox.shrink();
-                  return SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        vm.addNewHashtag(q);
-                        _searchController.clear();
-                      },
-                      icon: const Icon(Icons.add),
-                      label: Text('Add "$formatted"'),
-                    ),
-                  );
-                }),
+                Builder(
+                  builder: (ctx) {
+                    final q = _searchController.text.trim();
+                    final formatted = q.isEmpty
+                        ? ''
+                        : (q.startsWith('#') ? q : '#$q');
+                    final canAdd =
+                        formatted.length > 1 &&
+                        !selected.any(
+                          (s) => s.toLowerCase() == formatted.toLowerCase(),
+                        );
+                    if (!canAdd) return const SizedBox.shrink();
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          vm.addNewHashtag(q);
+                          _searchController.clear();
+                        },
+                        icon: const Icon(Icons.add),
+                        label: Text('Add "$formatted"'),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -142,7 +163,11 @@ class _PostHashTagPageState extends ConsumerState<PostHashTagPage> {
     );
   }
 
-  Widget _buildListSections(List<PostHashtagsModel> recent, HashtagViewModel vm, List<String> selected) {
+  Widget _buildListSections(
+    List<PostHashtagsModel> recent,
+    HashtagViewModel vm,
+    List<String> selected,
+  ) {
     return ListView(
       children: [
         if (recent.isNotEmpty) _buildList('Recent', recent, selected, vm),
@@ -150,21 +175,38 @@ class _PostHashTagPageState extends ConsumerState<PostHashTagPage> {
     );
   }
 
-  Widget _buildList(String title, List<PostHashtagsModel> items, List<String> selected, HashtagViewModel vm) {
+  Widget _buildList(
+    String title,
+    List<PostHashtagsModel> items,
+    List<String> selected,
+    HashtagViewModel vm,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         const SizedBox(height: 8),
         ...items.map((item) {
-          final isSelected = selected.any((s) => s.toLowerCase() == item.name.toLowerCase());
-          return Builder(builder: (context) {
-            return ListTile(
-              title: Text(item.name),
-              trailing: Icon(isSelected ? Icons.check_circle : Icons.add_circle_outline, color: isSelected ? Theme.of(context).colorScheme.primary : null),
-              onTap: () => vm.toggleSelect(item.name),
-            );
-          });
+          final isSelected = selected.any(
+            (s) => s.toLowerCase() == item.name.toLowerCase(),
+          );
+          return Builder(
+            builder: (context) {
+              return ListTile(
+                title: Text(item.name),
+                trailing: Icon(
+                  isSelected ? Icons.check_circle : Icons.add_circle_outline,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                ),
+                onTap: () => vm.toggleSelect(item.name),
+              );
+            },
+          );
         }),
       ],
     );

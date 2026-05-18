@@ -280,11 +280,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: topSalons.when(
                         loading: () => const _TopSalonSkeletonList(),
 
-                        error: (e, _) => Center(
-                          child: Text(
-                            e.toString(),
-                            style: TextStyle(color: colorScheme.error),
-                          ),
+                        error: (e, _) => _InlineLoadError(
+                          message: e.toString(),
+                          onRetry: () => ref
+                              .read(topSalonViewModelProvider.notifier)
+                              .refresh(),
                         ),
 
                         data: (salons) => ListView.builder(
@@ -313,9 +313,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                   color: colorScheme
                                       .surfaceContainerHighest, // fallback if no cover
-                                  image:
-                                      salon.coverUrl.isNotEmpty &&
-                                          salon.coverUrl != 'Not Set'
+                                  image: salon.coverUrl.isNotEmpty
                                       ? DecorationImage(
                                           image: NetworkImage(salon.coverUrl),
                                           fit: BoxFit.cover,
@@ -380,8 +378,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       const SizedBox(height: 8),
 
                                       // City (optional)
-                                      if (salon.city.isNotEmpty &&
-                                          salon.city != 'Not Set')
+                                      if (salon.city.isNotEmpty)
                                         Text(
                                           salon.city,
                                           style: Theme.of(context)
@@ -409,10 +406,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           loading: () => const _FeedPostSkeleton(),
 
                           error: (e, _) => Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              e.toString(),
-                              style: TextStyle(color: colorScheme.error),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 24,
+                            ),
+                            child: _InlineLoadError(
+                              message: e.toString(),
+                              onRetry: () => ref
+                                  .read(feedViewModelProvider.notifier)
+                                  .refresh(),
                             ),
                           ),
 
@@ -675,6 +677,44 @@ class _FeedFooterSkeleton extends StatelessWidget {
         SizedBox(height: 10),
         SkeletonCard(width: 160, height: 12),
       ],
+    );
+  }
+}
+
+class _InlineLoadError extends StatelessWidget {
+  const _InlineLoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, color: colorScheme.onSurfaceVariant),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

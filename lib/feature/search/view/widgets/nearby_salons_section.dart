@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
@@ -28,11 +29,10 @@ class NearbySalonsSection extends ConsumerWidget {
               onRetry: () => ref.invalidate(nearbySalonsProvider),
             ),
             data: (salons) => salons.isEmpty
-                ? Center(
-                    child: Text(
-                      'No salons nearby',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                ? const AppEmptyState(
+                    icon: Icons.location_off_outlined,
+                    title: 'No salons nearby',
+                    message: 'Nearby salons will appear here.',
                   )
                 : ListView.separated(
                     scrollDirection: Axis.horizontal,
@@ -72,37 +72,64 @@ class _NearbyError extends StatelessWidget {
         ? error as LocationDiscoveryException
         : null;
     final label = locationError == null ? 'Try again' : 'Open settings';
+    final scheme = Theme.of(context).colorScheme;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          border: Border.all(color: scheme.outlineVariant),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              locationError?.message ?? error.toString(),
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: () async {
-                if (locationError?.action ==
-                    LocationDiscoveryAction.openLocationSettings) {
-                  await Geolocator.openLocationSettings();
-                } else if (locationError?.action ==
-                    LocationDiscoveryAction.openAppSettings) {
-                  await Geolocator.openAppSettings();
-                }
-                onRetry();
-              },
-              icon: Icon(
-                locationError == null ? Icons.refresh : Icons.location_on,
-                size: 18,
+            Icon(Icons.location_on_outlined, color: scheme.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Find salons near you',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    locationError?.message ?? error.toString(),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.3,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () async {
+                      if (locationError?.action ==
+                          LocationDiscoveryAction.openLocationSettings) {
+                        await Geolocator.openLocationSettings();
+                      } else if (locationError?.action ==
+                          LocationDiscoveryAction.openAppSettings) {
+                        await Geolocator.openAppSettings();
+                      }
+                      onRetry();
+                    },
+                    icon: Icon(
+                      locationError == null
+                          ? Icons.refresh
+                          : Icons.settings_outlined,
+                      size: 18,
+                    ),
+                    label: Text(label),
+                  ),
+                ],
               ),
-              label: Text(label),
             ),
           ],
         ),
