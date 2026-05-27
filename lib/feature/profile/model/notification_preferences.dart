@@ -3,6 +3,7 @@ class NotificationPreferences {
   final bool allowComments;
   final bool allowBookings;
   final bool allowPromotions;
+  final String? promotionsPreferredTime;
   final bool allowReminders;
   final int reminderLeadMinutes;
 
@@ -11,6 +12,7 @@ class NotificationPreferences {
     required this.allowComments,
     required this.allowBookings,
     required this.allowPromotions,
+    this.promotionsPreferredTime,
     required this.allowReminders,
     required this.reminderLeadMinutes,
   });
@@ -21,6 +23,7 @@ class NotificationPreferences {
       allowComments: map['allow_comments'] as bool? ?? true,
       allowBookings: map['allow_bookings'] as bool? ?? true,
       allowPromotions: map['allow_promotions'] as bool? ?? true,
+      promotionsPreferredTime: map['promotions_preferred_time']?.toString(),
       allowReminders: map['allow_reminders'] as bool? ?? true,
       reminderLeadMinutes: map['reminder_lead_minutes'] as int? ?? 30,
     );
@@ -31,6 +34,7 @@ class NotificationPreferences {
     bool? allowComments,
     bool? allowBookings,
     bool? allowPromotions,
+    String? promotionsPreferredTime,
     bool? allowReminders,
     int? reminderLeadMinutes,
   }) {
@@ -39,6 +43,8 @@ class NotificationPreferences {
       allowComments: allowComments ?? this.allowComments,
       allowBookings: allowBookings ?? this.allowBookings,
       allowPromotions: allowPromotions ?? this.allowPromotions,
+      promotionsPreferredTime:
+          promotionsPreferredTime ?? this.promotionsPreferredTime,
       allowReminders: allowReminders ?? this.allowReminders,
       reminderLeadMinutes: reminderLeadMinutes ?? this.reminderLeadMinutes,
     );

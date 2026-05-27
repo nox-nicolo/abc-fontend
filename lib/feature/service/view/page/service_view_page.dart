@@ -7,6 +7,7 @@ import 'package:africa_beuty/core/failure/failure.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
+import 'package:africa_beuty/feature/profile/repositories/profile_insights.dart';
 import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -33,7 +34,8 @@ class MajorServiceModel {
     this.rating,
   });
 
-  factory MajorServiceModel.fromMap(Map<String, dynamic> m) => MajorServiceModel(
+  factory MajorServiceModel.fromMap(Map<String, dynamic> m) =>
+      MajorServiceModel(
         id: m['id'] as String,
         name: m['name'] as String? ?? '',
         image: m['image'] as String?,
@@ -58,7 +60,8 @@ class MinorServiceModel {
     this.isEvent = false,
   });
 
-  factory MinorServiceModel.fromMap(Map<String, dynamic> m) => MinorServiceModel(
+  factory MinorServiceModel.fromMap(Map<String, dynamic> m) =>
+      MinorServiceModel(
         id: m['id'] as String,
         serviceId: m['service_id'] as String? ?? '',
         name: m['name'] as String? ?? '',
@@ -94,7 +97,8 @@ class SalonServiceModel {
     this.salonServicePriceId,
   });
 
-  factory SalonServiceModel.fromMap(Map<String, dynamic> m) => SalonServiceModel(
+  factory SalonServiceModel.fromMap(Map<String, dynamic> m) =>
+      SalonServiceModel(
         salonId: m['salon_id'] as String,
         name: m['salon_name'] as String? ?? '',
         image: m['salon_image'] as String?,
@@ -110,7 +114,7 @@ class SalonServiceModel {
 
 class ServiceDetailsData {
   final MajorServiceModel majorService;
-  final MinorServiceModel? minorService;       // non-null → minor mode
+  final MinorServiceModel? minorService; // non-null → minor mode
   final List<MinorServiceModel>? minorServices; // non-null → major mode
   final List<SalonServiceModel> salonDetails;
 
@@ -123,19 +127,24 @@ class ServiceDetailsData {
 
   bool get isMajorMode => minorServices != null && minorServices!.isNotEmpty;
 
-  factory ServiceDetailsData.fromMap(Map<String, dynamic> m) => ServiceDetailsData(
-        majorService: MajorServiceModel.fromMap(m['major_service'] as Map<String, dynamic>),
-        minorService: m['minor_service'] != null
-            ? MinorServiceModel.fromMap(m['minor_service'] as Map<String, dynamic>)
-            : null,
-        minorServices: (m['minor_services'] as List?)
-            ?.map((e) => MinorServiceModel.fromMap(e as Map<String, dynamic>))
-            .toList(),
-        salonDetails: (m['salon_details'] as List?)
-                ?.map((e) => SalonServiceModel.fromMap(e as Map<String, dynamic>))
-                .toList() ??
-            [],
-      );
+  factory ServiceDetailsData.fromMap(
+    Map<String, dynamic> m,
+  ) => ServiceDetailsData(
+    majorService: MajorServiceModel.fromMap(
+      m['major_service'] as Map<String, dynamic>,
+    ),
+    minorService: m['minor_service'] != null
+        ? MinorServiceModel.fromMap(m['minor_service'] as Map<String, dynamic>)
+        : null,
+    minorServices: (m['minor_services'] as List?)
+        ?.map((e) => MinorServiceModel.fromMap(e as Map<String, dynamic>))
+        .toList(),
+    salonDetails:
+        (m['salon_details'] as List?)
+            ?.map((e) => SalonServiceModel.fromMap(e as Map<String, dynamic>))
+            .toList() ??
+        [],
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -146,7 +155,8 @@ class ServiceDetailsRepository {
   Future<Either<AppFailure, ServiceDetailsData>> fetch(String serviceId) async {
     try {
       final uri = Uri.parse(
-          '${ServerConstants.serverUrl}/services/$serviceId/details');
+        '${ServerConstants.serverUrl}/services/$serviceId/details',
+      );
       final response = await ApiClient.instance
           .get(uri)
           .timeout(const Duration(seconds: 15));
@@ -182,10 +192,7 @@ class ServiceDetailsRepository {
 // ─────────────────────────────────────────────────────────────────────────────
 
 @riverpod
-Future<ServiceDetailsData> serviceDetails(
-  Ref ref,
-  String serviceId,
-) async {
+Future<ServiceDetailsData> serviceDetails(Ref ref, String serviceId) async {
   final result = await ServiceDetailsRepository().fetch(serviceId);
   return result.fold((l) => throw l.message, (r) => r);
 }
@@ -212,7 +219,9 @@ class ServiceDetailsPage extends ConsumerWidget {
         centerTitle: false,
         title: Text(
           'Service Details',
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       body: async.when(
@@ -228,7 +237,8 @@ class ServiceDetailsPage extends ConsumerWidget {
                 Text(e.toString(), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: () => ref.invalidate(serviceDetailsProvider(serviceId)),
+                  onPressed: () =>
+                      ref.invalidate(serviceDetailsProvider(serviceId)),
                   child: const Text('Retry'),
                 ),
               ],
@@ -269,7 +279,8 @@ class _ServiceDetailsBody extends StatelessWidget {
                   if (data.isMajorMode) ...[
                     SectionHeader(
                       title: 'Sub-services',
-                      subtitle: '${data.minorServices!.length} styles available',
+                      subtitle:
+                          '${data.minorServices!.length} styles available',
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -326,8 +337,7 @@ class _ServiceDetailsBody extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 14),
               itemBuilder: (context, i) => SalonServiceCard(
                 salon: data.salonDetails[i],
-                serviceName:
-                    data.minorService?.name ?? data.majorService.name,
+                serviceName: data.minorService?.name ?? data.majorService.name,
               ),
             ),
           ),
@@ -393,24 +403,31 @@ class MajorServiceCard extends StatelessWidget {
               top: 16,
               right: 16,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: .18),
                   borderRadius: BorderRadius.circular(999),
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: .18)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: .18),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.star_rounded,
-                        size: 18, color: Colors.amber),
+                    const Icon(
+                      Icons.star_rounded,
+                      size: 18,
+                      color: Colors.amber,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       service.rating!.toStringAsFixed(1),
-                      style: theme.textTheme.labelLarge
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -425,8 +442,9 @@ class MajorServiceCard extends StatelessWidget {
               children: [
                 Text(
                   'Major Service',
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -445,9 +463,9 @@ class MajorServiceCard extends StatelessWidget {
   }
 
   Widget _imageFallback() => Container(
-        color: Colors.grey.shade300,
-        child: const Center(child: Icon(Icons.design_services, size: 48)),
-      );
+    color: Colors.grey.shade300,
+    child: const Center(child: Icon(Icons.design_services, size: 48)),
+  );
 }
 
 class MinorServiceHorizontalCard extends StatelessWidget {
@@ -465,10 +483,10 @@ class MinorServiceHorizontalCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 150,
+      width: 170,
       decoration: BoxDecoration(
         color: theme.colorScheme.secondary.withValues(alpha: .2),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .05),
@@ -478,7 +496,7 @@ class MinorServiceHorizontalCard extends StatelessWidget {
         ],
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(8),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(10),
@@ -486,11 +504,11 @@ class MinorServiceHorizontalCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(8),
                 child: service.image != null
                     ? CachedNetworkImage(
                         imageUrl: service.image!,
-                        height: 98,
+                        height: 112,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorWidget: (ctx, url, err) => _imgFallback(),
@@ -502,20 +520,25 @@ class MinorServiceHorizontalCard extends StatelessWidget {
                 service.name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const Spacer(),
               if (service.rating != null)
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded,
-                        size: 18, color: Colors.amber),
+                    const Icon(
+                      Icons.star_rounded,
+                      size: 18,
+                      color: Colors.amber,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       service.rating!.toStringAsFixed(1),
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -527,10 +550,10 @@ class MinorServiceHorizontalCard extends StatelessWidget {
   }
 
   Widget _imgFallback() => Container(
-        height: 98,
-        color: Colors.grey.shade300,
-        child: const Center(child: Icon(Icons.spa)),
-      );
+    height: 112,
+    color: Colors.grey.shade300,
+    child: const Center(child: Icon(Icons.spa)),
+  );
 }
 
 class MinorServiceFocusedCard extends StatelessWidget {
@@ -542,10 +565,10 @@ class MinorServiceFocusedCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: theme.colorScheme.secondary.withValues(alpha: .2),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .05),
@@ -557,12 +580,12 @@ class MinorServiceFocusedCard extends StatelessWidget {
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(8),
             child: service.image != null
                 ? CachedNetworkImage(
                     imageUrl: service.image!,
-                    width: 98,
-                    height: 98,
+                    width: 124,
+                    height: 112,
                     fit: BoxFit.cover,
                     errorWidget: (ctx, url, err) => _imgFallback(),
                   )
@@ -583,20 +606,25 @@ class MinorServiceFocusedCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   service.name,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
                     if (service.rating != null) ...[
-                      const Icon(Icons.star_rounded,
-                          size: 18, color: Colors.amber),
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 18,
+                        color: Colors.amber,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         service.rating!.toStringAsFixed(1),
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                     if (service.isEvent) ...[
@@ -620,11 +648,11 @@ class MinorServiceFocusedCard extends StatelessWidget {
   }
 
   Widget _imgFallback() => Container(
-        width: 98,
-        height: 98,
-        color: Colors.grey.shade300,
-        child: const Center(child: Icon(Icons.spa)),
-      );
+    width: 124,
+    height: 112,
+    color: Colors.grey.shade300,
+    child: const Center(child: Icon(Icons.spa)),
+  );
 }
 
 class SalonServiceCard extends ConsumerWidget {
@@ -650,6 +678,12 @@ class SalonServiceCard extends ConsumerWidget {
       salon.durationMinutes != null ? '${salon.durationMinutes} mins' : '–';
 
   void _book(BuildContext context, WidgetRef ref) {
+    unawaited(
+      ProfileInsightsRepository().recordServiceTap(
+        salonId: salon.salonId,
+        salonServicePriceId: salon.salonServicePriceId!,
+      ),
+    );
     ref.read(bookingDraftProvider.notifier)
       ..reset()
       ..selectSalonOffer(
@@ -673,10 +707,10 @@ class SalonServiceCard extends ConsumerWidget {
     final canBook = salon.salonServicePriceId != null;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: scheme.secondary.withValues(alpha: .1),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .05),
@@ -689,18 +723,18 @@ class SalonServiceCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(8),
             child: salon.image != null
                 ? CachedNetworkImage(
                     imageUrl: salon.image!,
-                    width: 104,
-                    height: 112,
+                    width: 132,
+                    height: 132,
                     fit: BoxFit.cover,
                     errorWidget: (ctx, url, err) => _imgFallback(),
                   )
                 : _imgFallback(),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -709,23 +743,28 @@ class SalonServiceCard extends ConsumerWidget {
                   salon.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 if (salon.city != null)
                   Row(
                     children: [
-                      Icon(Icons.location_on_rounded,
-                          size: 18, color: Colors.grey.shade600),
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 18,
+                        color: Colors.grey.shade600,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           salon.city!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(color: Colors.grey.shade500),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey.shade500,
+                          ),
                         ),
                       ),
                     ],
@@ -737,12 +776,14 @@ class SalonServiceCard extends ConsumerWidget {
                   children: [
                     if (salon.rating != null)
                       _MetaChip(
-                          icon: Icons.star_rounded,
-                          text: salon.rating!.toStringAsFixed(1)),
+                        icon: Icons.star_rounded,
+                        text: salon.rating!.toStringAsFixed(1),
+                      ),
+                    _MetaChip(icon: Icons.payments_rounded, text: _priceText),
                     _MetaChip(
-                        icon: Icons.payments_rounded, text: _priceText),
-                    _MetaChip(
-                        icon: Icons.schedule_rounded, text: _durationText),
+                      icon: Icons.schedule_rounded,
+                      text: _durationText,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -765,7 +806,8 @@ class SalonServiceCard extends ConsumerWidget {
                                 ),
                                 style: FilledButton.styleFrom(
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14)),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
                                 ),
                                 child: const Text('View salon'),
                               )
@@ -781,7 +823,8 @@ class SalonServiceCard extends ConsumerWidget {
                                 ),
                                 style: FilledButton.styleFrom(
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14)),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
                                 ),
                                 child: const Text('View salon'),
                               ),
@@ -796,7 +839,8 @@ class SalonServiceCard extends ConsumerWidget {
                           onPressed: () => _book(context, ref),
                           style: FilledButton.styleFrom(
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                           child: const Text('Book'),
                         ),
@@ -813,11 +857,11 @@ class SalonServiceCard extends ConsumerWidget {
   }
 
   Widget _imgFallback() => Container(
-        width: 104,
-        height: 112,
-        color: Colors.grey.shade300,
-        child: const Center(child: Icon(Icons.store, size: 36)),
-      );
+    width: 132,
+    height: 132,
+    color: Colors.grey.shade300,
+    child: const Center(child: Icon(Icons.store, size: 36)),
+  );
 }
 
 class _MetaChip extends StatelessWidget {
@@ -841,8 +885,9 @@ class _MetaChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             text,
-            style: theme.textTheme.labelLarge
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -853,11 +898,7 @@ class _MetaChip extends StatelessWidget {
 class SectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
-  const SectionHeader({
-    super.key,
-    required this.title,
-    required this.subtitle,
-  });
+  const SectionHeader({super.key, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -867,14 +908,16 @@ class SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: theme.textTheme.titleLarge
-              ?.copyWith(fontWeight: FontWeight.w800),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           subtitle,
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: Colors.grey.shade700),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: Colors.grey.shade700,
+          ),
         ),
       ],
     );

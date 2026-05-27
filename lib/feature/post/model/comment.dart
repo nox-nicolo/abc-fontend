@@ -1,3 +1,6 @@
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class CommentAuthorModel {
   final String id;
   final String username;
@@ -13,7 +16,9 @@ class CommentAuthorModel {
     return CommentAuthorModel(
       id: map['id'] ?? '',
       username: map['username'] ?? '',
-      profilePicture: map['profile_picture'],
+      profilePicture: resolveImageUrl(
+        map['profile_picture'] ?? map['profile_picture_url'] ?? map['avatar'],
+      ),
     );
   }
 }
@@ -83,7 +88,7 @@ class CommentModel {
       replyCount: map['reply_count'] ?? 0,
       likesCount: map['likes_count'] ?? 0,
       isLiked: map['is_liked'] ?? false,
-      createdAt: DateTime.parse(map['created_at']),
+      createdAt: parseApiDateTime(map['created_at']),
       isMine: map['is_mine'] ?? false,
       isPending: false,
     );

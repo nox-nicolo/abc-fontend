@@ -5,6 +5,9 @@ import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
 import 'package:africa_beuty/feature/notifications/view/widget/notifications_bell.dart';
 import 'package:africa_beuty/feature/profile/model/customer_profile.dart';
 import 'package:africa_beuty/feature/profile/view/page/following_page.dart';
+import 'package:africa_beuty/feature/profile/view/widget/profile_completion_card.dart';
+import 'package:africa_beuty/feature/profile/view/widget/profile_insights_card.dart';
+import 'package:africa_beuty/feature/profile/view/widget/profile_trust_card.dart';
 import 'package:africa_beuty/feature/profile/view/widget/setting.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots.dart';
 import 'package:africa_beuty/feature/profile/view_model/customer_profile.dart';
@@ -296,6 +299,12 @@ class _CustomerProfileSliverWidgetState
                 ),
               ),
             ),
+          ),
+
+          const SliverToBoxAdapter(child: ProfileCompletionCard()),
+          const SliverToBoxAdapter(child: ProfileTrustCard(role: 'customer')),
+          const SliverToBoxAdapter(
+            child: ProfileInsightsCard(role: 'customer'),
           ),
 
           // ── Bio ─────────────────────────────────────────────────────────

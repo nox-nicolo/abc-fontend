@@ -1,6 +1,4 @@
-
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class BookingNowGlowButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -16,55 +14,46 @@ class BookingNowGlowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      child: Container(
-        height: height,
-        width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          // This creates the "Border" look without filling the inside
-          border: Border.all(
-            color: scheme.primary.withOpacity(0.5),
-            width: 2,
-          ),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: scheme.primary.withValues(alpha: 0.18),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(999),
-          child: Center(
-            child: Text(
+        child: SizedBox(
+          height: height,
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: onPressed,
+            icon: const Icon(Icons.calendar_month_rounded, size: 20),
+            label: Text(
               text,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: scheme.onSurface,
-                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: scheme.onPrimary,
+              ),
+            ),
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           ),
         ),
-      )
-      // 1. Add the Glow (Shadow)
-      .animate(onPlay: (controller) => controller.repeat(reverse: true))
-      .custom(
-        duration: 1500.ms,
-        builder: (context, value, child) {
-          return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              boxShadow: [
-                BoxShadow(
-                  color: scheme.primary.withOpacity(value * 0.6), // Pulsing opacity
-                  blurRadius: 15 * value, // Pulsing blur
-                  spreadRadius: 1 * value,
-                  blurStyle: BlurStyle.outer, // CRITICAL: This keeps the inside clean
-                ),
-              ],
-            ),
-            child: child,
-          );
-        },
       ),
     );
   }

@@ -1,6 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class SalonProfileModel {
   final String id;
   final String username;
@@ -8,6 +10,8 @@ class SalonProfileModel {
   final String slogan;
   final String description;
   final String displayAds;
+  final double coverPositionX;
+  final double coverPositionY;
   final double profileCompletion;
   final String profilePicture;
   final LocationModel? location;
@@ -24,6 +28,8 @@ class SalonProfileModel {
     required this.slogan,
     required this.description,
     required this.displayAds,
+    required this.coverPositionX,
+    required this.coverPositionY,
     required this.profileCompletion,
     required this.profilePicture,
     this.location,
@@ -42,6 +48,8 @@ class SalonProfileModel {
       'slogan': slogan,
       'description': description,
       'displayAds': displayAds,
+      'coverPositionX': coverPositionX,
+      'coverPositionY': coverPositionY,
       'profileCompletion': profileCompletion,
       'profilePicture': profilePicture,
       'location': location?.toMap(),
@@ -60,16 +68,22 @@ class SalonProfileModel {
       title: map['title']?.toString() ?? '',
       slogan: map['slogan']?.toString() ?? '',
       description: map['description']?.toString() ?? '',
-      displayAds:
-          map['displayAds']?.toString() ?? map['display_ads']?.toString() ?? '',
+      displayAds: imageUrlOrEmpty(map['displayAds'] ?? map['display_ads']),
+      coverPositionX:
+          (map['coverPositionX'] as num?)?.toDouble() ??
+          (map['cover_position_x'] as num?)?.toDouble() ??
+          0.5,
+      coverPositionY:
+          (map['coverPositionY'] as num?)?.toDouble() ??
+          (map['cover_position_y'] as num?)?.toDouble() ??
+          0.5,
       profileCompletion:
           (map['profileCompletion'] as num?)?.toDouble() ??
           (map['profile_completion'] as num?)?.toDouble() ??
           0.0,
-      profilePicture:
-          map['profilePicture']?.toString() ??
-          map['profile_picture']?.toString() ??
-          '',
+      profilePicture: imageUrlOrEmpty(
+        map['profilePicture'] ?? map['profile_picture'],
+      ),
 
       // Fixed: Casting nested map
       location: map['location'] != null
@@ -225,15 +239,29 @@ class WorkingHourModel {
 class GalleryModel {
   final String id;
   final String imageUrl;
+  final String category;
+  final int position;
 
-  GalleryModel({required this.id, required this.imageUrl});
+  GalleryModel({
+    required this.id,
+    required this.imageUrl,
+    required this.category,
+    required this.position,
+  });
 
-  Map<String, dynamic> toMap() => {'id': id, 'image_url': imageUrl};
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'image_url': imageUrl,
+    'category': category,
+    'position': position,
+  };
 
   factory GalleryModel.fromMap(Map<String, dynamic> map) {
     return GalleryModel(
       id: map['id']?.toString() ?? '',
-      imageUrl: map['image_url']?.toString() ?? '', // Backend uses image_url
+      imageUrl: imageUrlOrEmpty(map['image_url']), // Backend uses image_url
+      category: map['category']?.toString() ?? 'general',
+      position: (map['position'] as num?)?.toInt() ?? 0,
     );
   }
 }

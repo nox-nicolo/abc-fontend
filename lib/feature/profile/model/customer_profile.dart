@@ -1,3 +1,5 @@
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class CustomerStatsModel {
   final int followingCount;
   final int bookingsCount;
@@ -50,7 +52,7 @@ class CustomerProfileModel {
       id: map['id']?.toString() ?? '',
       username: map['username']?.toString() ?? '',
       name: map['name']?.toString() ?? '',
-      profilePicture: map['profile_picture']?.toString(),
+      profilePicture: resolveImageUrl(map['profile_picture']),
       bio: map['bio']?.toString(),
       city: map['city']?.toString(),
       country: map['country']?.toString(),
@@ -60,9 +62,13 @@ class CustomerProfileModel {
           .toList(),
       stats: map['stats'] != null
           ? CustomerStatsModel.fromMap(
-              Map<String, dynamic>.from(map['stats'] as Map))
+              Map<String, dynamic>.from(map['stats'] as Map),
+            )
           : const CustomerStatsModel(
-              followingCount: 0, bookingsCount: 0, reviewsCount: 0),
+              followingCount: 0,
+              bookingsCount: 0,
+              reviewsCount: 0,
+            ),
       isSalonOwner: map['is_salon_owner'] as bool? ?? false,
     );
   }

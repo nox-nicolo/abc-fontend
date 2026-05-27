@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 /* ------------------------------------------------------------
    Post Model
 ------------------------------------------------------------- */
@@ -71,7 +74,7 @@ class PostModel {
       id: map['id'] ?? '',
       postType: map['post_type'] ?? 'service',
       caption: map['caption'] ?? '',
-      createdAt: DateTime.parse(map['created_at']),
+      createdAt: parseApiDateTime(map['created_at']),
       author: PostAuthor.fromMap(map['author'] ?? {}),
       media: List<PostMedia>.from(
         (map['media'] ?? []).map((e) => PostMedia.fromMap(e)),
@@ -168,7 +171,7 @@ class PostAuthor {
       userId: map['user_id'] ?? '',
       username: map['username'] ?? '',
       isVerified: map['is_verified'] ?? false,
-      profilePicture: map['profile_picture'] ?? '',
+      profilePicture: imageUrlOrEmpty(map['profile_picture']),
       salon: PostSalon.fromMap(map['salon'] ?? {}),
     );
   }
@@ -278,7 +281,7 @@ class PostMedia {
 
   factory PostMedia.fromMap(Map<String, dynamic> map) {
     return PostMedia(
-      url: map['url'] ?? '',
+      url: imageUrlOrEmpty(map['url']),
       type: map['type'] ?? '',
       aspectRatio: (map['aspect_ratio'] as num?)?.toDouble() ?? 1,
     );

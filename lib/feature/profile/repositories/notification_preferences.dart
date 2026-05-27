@@ -33,6 +33,7 @@ class NotificationPreferencesRepository {
     bool? allowComments,
     bool? allowBookings,
     bool? allowPromotions,
+    String? promotionsPreferredTime,
     bool? allowReminders,
     int? reminderLeadMinutes,
   }) async {
@@ -45,6 +46,9 @@ class NotificationPreferencesRepository {
       if (allowComments != null) body['allow_comments'] = allowComments;
       if (allowBookings != null) body['allow_bookings'] = allowBookings;
       if (allowPromotions != null) body['allow_promotions'] = allowPromotions;
+      if (promotionsPreferredTime != null) {
+        body['promotions_preferred_time'] = promotionsPreferredTime;
+      }
       if (allowReminders != null) body['allow_reminders'] = allowReminders;
       if (reminderLeadMinutes != null) {
         body['reminder_lead_minutes'] = reminderLeadMinutes;

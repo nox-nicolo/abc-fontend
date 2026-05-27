@@ -2,6 +2,7 @@ import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/search/model/discover.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
+import 'package:africa_beuty/feature/search/view/page/discover_list_page.dart';
 import 'package:africa_beuty/feature/search/view/widgets/section_header.dart';
 import 'package:africa_beuty/feature/service/view/page/service_view_page.dart'
     hide SectionHeader;
@@ -19,7 +20,15 @@ class TrendingStylesSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(title: 'Trending styles', onSeeAll: () {}),
+        SectionHeader(
+          title: 'Trending styles',
+          onSeeAll: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  const DiscoverListPage(type: DiscoverListType.trendingStyles),
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
         state.when(
           loading: () => const _TrendingStylesSkeleton(),

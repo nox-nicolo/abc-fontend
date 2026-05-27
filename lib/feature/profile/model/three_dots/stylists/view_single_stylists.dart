@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+
 SalonStylistDetail salonStylistDetailFromJson(String str) =>
     SalonStylistDetail.fromJson(json.decode(str) as Map<String, dynamic>);
 
@@ -38,9 +40,7 @@ class SalonStylistDetail {
       bio: json['bio'] as String? ?? '',
       isOwner: json['is_owner'] as bool? ?? false,
       isActive: json['is_active'] as bool? ?? false,
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String)
-          : null,
+      createdAt: tryParseApiDateTime(json['created_at']),
       user: json['user'] != null
           ? SalonStylistDetailUser.fromJson(
               json['user'] as Map<String, dynamic>,
@@ -137,9 +137,7 @@ class SalonStylistDetailProfilePicture {
     required this.fileName,
   });
 
-  factory SalonStylistDetailProfilePicture.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory SalonStylistDetailProfilePicture.fromJson(Map<String, dynamic> json) {
     return SalonStylistDetailProfilePicture(
       id: json['id'] as String? ?? '',
       fileName: json['file_name'] as String? ?? '',
@@ -147,9 +145,6 @@ class SalonStylistDetailProfilePicture {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'file_name': fileName,
-    };
+    return {'id': id, 'file_name': fileName};
   }
 }

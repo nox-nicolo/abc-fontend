@@ -9,6 +9,7 @@ import 'package:africa_beuty/core/theme/dark_theme.dart';
 import 'package:africa_beuty/core/theme/light_theme.dart';
 import 'package:africa_beuty/core/widgets/network_status_banner.dart';
 import 'package:africa_beuty/feature/auth/repositories/local_storage_service.dart';
+import 'package:africa_beuty/feature/auth/view/page/forgot_password.dart';
 import 'package:africa_beuty/feature/auth/view/page/login.dart';
 import 'package:africa_beuty/feature/auth/view/page/logout_page.dart';
 import 'package:africa_beuty/feature/auth/view/page/set_profile.dart';
@@ -96,6 +97,7 @@ class MyApp extends StatelessWidget {
         '/select_account': (context) => const SelectAccount(),
         '/signup': (context) => const SignUpPage(),
         '/signin': (context) => const SignInPage(),
+        '/forgot_password': (context) => const ForgotPasswordPage(),
         '/verify': (context) => const Verify(),
         '/logout': (context) => const LogoutPage(),
         '/page0': (context) => const BottomNavigationPage(),

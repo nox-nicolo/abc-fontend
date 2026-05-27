@@ -4,9 +4,11 @@ import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/view/pages/customer_booking_detail.dart';
 import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
 import 'package:africa_beuty/feature/notifications/model/notification.dart';
+import 'package:africa_beuty/feature/notifications/view/page/campaign_notification_page.dart';
 import 'package:africa_beuty/feature/notifications/view_model/notification.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
+import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -129,6 +131,16 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       return;
     }
 
+    if (item.isCampaign) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CampaignNotificationPage(notification: item),
+        ),
+      );
+      return;
+    }
+
     final bookingId = item.bookingId;
     if (bookingId != null && bookingId.isNotEmpty) {
       Navigator.push(
@@ -163,12 +175,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     }
 
     final salonId = item.actor.salonId;
-    if (item.actor.role == 'salon' && salonId != null && salonId.isNotEmpty) {
+    if (salonId != null && salonId.isNotEmpty) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) =>
-              ViewProfilePage(isServiceProfile: true, userId: salonId),
+          builder: (_) => ViewServiceProfilePage(salonId: salonId),
         ),
       );
       return;
@@ -345,6 +356,10 @@ class _NotificationTile extends StatelessWidget {
         return 'rescheduled their booking';
       case 'booking_reminder_ai':
         return 'sent a booking reminder';
+      case 'salon_event_marketing':
+        return 'invited you to an event';
+      case 'salon_promotion_campaign':
+        return 'shared a promotion';
       default:
         return 'sent you a notification';
     }
@@ -373,6 +388,10 @@ class _NotificationTile extends StatelessWidget {
       case 'booking_rescheduled':
       case 'booking_reminder_ai':
         return Icons.schedule;
+      case 'salon_event_marketing':
+        return Icons.celebration_rounded;
+      case 'salon_promotion_campaign':
+        return Icons.local_offer_rounded;
       default:
         return Icons.notifications;
     }
@@ -393,6 +412,9 @@ class _NotificationTile extends StatelessWidget {
       case 'booking_rescheduled':
       case 'booking_reminder_ai':
         return scheme.tertiary;
+      case 'salon_event_marketing':
+      case 'salon_promotion_campaign':
+        return scheme.primary;
       case 'booking_confirmed':
       case 'booking_completed':
         return scheme.secondary;
@@ -405,7 +427,8 @@ class _NotificationTile extends StatelessWidget {
   }
 
   String _relativeTime(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
+    final diff = DateTime.now().toUtc().difference(dt.toUtc());
+    if (diff.isNegative) return 'now';
     if (diff.inSeconds < 60) return 'now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m';
     if (diff.inHours < 24) return '${diff.inHours}h';

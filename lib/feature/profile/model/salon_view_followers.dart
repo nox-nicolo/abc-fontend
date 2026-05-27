@@ -1,5 +1,6 @@
-
 import 'dart:convert';
+
+import 'package:africa_beuty/core/utils/image_url.dart';
 
 class SalonFollowersResponseModel {
   final int count;
@@ -25,8 +26,9 @@ class SalonFollowersResponseModel {
       count: map['count'] ?? 0,
       items: map['items'] is List
           ? List<SalonFollowerItemModel>.from(
-              (map['items'] as List)
-                  .map((x) => SalonFollowerItemModel.fromMap(x)),
+              (map['items'] as List).map(
+                (x) => SalonFollowerItemModel.fromMap(x),
+              ),
             )
           : [],
       nextCursor: map['next_cursor'],
@@ -55,19 +57,21 @@ class SalonFollowerItemModel {
   });
 
   Map<String, dynamic> toMap() => {
-        'user_id': userId,
-        'username': username,
-        'name': name,
-        'avatar': avatar,
-        'is_following': isFollowing,
-      };
+    'user_id': userId,
+    'username': username,
+    'name': name,
+    'avatar': avatar,
+    'is_following': isFollowing,
+  };
 
   factory SalonFollowerItemModel.fromMap(Map<String, dynamic> map) {
     return SalonFollowerItemModel(
       userId: map['user_id'] ?? '',
       username: map['username'] ?? '',
       name: map['name'] ?? '',
-      avatar: map['avatar'],
+      avatar: resolveImageUrl(
+        map['avatar'] ?? map['profile_picture'] ?? map['profile_picture_url'],
+      ),
       isFollowing: map['is_following'] ?? false,
     );
   }

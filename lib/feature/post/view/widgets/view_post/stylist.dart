@@ -1,18 +1,14 @@
-
 /* ---------------------------------------------------
    STYLIST
 --------------------------------------------------- */
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class PostStylistSection extends StatelessWidget {
   final List<StylistPreview> stylists;
-  final VoidCallback onView;
+  final VoidCallback? onView;
 
-  const PostStylistSection({
-    super.key,
-    required this.stylists,
-    required this.onView,
-  });
+  const PostStylistSection({super.key, required this.stylists, this.onView});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +31,7 @@ class PostStylistSection extends StatelessWidget {
 
           // VIEW BUTTON
           TextButton(
-            onPressed: onView,
+            onPressed: onView ?? () => _showStylistDetails(context),
             style: TextButton.styleFrom(
               foregroundColor: scheme.primary,
               textStyle: theme.textTheme.labelLarge?.copyWith(
@@ -46,6 +42,15 @@ class PostStylistSection extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showStylistDetails(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (_) => _StylistDetailsSheet(stylists: stylists),
     );
   }
 }
@@ -65,7 +70,11 @@ class _SingleStylist extends StatelessWidget {
 
     return Row(
       children: [
-        _StylistAvatarImg(url: stylist.avatarUrl, name: stylist.name, radius: 22),
+        _StylistAvatarImg(
+          url: stylist.avatarUrl,
+          name: stylist.name,
+          radius: 22,
+        ),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,10 +85,7 @@ class _SingleStylist extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            Text(
-              stylist.role ?? 'Stylist',
-              style: theme.textTheme.labelSmall,
-            ),
+            Text(stylist.role ?? 'Stylist', style: theme.textTheme.labelSmall),
           ],
         ),
       ],
@@ -99,19 +105,20 @@ class _MultipleStylists extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final shown = stylists.take(5).toList();
+    final shown = stylists.take(10).toList();
     final extra = stylists.length - shown.length;
 
     return Row(
       children: [
-        _AvatarStack(
-          stylists: shown,
-          extraCount: extra > 0 ? extra : null,
-        ),
+        _AvatarStack(stylists: shown, extraCount: extra > 0 ? extra : null),
         const SizedBox(width: 12),
-        Text(
-          'Styled by ${stylists.length} professionals',
-          style: theme.textTheme.bodyMedium,
+        Flexible(
+          child: Text(
+            'Styled by ${stylists.length} professional${stylists.length == 1 ? '' : 's'}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium,
+          ),
         ),
       ],
     );
@@ -126,21 +133,20 @@ class _AvatarStack extends StatelessWidget {
   final List<StylistPreview> stylists;
   final int? extraCount;
 
-  const _AvatarStack({
-    required this.stylists,
-    this.extraCount,
-  });
+  const _AvatarStack({required this.stylists, this.extraCount});
 
   @override
   Widget build(BuildContext context) {
     const double size = 36;
-    const double overlap = 12;
+    const double overlap = 14;
+    final visibleCount = stylists.length;
 
     return SizedBox(
       height: size,
-      width: size + (stylists.length - 1) * overlap,
+      width: size + (visibleCount - 1) * overlap,
       child: Stack(
-        children: List.generate(stylists.length, (index) {
+        clipBehavior: Clip.none,
+        children: List.generate(visibleCount, (index) {
           final isLast = index == stylists.length - 1 && extraCount != null;
 
           return Positioned(
@@ -153,9 +159,7 @@ class _AvatarStack extends StatelessWidget {
                 child: isLast
                     ? Text(
                         '+$extraCount',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelMedium
+                        style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       )
                     : _StylistAvatarImg(
@@ -197,13 +201,84 @@ class _StylistAvatarImg extends StatelessWidget {
     }
 
     return ClipOval(
-      child: Image.network(
-        url,
+      child: CachedNetworkImage(
+        imageUrl: url,
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) =>
+        errorWidget: (_, _, _) =>
             CircleAvatar(radius: radius, child: Text(initial)),
+      ),
+    );
+  }
+}
+
+class _StylistDetailsSheet extends StatelessWidget {
+  final List<StylistPreview> stylists;
+
+  const _StylistDetailsSheet({required this.stylists});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return SafeArea(
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: stylists.length > 4 ? 0.62 : 0.38,
+        minChildSize: 0.28,
+        maxChildSize: 0.88,
+        builder: (context, scrollController) {
+          return ListView.separated(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(18, 4, 18, 22),
+            itemCount: stylists.length + 1,
+            separatorBuilder: (_, index) =>
+                index == 0 ? const SizedBox(height: 10) : const Divider(),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Assigned stylists',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${stylists.length} professional${stylists.length == 1 ? '' : 's'} assigned to this service',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              final stylist = stylists[index - 1];
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: _StylistAvatarImg(
+                  url: stylist.avatarUrl,
+                  name: stylist.name,
+                  radius: 24,
+                ),
+                title: Text(
+                  stylist.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                subtitle: Text(stylist.role ?? 'Stylist'),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -226,4 +301,3 @@ class StylistPreview {
     this.role,
   });
 }
-

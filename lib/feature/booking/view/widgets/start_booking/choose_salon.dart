@@ -3,6 +3,7 @@ import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
 import 'package:africa_beuty/feature/booking/view_modal/salon_offer.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -75,18 +76,15 @@ class ChooseSalonPage extends ConsumerWidget {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: s.salonImage.isNotEmpty
-                              ? Image.network(
-                                  s.salonImage,
+                              ? CachedNetworkImage(
+                                  imageUrl: s.salonImage,
                                   width: 72,
                                   height: 72,
                                   fit: BoxFit.cover,
+                                  errorWidget: (_, _, _) =>
+                                      _SalonImageFallback(),
                                 )
-                              : Container(
-                                  width: 72,
-                                  height: 72,
-                                  color: Colors.grey.shade300,
-                                  child: const Icon(Icons.store, size: 32),
-                                ),
+                              : const _SalonImageFallback(),
                         ),
 
                         const SizedBox(width: 12),
@@ -141,6 +139,24 @@ class ChooseSalonPage extends ConsumerWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class _SalonImageFallback extends StatelessWidget {
+  const _SalonImageFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 72,
+      height: 72,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Icon(
+        Icons.storefront_rounded,
+        size: 32,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
   }

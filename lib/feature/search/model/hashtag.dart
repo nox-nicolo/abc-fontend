@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class HashtagHeaderModel {
   final String name;
   final int postCount;
@@ -24,11 +26,7 @@ class HashtagHeaderModel {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'post_count': postCount,
-      'is_trending': isTrending,
-    };
+    return {'name': name, 'post_count': postCount, 'is_trending': isTrending};
   }
 
   factory HashtagHeaderModel.fromMap(Map<String, dynamic> map) {
@@ -57,25 +55,16 @@ class HashtagHeaderModel {
   }
 
   @override
-  int get hashCode =>
-      name.hashCode ^ postCount.hashCode ^ isTrending.hashCode;
+  int get hashCode => name.hashCode ^ postCount.hashCode ^ isTrending.hashCode;
 }
-
-
 
 class HashtagPostTileModel {
   final String postId;
   final String imageUrl;
 
-  HashtagPostTileModel({
-    required this.postId,
-    required this.imageUrl,
-  });
+  HashtagPostTileModel({required this.postId, required this.imageUrl});
 
-  HashtagPostTileModel copyWith({
-    String? postId,
-    String? imageUrl,
-  }) {
+  HashtagPostTileModel copyWith({String? postId, String? imageUrl}) {
     return HashtagPostTileModel(
       postId: postId ?? this.postId,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -85,18 +74,16 @@ class HashtagPostTileModel {
   Map<String, dynamic> toMap() {
     return {
       'post_id': postId,
-      'image': {
-        'url': imageUrl,
-      },
+      'image': {'url': imageUrl},
     };
   }
 
   factory HashtagPostTileModel.fromMap(Map<String, dynamic> map) {
     return HashtagPostTileModel(
       postId: map['post_id']?.toString() ?? '',
-      imageUrl: map['image'] != null
-          ? map['image']['url']?.toString() ?? ''
-          : '',
+      imageUrl: imageUrlOrEmpty(
+        map['image'] != null ? map['image']['url'] : null,
+      ),
     );
   }
 
@@ -107,26 +94,19 @@ class HashtagPostTileModel {
   @override
   bool operator ==(covariant HashtagPostTileModel other) {
     if (identical(this, other)) return true;
-    return other.postId == postId &&
-        other.imageUrl == imageUrl;
+    return other.postId == postId && other.imageUrl == imageUrl;
   }
 
   @override
   int get hashCode => postId.hashCode ^ imageUrl.hashCode;
 }
 
-
-
 class HashtagGridModel {
   final HashtagHeaderModel hashtag;
   final List<HashtagPostTileModel> posts;
   final String? cursor;
 
-  HashtagGridModel({
-    required this.hashtag,
-    required this.posts,
-    this.cursor,
-  });
+  HashtagGridModel({required this.hashtag, required this.posts, this.cursor});
 
   HashtagGridModel copyWith({
     HashtagHeaderModel? hashtag,
@@ -155,10 +135,9 @@ class HashtagGridModel {
       ),
       posts: map['posts'] is List
           ? List<HashtagPostTileModel>.from(
-              (map['posts'] as List)
-                  .map((x) => HashtagPostTileModel.fromMap(
-                        x as Map<String, dynamic>,
-                      )),
+              (map['posts'] as List).map(
+                (x) => HashtagPostTileModel.fromMap(x as Map<String, dynamic>),
+              ),
             )
           : [],
       cursor: map['cursor']?.toString(),

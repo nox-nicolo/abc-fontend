@@ -18,6 +18,8 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
   Future<void> updateAccountMedia({
     required File? profileImage,
     required File? coverImage,
+    double? coverPositionX,
+    double? coverPositionY,
   }) async {
     state = const AsyncValue.loading();
 
@@ -25,6 +27,8 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
     final result = await repository.updateAccountMedia(
       profileImage: profileImage,
       coverImage: coverImage,
+      coverPositionX: coverPositionX,
+      coverPositionY: coverPositionY,
     );
 
     switch (result) {
@@ -136,6 +140,9 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
   Future<void> updateGallery({
     required List<File> newFiles,
     required List<String> deleteIds,
+    required List<String> galleryOrder,
+    required Map<String, String> galleryCategories,
+    required List<String> newFileCategories,
   }) async {
     state = const AsyncValue.loading();
 
@@ -143,6 +150,9 @@ class SalonUpdateViewModel extends _$SalonUpdateViewModel {
     final result = await repository.updateGallery(
       newFiles: newFiles,
       deleteIds: deleteIds,
+      galleryOrder: galleryOrder,
+      galleryCategories: galleryCategories,
+      newFileCategories: newFileCategories,
     );
 
     switch (result) {

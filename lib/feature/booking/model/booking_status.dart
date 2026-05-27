@@ -1,3 +1,5 @@
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+
 class BookingListItem {
   final String id;
   final String status;
@@ -86,8 +88,8 @@ class BookingListItem {
       customerId: map['customer_id']?.toString() ?? '',
       customerName: map['customer_name']?.toString() ?? '',
 
-      startAt: DateTime.parse(map['start_at']),
-      endAt: DateTime.parse(map['end_at']),
+      startAt: parseApiDateTime(map['start_at']).toLocal(),
+      endAt: parseApiDateTime(map['end_at']).toLocal(),
 
       serviceName: map['service_name_snapshot']?.toString() ?? '',
 
@@ -102,9 +104,7 @@ class BookingListItem {
       hasReview: map['has_review'] == true,
       reviewRating: (map['review_rating'] as num?)?.toInt(),
       reviewComment: map['review_comment']?.toString(),
-      reviewCreatedAt: DateTime.tryParse(
-        map['review_created_at']?.toString() ?? '',
-      ),
+      reviewCreatedAt: tryParseApiDateTime(map['review_created_at'])?.toLocal(),
     );
   }
 

@@ -18,6 +18,8 @@ class _ProfileCoverPhotoState extends ConsumerState<ProfileCoverPhoto> {
   final ImagePicker _picker = ImagePicker();
   File? _localProfileImage;
   File? _localCoverImage;
+  double? _coverPositionX;
+  double? _coverPositionY;
 
   Future<void> _pickAndCropImage(ImageSource source, bool isCover) async {
     final XFile? pickedFile = await _picker.pickImage(source: source);
@@ -116,7 +118,10 @@ class _ProfileCoverPhotoState extends ConsumerState<ProfileCoverPhoto> {
             ),
             orElse: () => TextButton(
               onPressed:
-                  (_localProfileImage == null && _localCoverImage == null)
+                  (_localProfileImage == null &&
+                      _localCoverImage == null &&
+                      _coverPositionX == null &&
+                      _coverPositionY == null)
                   ? null
                   : () async {
                       await ref
@@ -124,6 +129,8 @@ class _ProfileCoverPhotoState extends ConsumerState<ProfileCoverPhoto> {
                           .updateAccountMedia(
                             profileImage: _localProfileImage,
                             coverImage: _localCoverImage,
+                            coverPositionX: _coverPositionX,
+                            coverPositionY: _coverPositionY,
                           );
 
                       if (!context.mounted) return;
@@ -163,6 +170,35 @@ class _ProfileCoverPhotoState extends ConsumerState<ProfileCoverPhoto> {
                 isSquare: false,
                 outlineColor: theme.colorScheme.outlineVariant,
                 surfaceColor: theme.colorScheme.surfaceContainerHighest,
+                alignment: Alignment(
+                  ((_coverPositionX ?? salon.coverPositionX) * 2) - 1,
+                  ((_coverPositionY ?? salon.coverPositionY) * 2) - 1,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cover photo positioning',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Slider(
+                      value: _coverPositionX ?? salon.coverPositionX,
+                      onChanged: (value) =>
+                          setState(() => _coverPositionX = value),
+                    ),
+                    Slider(
+                      value: _coverPositionY ?? salon.coverPositionY,
+                      onChanged: (value) =>
+                          setState(() => _coverPositionY = value),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -179,6 +215,7 @@ class _ImagePickerBox extends StatelessWidget {
   final bool isSquare;
   final Color outlineColor;
   final Color? surfaceColor;
+  final Alignment alignment;
 
   const _ImagePickerBox({
     required this.onTap,
@@ -187,6 +224,7 @@ class _ImagePickerBox extends StatelessWidget {
     required this.isSquare,
     required this.outlineColor,
     this.surfaceColor,
+    this.alignment = Alignment.center,
   });
 
   @override
@@ -195,16 +233,17 @@ class _ImagePickerBox extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         if (localFile != null)
-          Image.file(localFile!, fit: BoxFit.cover)
+          Image.file(localFile!, fit: BoxFit.cover, alignment: alignment)
         else
           CachedNetworkImage(
             imageUrl: networkUrl,
             fit: BoxFit.cover,
+            alignment: alignment,
             errorWidget: (context, url, error) =>
                 Icon(isSquare ? Icons.person : Icons.image, size: 50),
           ),
         Container(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withValues(alpha: 0.3),
           child: const Icon(Icons.camera_alt, color: Colors.white, size: 30),
         ),
       ],

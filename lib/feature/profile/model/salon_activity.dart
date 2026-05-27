@@ -1,3 +1,5 @@
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class ActivityFeedResponse {
   final List<ActivityItem> items;
   final String? nextCursor;
@@ -7,8 +9,9 @@ class ActivityFeedResponse {
   factory ActivityFeedResponse.fromMap(Map<String, dynamic> map) {
     return ActivityFeedResponse(
       items: List<ActivityItem>.from(
-        (map['items'] as List<dynamic>)
-            .map((x) => ActivityItem.fromMap(x as Map<String, dynamic>)),
+        (map['items'] as List<dynamic>).map(
+          (x) => ActivityItem.fromMap(x as Map<String, dynamic>),
+        ),
       ),
       nextCursor: map['next_cursor'],
     );
@@ -64,7 +67,9 @@ class ActivityActor {
       id: map['id'] ?? '',
       username: map['username'] ?? '',
       name: map['name'] ?? '',
-      profilePicture: map['profile_picture'],
+      profilePicture: resolveImageUrl(
+        map['profile_picture'] ?? map['profile_picture_url'] ?? map['avatar'],
+      ),
     );
   }
 }

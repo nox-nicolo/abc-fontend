@@ -74,10 +74,10 @@ class _SalonBookingPageState extends ConsumerState<SalonBookingPage> {
           children: [
             CustomScrollView(
               slivers: [
-                const SliverAppBar(
-                  automaticallyImplyLeading: false,
+                SliverAppBar(
+                  automaticallyImplyLeading: Navigator.of(context).canPop(),
                   pinned: true,
-                  title: Text('Bookings'),
+                  title: const Text('Bookings'),
                 ),
 
                 // ---------------- Next Appointment ----------------

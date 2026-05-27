@@ -1,5 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class SalonOfferModel {
   final String salonServicePriceId;
 
@@ -38,7 +40,13 @@ class SalonOfferModel {
       salonId: map['salon_id']?.toString() ?? '',
       salonName: _textOrEmpty(map['salon_name']),
       salonCity: _textOrEmpty(map['salon_city']),
-      salonImage: _textOrEmpty(map['salon_image']),
+      salonImage: imageUrlOrEmpty(
+        map['salon_image'] ??
+            map['profile_picture'] ??
+            map['profile_picture_url'] ??
+            map['avatar'] ??
+            map['image_url'],
+      ),
 
       subServiceId: map['sub_service_id']?.toString() ?? '',
       subServiceName: map['sub_service_name']?.toString() ?? '',

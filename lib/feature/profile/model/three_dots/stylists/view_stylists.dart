@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+
 StylistListResponse stylistListResponseFromJson(String str) =>
     StylistListResponse.fromJson(json.decode(str) as Map<String, dynamic>);
 
@@ -86,9 +88,7 @@ class StylistItem {
       bio: json['bio'] as String? ?? '',
       isOwner: json['is_owner'] as bool? ?? false,
       isActive: json['is_active'] as bool? ?? false,
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String)
-          : null,
+      createdAt: tryParseApiDateTime(json['created_at']),
       user: json['user'] != null
           ? StylistUser.fromJson(json['user'] as Map<String, dynamic>)
           : null,
@@ -198,10 +198,7 @@ class StylistProfilePicture {
   final String id;
   final String fileName;
 
-  const StylistProfilePicture({
-    required this.id,
-    required this.fileName,
-  });
+  const StylistProfilePicture({required this.id, required this.fileName});
 
   factory StylistProfilePicture.fromJson(Map<String, dynamic> json) {
     return StylistProfilePicture(
@@ -211,16 +208,10 @@ class StylistProfilePicture {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'file_name': fileName,
-    };
+    return {'id': id, 'file_name': fileName};
   }
 
-  StylistProfilePicture copyWith({
-    String? id,
-    String? fileName,
-  }) {
+  StylistProfilePicture copyWith({String? id, String? fileName}) {
     return StylistProfilePicture(
       id: id ?? this.id,
       fileName: fileName ?? this.fileName,

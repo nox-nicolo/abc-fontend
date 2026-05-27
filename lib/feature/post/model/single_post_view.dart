@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 /// =================================================
 /// ENGAGEMENT
 /// =================================================
@@ -77,7 +80,7 @@ class StylistModel {
     return StylistModel(
       id: map['id'],
       name: map['name'] ?? '',
-      avatar: map['avatar'],
+      avatar: resolveImageUrl(map['avatar']),
       title: map['title'],
       rating: map['rating'] != null ? (map['rating'] as num).toDouble() : null,
     );
@@ -135,7 +138,12 @@ class PostAuthorModel {
       id: map['id'],
       salonName: map['salon_name'] ?? '',
       username: map['username'] ?? '',
-      displayPicture: map['display_picture'],
+      displayPicture: resolveImageUrl(
+        map['display_picture'] ??
+            map['profile_picture'] ??
+            map['profile_picture_url'] ??
+            map['avatar'],
+      ),
       isVerified: map['is_verified'] ?? false,
       location: map['location'] != null
           ? AuthorLocationModel.fromMap(map['location'])
@@ -160,7 +168,7 @@ class PostImageModel {
 
   factory PostImageModel.fromMap(Map<String, dynamic> map) {
     return PostImageModel(
-      url: map['url'] ?? '',
+      url: imageUrlOrEmpty(map['url']),
       type: map['type'] ?? 'image',
       aspectRatio: (map['aspect_ratio'] as num?)?.toDouble() ?? 1,
     );
@@ -288,7 +296,7 @@ class PostItemModel {
         (key, value) => MapEntry(key, (value as num?)?.toInt() ?? 0),
       ),
       viewerState: ViewerStateModel.fromMap(map['viewer_state'] ?? {}),
-      createdAt: DateTime.parse(map['created_at']),
+      createdAt: parseApiDateTime(map['created_at']),
     );
   }
 }
@@ -329,6 +337,7 @@ class ServiceProductModel {
 
 class ServiceSectionModel {
   final String id;
+  final String subname;
   final String name;
   final PriceRangeModel price;
   final int durationMinutes;
@@ -337,6 +346,7 @@ class ServiceSectionModel {
 
   const ServiceSectionModel({
     required this.id,
+    required this.subname,
     required this.name,
     required this.price,
     required this.durationMinutes,
@@ -344,9 +354,12 @@ class ServiceSectionModel {
     required this.products,
   });
 
+  String get bookingName => subname.isNotEmpty ? subname : name;
+
   factory ServiceSectionModel.fromMap(Map<String, dynamic> map) {
     return ServiceSectionModel(
-      id: map['id'],
+      id: map['id'] ?? '',
+      subname: map['subname'] ?? '',
       name: map['name'] ?? '',
       price: PriceRangeModel.fromMap(map['price'] ?? {}),
       durationMinutes: (map['duration_minutes'] as num?)?.toInt() ?? 0,
@@ -383,7 +396,7 @@ class OtherPostsSectionModel {
           .map((e) => PostItemModel.fromMap(e))
           .toList(),
       nextCursor: map['next_cursor'] != null
-          ? DateTime.parse(map['next_cursor'])
+          ? parseApiDateTime(map['next_cursor'])
           : null,
     );
   }
@@ -479,10 +492,10 @@ class ServiceReviewModel {
     return ServiceReviewModel(
       id: map['id'] ?? '',
       userName: map['user_name'] ?? '',
-      userAvatar: map['user_avatar'],
+      userAvatar: resolveImageUrl(map['user_avatar']),
       rating: (map['rating'] as num?)?.toDouble() ?? 0,
       comment: map['comment'] ?? '',
-      createdAt: DateTime.parse(map['created_at']),
+      createdAt: parseApiDateTime(map['created_at']),
     );
   }
 }

@@ -4,12 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 
 class ThreeDotsOptions extends StatefulWidget {
-  const ThreeDotsOptions(
-    {
-      super.key, 
-      required this.isCustomer, 
-    }
-  );
+  const ThreeDotsOptions({super.key, required this.isCustomer});
 
   final bool isCustomer;
 
@@ -20,12 +15,16 @@ class ThreeDotsOptions extends StatefulWidget {
 class _ThreeDotsOptionsState extends State<ThreeDotsOptions> {
   late bool _isCustomer;
 
-  @override 
+  @override
   void initState() {
     super.initState();
 
     _isCustomer = widget.isCustomer;
   }
+
+  ShapeBorder get _sheetShape => const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+  );
 
   // implementation of three dots function
   void _threeDotsModal() {
@@ -33,10 +32,12 @@ class _ThreeDotsOptionsState extends State<ThreeDotsOptions> {
       useSafeArea: true,
       showDragHandle: true,
       isScrollControlled: true,
-      context: context, 
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: _sheetShape,
+      context: context,
       builder: (context) {
         return const ThreedotsSalon();
-      }
+      },
     );
   }
 
@@ -45,22 +46,23 @@ class _ThreeDotsOptionsState extends State<ThreeDotsOptions> {
       useSafeArea: true,
       showDragHandle: true,
       isScrollControlled: true,
-      context: context, 
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: _sheetShape,
+      context: context,
       builder: (context) {
         return const ThreedotsCustomer();
-      }
+      },
     );
   }
-  
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: () {
-        _isCustomer ? _customerThreeDotsModal() :_threeDotsModal();
+        _isCustomer ? _customerThreeDotsModal() : _threeDotsModal();
       },
       icon: Icon(
-        Bootstrap.three_dots_vertical, 
+        Bootstrap.three_dots_vertical,
         size: 16,
         color: Theme.of(context).colorScheme.onPrimary,
       ),

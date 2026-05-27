@@ -1,12 +1,10 @@
+import 'package:africa_beuty/core/utils/image_url.dart';
 import 'package:flutter/material.dart';
 
 class UserResultTile extends StatelessWidget {
   final Map<String, dynamic> data;
 
-  const UserResultTile({
-    super.key,
-    required this.data,
-  });
+  const UserResultTile({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +23,9 @@ class UserResultTile extends StatelessWidget {
 
   Widget _buildAvatar(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final imageUrl = data['profile_image'];
+    final imageUrl = resolveImageUrl(
+      data['profile_image'] ?? data['profile_picture'] ?? data['avatar_url'],
+    );
 
     if (imageUrl != null && imageUrl.toString().isNotEmpty) {
       return CircleAvatar(
@@ -36,9 +36,6 @@ class UserResultTile extends StatelessWidget {
       );
     }
 
-    return const CircleAvatar(
-      radius: 22,
-      child: Icon(Icons.person),
-    );
+    return const CircleAvatar(radius: 22, child: Icon(Icons.person));
   }
 }

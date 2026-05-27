@@ -1,5 +1,8 @@
 import 'package:africa_beuty/core/widgets/skeleton.dart';
-import 'package:africa_beuty/feature/booking/view/widgets/start_booking/choose_salon.dart';
+import 'package:africa_beuty/feature/ads/provider/ad_provider.dart';
+import 'package:africa_beuty/feature/ads/view/sponsored_ad_post.dart';
+import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
+import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
 import 'package:africa_beuty/feature/mute/repository/mute_repository.dart';
 import 'package:africa_beuty/feature/post/model/single_post_view.dart';
 import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
@@ -10,14 +13,13 @@ import 'package:africa_beuty/feature/post/view/widgets/view_post/look_alike.dart
 import 'package:africa_beuty/feature/post/view/widgets/view_post/post_description.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/post_images.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/post_stats.dart';
+import 'package:africa_beuty/feature/post/view/widgets/post_share_sheet.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/service_datails.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/service_review.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/sponsored_salon.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/stylist.dart';
 import 'package:africa_beuty/feature/post/view_model/single_post_view.dart';
 import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
-import 'package:africa_beuty/feature/search/model/search.dart';
-import 'package:africa_beuty/feature/search/repository/search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,6 +84,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
   late final ScrollController _scrollCtrl;
   bool _loadingMore = false;
   bool _openedComments = false;
+  bool _shownOwnerReactionSummary = false;
 
   @override
   void initState() {
@@ -127,6 +130,16 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
 
     final post = data.post;
     final isServicePost = post.postType == 'service';
+    final postViewAds = ref.watch(adsByPlacementProvider(adPlacementPostView));
+
+    if (post.viewerState.isMyPost &&
+        !_shownOwnerReactionSummary &&
+        _reactionTotal(post.reactions) > 0) {
+      _shownOwnerReactionSummary = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showOwnerReactionSummary(context, post.reactions);
+      });
+    }
 
     return CustomScrollView(
       controller: _scrollCtrl,
@@ -263,6 +276,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
               myReaction:
                   data.engagement.myReaction ?? post.viewerState.reaction,
               reactions: post.reactions,
+              isMyPost: post.viewerState.isMyPost,
             ),
           ),
 
@@ -275,16 +289,20 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
             ),
           ),
 
+        SliverToBoxAdapter(
+          child: postViewAds.maybeWhen(
+            data: (items) => items.isEmpty
+                ? const SizedBox.shrink()
+                : SponsoredAdPost(ad: items.first),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ),
+
         // ─────────── Book Now (FIX 4: navigate to booking flow) ───────────
         if (isServicePost && data.booking.canBook && data.service.id.isNotEmpty)
           SliverToBoxAdapter(
             child: BookingNowGlowButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) =>
-                      ChooseSalonPage(subServiceId: data.service.id),
-                ),
-              ),
+              onPressed: () => _startPostBooking(context, post, data.service),
             ),
           ),
 
@@ -315,7 +333,6 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
                     ),
                   )
                   .toList(),
-              onView: () {},
             ),
           ),
 
@@ -452,297 +469,216 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
     final parts = [loc.city, loc.country].where((s) => s.isNotEmpty).toList();
     return parts.join(', ');
   }
+
+  int _reactionTotal(Map<String, int> reactions) {
+    return reactions.values.fold(0, (sum, count) => sum + count);
+  }
+
+  void _startPostBooking(
+    BuildContext context,
+    PostItemModel post,
+    ServiceSectionModel service,
+  ) {
+    ref.read(bookingDraftProvider.notifier)
+      ..reset()
+      ..selectSalonOffer(
+        salonServicePriceId: service.id,
+        salonName: post.author.salonName,
+        serviceName: service.bookingName,
+        price: service.price.min,
+        currency: service.price.currency,
+        durationMinutes: service.durationMinutes > 0
+            ? service.durationMinutes
+            : 60,
+      );
+
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const PickDateTimePage()));
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Reactions
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _PostReactionsBar extends ConsumerWidget {
+class _ReactionOption {
+  final String value;
+  final String label;
+  final String emoji;
+  final IconData icon;
+
+  const _ReactionOption(this.value, this.label, this.emoji, this.icon);
+}
+
+const _reactionOptions = [
+  _ReactionOption('love', 'Love', '❤️', Icons.favorite_rounded),
+  _ReactionOption('wow', 'Wow', '😮', Icons.auto_awesome_rounded),
+  _ReactionOption(
+    'excited',
+    'Excited',
+    '😍',
+    Icons.sentiment_very_satisfied_rounded,
+  ),
+  _ReactionOption('fire', 'Fire', '🔥', Icons.local_fire_department_rounded),
+  _ReactionOption('beautiful', 'Beautiful', '✨', Icons.spa_rounded),
+];
+
+_ReactionOption? _reactionFor(String? value) {
+  if (value == null) return null;
+  for (final option in _reactionOptions) {
+    if (option.value == value) return option;
+  }
+  return null;
+}
+
+int _reactionCountTotal(Map<String, int> reactions) {
+  return reactions.values.fold(0, (sum, count) => sum + count);
+}
+
+class _PostReactionsBar extends ConsumerStatefulWidget {
   const _PostReactionsBar({
     required this.postId,
     required this.myReaction,
     required this.reactions,
+    required this.isMyPost,
   });
 
   final String postId;
   final String? myReaction;
   final Map<String, int> reactions;
-
-  static const _items = [
-    ('love', 'Love', Icons.favorite_rounded),
-    ('wow', 'Wow', Icons.auto_awesome_rounded),
-    ('excited', 'Excited', Icons.sentiment_very_satisfied_rounded),
-    ('fire', 'Fire', Icons.local_fire_department_rounded),
-    ('beautiful', 'Beautiful', Icons.spa_rounded),
-  ];
+  final bool isMyPost;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: _items.map((item) {
-            final selected = myReaction == item.$1;
-            final count = reactions[item.$1] ?? 0;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Tooltip(
-                message: item.$2,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () async {
-                    final result = await ref
-                        .read(postRemoteRepoProviderProvider)
-                        .reactToPost(postId: postId, reaction: item.$1);
-                    if (!context.mounted) return;
-                    result.match(
-                      (failure) => ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(failure.message))),
-                      (_) =>
-                          ref.invalidate(singlePostViewModelProvider(postId)),
-                    );
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? theme.colorScheme.primaryContainer
-                          : theme.colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: selected
-                            ? theme.colorScheme.primary
-                            : Colors.transparent,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          item.$3,
-                          size: 18,
-                          color: selected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurfaceVariant,
-                        ),
-                        if (count > 0) ...[
-                          const SizedBox(width: 5),
-                          Text(
-                            '$count',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
+  ConsumerState<_PostReactionsBar> createState() => _PostReactionsBarState();
 }
 
-Future<void> showPostShareSheet(
-  BuildContext context,
-  WidgetRef ref,
-  String postId,
-) async {
-  final sharedCount = await showModalBottomSheet<int>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (_) => _PostShareSheet(parentRef: ref, postId: postId),
-  );
-
-  if (!context.mounted || sharedCount == null) return;
-
-  await showDialog<void>(
-    context: context,
-    builder: (_) => _PostSharedDialog(sharedCount: sharedCount),
-  );
-}
-
-class _PostShareSheet extends StatefulWidget {
-  const _PostShareSheet({required this.parentRef, required this.postId});
-
-  final WidgetRef parentRef;
-  final String postId;
-
-  @override
-  State<_PostShareSheet> createState() => _PostShareSheetState();
-}
-
-class _PostShareSheetState extends State<_PostShareSheet> {
-  final _search = TextEditingController();
-  final _message = TextEditingController();
-  final _repo = SearchRepositoryImpl();
-  List<SearchUserResult> _users = const [];
-  final Set<String> _selected = {};
-  bool _loading = false;
+class _PostReactionsBarState extends ConsumerState<_PostReactionsBar> {
   bool _sending = false;
 
-  @override
-  void dispose() {
-    _search.dispose();
-    _message.dispose();
-    super.dispose();
+  Future<void> _pickReaction() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => _ReactionPickerSheet(
+        selected: widget.myReaction,
+        reactions: widget.reactions,
+      ),
+    );
+
+    if (selected == null) return;
+    await _sendReaction(selected);
   }
 
-  Future<void> _runSearch(String value) async {
-    final query = value.trim();
-    if (query.isEmpty) {
-      setState(() => _users = const []);
+  void _openReactionDetails() {
+    if (widget.isMyPost) {
+      _showOwnerReactionSummary(context, widget.reactions);
       return;
     }
-    setState(() => _loading = true);
-    final result = await _repo.search(query: query, limit: 12);
-    if (!mounted) return;
-    result.match(
-      (_) => setState(() {
-        _loading = false;
-        _users = const [];
-      }),
-      (items) => setState(() {
-        _loading = false;
-        _users = items.whereType<SearchUserResult>().toList();
-      }),
-    );
+
+    _pickReaction();
   }
 
-  Future<void> _share() async {
-    if (_selected.isEmpty || _sending) return;
+  Future<void> _sendReaction(String reaction) async {
+    if (_sending) return;
+
+    HapticFeedback.selectionClick();
     setState(() => _sending = true);
-    final result = await widget.parentRef
+
+    final result = await ref
         .read(postRemoteRepoProviderProvider)
-        .sharePost(
-          postId: widget.postId,
-          userIds: _selected.toList(),
-          message: _message.text,
-        );
+        .reactToPost(postId: widget.postId, reaction: reaction);
+
     if (!mounted) return;
     setState(() => _sending = false);
+
     result.match(
       (failure) => ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(failure.message))),
-      (count) {
-        Navigator.pop(context, count);
-      },
+      (_) => ref.invalidate(singlePostViewModelProvider(widget.postId)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return FractionallySizedBox(
-      heightFactor: 0.82,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          MediaQuery.of(context).viewInsets.bottom + 16,
+    final scheme = theme.colorScheme;
+    final selected = _reactionFor(widget.myReaction);
+    final total = _reactionCountTotal(widget.reactions);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.38),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: scheme.outlineVariant.withValues(alpha: 0.7),
+          ),
         ),
         child: Column(
           children: [
             Row(
               children: [
-                Text(
-                  'Share post',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
+                Icon(
+                  selected == null
+                      ? Icons.add_reaction_outlined
+                      : selected.icon,
+                  size: 18,
+                  color: selected == null ? scheme.primary : scheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    selected == null
+                        ? 'React'
+                        : 'You reacted ${selected.label}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded),
-                ),
+                if (_sending)
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: scheme.primary,
+                    ),
+                  )
+                else if (total > 0)
+                  TextButton(
+                    onPressed: _openReactionDetails,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(44, 34),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text('$total total'),
+                  ),
               ],
             ),
-            TextField(
-              controller: _search,
-              onChanged: _runSearch,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Search friends or users',
-              ),
-            ),
             const SizedBox(height: 10),
-            TextField(
-              controller: _message,
-              maxLines: 2,
-              decoration: const InputDecoration(hintText: 'Add a message...'),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      itemCount: _users.length,
-                      itemBuilder: (_, index) {
-                        final user = _users[index];
-                        final selected = _selected.contains(user.id);
-                        return CheckboxListTile(
-                          value: selected,
-                          onChanged: (value) {
-                            setState(() {
-                              if (value == true) {
-                                _selected.add(user.id);
-                              } else {
-                                _selected.remove(user.id);
-                              }
-                            });
-                          },
-                          secondary: CircleAvatar(
-                            backgroundImage:
-                                user.avatarUrl != null &&
-                                    user.avatarUrl!.isNotEmpty
-                                ? NetworkImage(user.avatarUrl!)
-                                : null,
-                            child:
-                                user.avatarUrl == null ||
-                                    user.avatarUrl!.isEmpty
-                                ? const Icon(Icons.person)
-                                : null,
-                          ),
-                          title: Text(user.fullName ?? user.username),
-                          subtitle: Text('@${user.username}'),
-                        );
-                      },
-                    ),
-            ),
             SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _selected.isEmpty || _sending ? null : _share,
-                icon: _sending
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send_rounded),
-                label: Text(
-                  _selected.isEmpty
-                      ? 'Select people'
-                      : 'Send to ${_selected.length}',
-                ),
+              height: 72,
+              child: Row(
+                children: _reactionOptions.map((option) {
+                  return Expanded(
+                    child: _ReactionBubbleButton(
+                      option: option,
+                      count: widget.reactions[option.value] ?? 0,
+                      selected: widget.myReaction == option.value,
+                      busy: _sending,
+                      onTap: () => _sendReaction(option.value),
+                      onLongPress: _pickReaction,
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ],
@@ -752,48 +688,263 @@ class _PostShareSheetState extends State<_PostShareSheet> {
   }
 }
 
-class _PostSharedDialog extends StatelessWidget {
-  const _PostSharedDialog({required this.sharedCount});
+class _ReactionBubbleButton extends StatelessWidget {
+  final _ReactionOption option;
+  final int count;
+  final bool selected;
+  final bool busy;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
-  final int sharedCount;
+  const _ReactionBubbleButton({
+    required this.option,
+    required this.count,
+    required this.selected,
+    required this.busy,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final alreadyShared = sharedCount == 0;
+    final scheme = Theme.of(context).colorScheme;
 
-    return AlertDialog(
-      icon: CircleAvatar(
-        radius: 28,
-        backgroundColor: alreadyShared
-            ? colorScheme.surfaceContainerHighest
-            : colorScheme.primaryContainer,
-        child: Icon(
-          alreadyShared ? Icons.check_circle_outline : Icons.send_rounded,
-          color: alreadyShared
-              ? colorScheme.onSurfaceVariant
-              : colorScheme.onPrimaryContainer,
+    return Tooltip(
+      message: selected ? 'Tap to remove ${option.label}' : option.label,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: busy ? null : onTap,
+        onLongPress: busy ? null : onLongPress,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          decoration: BoxDecoration(
+            color: selected
+                ? scheme.primaryContainer
+                : scheme.surface.withValues(alpha: 0.62),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected ? scheme.primary : Colors.transparent,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: scheme.primary.withValues(alpha: 0.18),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedScale(
+                scale: selected ? 1.18 : 1,
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutBack,
+                child: Text(option.emoji, style: const TextStyle(fontSize: 25)),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                count > 0 ? '$count' : option.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: selected
+                      ? scheme.onPrimaryContainer
+                      : scheme.onSurfaceVariant,
+                  fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      title: Text(alreadyShared ? 'Already shared' : 'Post shared'),
-      content: Text(
-        alreadyShared
-            ? 'You already shared this post with the selected people.'
-            : sharedCount == 1
-            ? 'Your post was sent to 1 person.'
-            : 'Your post was sent to $sharedCount people.',
-        textAlign: TextAlign.center,
-      ),
-      actionsAlignment: MainAxisAlignment.center,
-      actions: [
-        FilledButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Done'),
-        ),
-      ],
     );
   }
+}
+
+class _ReactionPickerSheet extends StatelessWidget {
+  final String? selected;
+  final Map<String, int> reactions;
+
+  const _ReactionPickerSheet({required this.selected, required this.reactions});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 4, 18, 22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'React to this post',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              selected == null
+                  ? 'Pick the feeling that fits.'
+                  : 'Tap the same reaction again to remove it.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            GridView.count(
+              crossAxisCount: 5,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 8,
+              children: _reactionOptions.map((option) {
+                final isSelected = selected == option.value;
+                return _ReactionPickerItem(
+                  option: option,
+                  count: reactions[option.value] ?? 0,
+                  selected: isSelected,
+                  onTap: () => Navigator.of(context).pop(option.value),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReactionPickerItem extends StatelessWidget {
+  final _ReactionOption option;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ReactionPickerItem({
+    required this.option,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? scheme.primaryContainer
+              : scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? scheme.primary : Colors.transparent,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(option.emoji, style: const TextStyle(fontSize: 28)),
+            const SizedBox(height: 5),
+            Text(
+              option.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            if (count > 0)
+              Text(
+                '$count',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void _showOwnerReactionSummary(
+  BuildContext context,
+  Map<String, int> reactions,
+) {
+  final total = _reactionCountTotal(reactions);
+  if (total <= 0) return;
+
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 4, 18, 22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$total reaction${total == 1 ? '' : 's'} on this post',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Here is how people are responding right now.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ..._reactionOptions
+                .where((option) => (reactions[option.value] ?? 0) > 0)
+                .map(
+                  (option) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Text(
+                          option.emoji,
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            option.label,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
+                        Text(
+                          '${reactions[option.value] ?? 0}',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

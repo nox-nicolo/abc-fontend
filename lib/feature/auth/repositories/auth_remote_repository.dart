@@ -72,6 +72,61 @@ class AuthRemoteRepository {
     }
   }
 
+  Future<Either<AppFailure, String>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ServerConstants.serverUrl}/auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      if (response.statusCode != 200) {
+        return Left(
+          AppFailure(
+            responseErrorMessage(response, 'Could not send reset link'),
+          ),
+        );
+      }
+
+      final resBodyMap = decodeMapOrThrow(response);
+      return Right(
+        (resBodyMap['detail'] as String?) ??
+            'If an account exists, a password reset link has been sent.',
+      );
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  Future<Either<AppFailure, String>> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ServerConstants.serverUrl}/auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'token': token, 'new_password': newPassword}),
+      );
+
+      if (response.statusCode != 200) {
+        return Left(
+          AppFailure(responseErrorMessage(response, 'Password reset failed')),
+        );
+      }
+
+      final resBodyMap = decodeMapOrThrow(response);
+      return Right(
+        (resBodyMap['detail'] as String?) ??
+            'Password reset successfully. Please sign in again.',
+      );
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
   Future<Either<AppFailure, VerificationCodeModel>> newCode({
     required String code,
   }) async {

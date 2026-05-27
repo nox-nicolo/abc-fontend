@@ -1,5 +1,7 @@
 import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
+import 'package:africa_beuty/feature/ads/provider/ad_provider.dart';
+import 'package:africa_beuty/feature/ads/view/sponsored_ad_post.dart';
 import 'package:africa_beuty/feature/search/model/search.dart';
 import 'package:africa_beuty/feature/search/view/widgets/nearby_salons_section.dart';
 import 'package:africa_beuty/feature/search/view/widgets/results/search_result_list.dart';
@@ -107,19 +109,27 @@ class _SearchResultsSkeleton extends StatelessWidget {
 
 // ── Idle content (no query typed) ─────────────────────────────────────────────
 
-class _IdleContent extends StatelessWidget {
+class _IdleContent extends ConsumerWidget {
   const _IdleContent();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ads = ref.watch(adsByPlacementProvider(adPlacementSearch));
+
     return ListView(
-      children: const [
-        NearbySalonsSection(),
-        SizedBox(height: 28),
-        TopSalonsSection(),
-        SizedBox(height: 28),
-        TrendingStylesSection(),
-        SizedBox(height: 16),
+      children: [
+        const NearbySalonsSection(),
+        const SizedBox(height: 28),
+        ads.maybeWhen(
+          data: (items) => items.isEmpty
+              ? const SizedBox.shrink()
+              : SponsoredAdPost(ad: items.first),
+          orElse: () => const SizedBox.shrink(),
+        ),
+        const TopSalonsSection(),
+        const SizedBox(height: 28),
+        const TrendingStylesSection(),
+        const SizedBox(height: 16),
       ],
     );
   }

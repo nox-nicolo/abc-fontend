@@ -68,6 +68,8 @@ abstract class PostRepository {
 ------------------------------------------------------------- */
 
 class PostRepositoryImpl implements PostRepository {
+  static const _postUploadTimeout = Duration(minutes: 2);
+
   /* ----------------------------------------------------------
      CREATE POST
   ----------------------------------------------------------- */
@@ -106,9 +108,7 @@ class PostRepositoryImpl implements PostRepository {
         );
       }
 
-      final streamed = await request.send().timeout(
-        const Duration(seconds: 30),
-      );
+      final streamed = await request.send().timeout(_postUploadTimeout);
       final response = await http.Response.fromStream(streamed);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -120,7 +120,11 @@ class PostRepositoryImpl implements PostRepository {
     } on SocketException {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
-      return Left(AppFailure('Request timed out'));
+      return Left(
+        AppFailure(
+          'Post upload is taking longer than expected. Please check your posts before trying again.',
+        ),
+      );
     } catch (e) {
       return Left(AppFailure('Create post error: $e'));
     }

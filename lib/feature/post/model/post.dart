@@ -1,3 +1,5 @@
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+
 class PostModel {
   final String id;
   final String content;
@@ -16,7 +18,7 @@ class PostModel {
       id: json['id'],
       content: json['content'],
       authorId: json['authorId'],
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: parseApiDateTime(json['createdAt']),
     );
   }
 }

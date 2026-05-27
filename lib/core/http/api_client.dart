@@ -94,11 +94,15 @@ class ApiClient {
         .timeout(_kTimeout),
   );
 
-  Future<http.Response> delete(Uri uri, {Map<String, String>? extra}) =>
-      _request(
-        () async =>
-            http.delete(uri, headers: await _headers(extra)).timeout(_kTimeout),
-      );
+  Future<http.Response> delete(
+    Uri uri, {
+    Map<String, String>? extra,
+    Object? body,
+  }) => _request(
+    () async => http
+        .delete(uri, headers: await _headers(extra), body: body)
+        .timeout(_kTimeout),
+  );
 
   // ── Internal ────────────────────────────────────────────────────
 

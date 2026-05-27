@@ -1,6 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 enum SearchEntityType { user, salon, service, hashtag }
 
 sealed class SearchResult {
@@ -63,7 +65,7 @@ class SearchUserResult extends SearchResult {
       score: (map['score'] as num?)?.toDouble(),
       username: map['username'] ?? '',
       fullName: map['fullName'],
-      avatarUrl: map['avatarUrl'],
+      avatarUrl: resolveImageUrl(map['avatarUrl']),
     );
   }
 
@@ -142,7 +144,7 @@ class SearchSalonResult extends SearchResult {
       score: (map['score'] as num?)?.toDouble(),
       slogan: _textOrEmpty(map['slogan']),
       title: _textOrNull(map['title']),
-      coverImage: _textOrNull(map['coverImage']),
+      coverImage: resolveImageUrl(map['coverImage']),
       isVerified: map['isVerified'] ?? false,
       ownerName: _textOrEmpty(map['ownerName']),
     );
@@ -245,7 +247,7 @@ class SearchServiceResult extends SearchResult {
       parentServiceName: map['parentServiceName'],
       priceMin: (map['priceMin'] as num?)?.toDouble(),
       priceMax: (map['priceMax'] as num?)?.toDouble(),
-      imageUrl: map['imageUrl'],
+      imageUrl: resolveImageUrl(map['imageUrl']),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/utils/api_datetime.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
@@ -303,7 +304,7 @@ class _PostManagementPageState extends ConsumerState<PostManagementPage> {
 
   String _formatDate(String raw) {
     try {
-      final dt = DateTime.parse(raw);
+      final dt = parseApiDateTime(raw).toLocal();
       return DateFormat('MMM d, yyyy').format(dt);
     } catch (_) {
       return raw;

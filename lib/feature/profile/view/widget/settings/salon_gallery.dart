@@ -1,11 +1,13 @@
 import 'dart:io';
+
+import 'package:africa_beuty/feature/profile/model/salon.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon.dart';
 import 'package:africa_beuty/feature/profile/view_model/settings/profile_cover.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 
 class GalleryPage extends ConsumerStatefulWidget {
   const GalleryPage({super.key});
@@ -15,81 +17,106 @@ class GalleryPage extends ConsumerStatefulWidget {
 }
 
 class _GalleryPageState extends ConsumerState<GalleryPage> {
-  final ImagePicker _picker = ImagePicker();
+  static const _categories = ['general', 'hair', 'nails', 'makeup', 'braids'];
 
-  // FIX: Initialize as empty lists immediately instead of using 'late'
-  List<dynamic> _currentServerGallery = []; 
+  final ImagePicker _picker = ImagePicker();
+  final List<GalleryModel> _serverItems = [];
+  final List<_PendingGalleryImage> _newItems = [];
   final List<String> _idsToDelete = [];
-  final List<File> _newFilesToUpload = [];
 
   @override
   void initState() {
     super.initState();
-    // We use microtask to ensure the provider is read after the first frame
     Future.microtask(() {
       final salon = ref.read(salonProfileViewModelProvider).value;
-      if (salon != null) {
-        setState(() {
-          _currentServerGallery = List.from(salon.gallery);
-        });
-      }
+      if (salon == null || !mounted) return;
+      setState(() {
+        _serverItems
+          ..clear()
+          ..addAll(salon.gallery);
+      });
     });
   }
 
+  int get _totalCount => _serverItems.length + _newItems.length;
+
   Future<void> _pickAndCropImage(ImageSource source) async {
-    final totalCount = _currentServerGallery.length + _newFilesToUpload.length;
-    if (totalCount >= 10) {
-      _showLimitReachedMessage();
+    if (_totalCount >= 10) {
+      _showMessage('Maximum of 10 images reached.');
       return;
     }
 
-    final XFile? pickedFile = await _picker.pickImage(source: source);
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile == null || !mounted) return;
 
-    if (pickedFile != null && mounted) {
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: pickedFile.path,
-        aspectRatio: const CropAspectRatio(ratioX: 640, ratioY: 420),
-        compressQuality: 90,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop Salon Image',
-            toolbarColor: Theme.of(context).colorScheme.surface,
-            toolbarWidgetColor: Colors.black,
-            initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: true,
-          ),
-          IOSUiSettings(title: 'Crop Image', aspectRatioLockEnabled: true),
-        ],
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: pickedFile.path,
+      aspectRatio: const CropAspectRatio(ratioX: 640, ratioY: 420),
+      compressQuality: 90,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Salon Image',
+          toolbarColor: Theme.of(context).colorScheme.surface,
+          toolbarWidgetColor: Colors.black,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(title: 'Crop Image', aspectRatioLockEnabled: true),
+      ],
+    );
+
+    if (croppedFile == null) return;
+    setState(() {
+      _newItems.add(
+        _PendingGalleryImage(
+          id: 'new-${DateTime.now().microsecondsSinceEpoch}',
+          file: File(croppedFile.path),
+        ),
       );
-
-      if (croppedFile != null) {
-        setState(() {
-          _newFilesToUpload.add(File(croppedFile.path));
-        });
-      }
-    }
-  }
-
-  void _removeExistingImage(int index) {
-    setState(() {
-      final item = _currentServerGallery[index];
-      // Assuming your gallery model has an 'id' field
-      if (item.id != null) {
-        _idsToDelete.add(item.id.toString());
-      }
-      _currentServerGallery.removeAt(index);
     });
   }
 
-  void _removeNewFile(int index) {
+  Future<void> _confirmDeleteExisting(int index) async {
+    final confirmed = await _confirmDelete();
+    if (!confirmed || !mounted) return;
+
     setState(() {
-      _newFilesToUpload.removeAt(index);
+      final item = _serverItems.removeAt(index);
+      _idsToDelete.add(item.id);
     });
+  }
+
+  Future<void> _confirmDeleteNew(int index) async {
+    final confirmed = await _confirmDelete();
+    if (!confirmed || !mounted) return;
+    setState(() => _newItems.removeAt(index));
+  }
+
+  Future<bool> _confirmDelete() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete photo?'),
+            content: const Text('This photo will be removed when you save.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   void _showPickerOptions() {
     showModalBottomSheet(
       context: context,
+      showDragHandle: true,
       builder: (context) => SafeArea(
         child: Wrap(
           children: [
@@ -115,34 +142,55 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
     );
   }
 
-  void _showLimitReachedMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Maximum of 10 images reached.')),
-    );
-  }
-
   Future<void> _handleSave() async {
-    await ref.read(salonUpdateViewModelProvider.notifier).updateGallery(
-          newFiles: _newFilesToUpload,
+    await ref
+        .read(salonUpdateViewModelProvider.notifier)
+        .updateGallery(
+          newFiles: _newItems.map((item) => item.file).toList(),
           deleteIds: _idsToDelete,
+          galleryOrder: _serverItems.map((item) => item.id).toList(),
+          galleryCategories: {
+            for (final item in _serverItems) item.id: item.category,
+          },
+          newFileCategories: _newItems.map((item) => item.category).toList(),
         );
 
+    if (!mounted) return;
     final state = ref.read(salonUpdateViewModelProvider);
-    if (state is AsyncData && mounted) {
+    if (state is AsyncData) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gallery updated successfully!'), backgroundColor: Colors.green),
-      );
+      _showMessage('Gallery updated successfully.');
     }
+  }
+
+  void _reorder(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) newIndex -= 1;
+    setState(() {
+      final allItems = _combinedItems();
+      final item = allItems.removeAt(oldIndex);
+      allItems.insert(newIndex, item);
+      _serverItems
+        ..clear()
+        ..addAll(allItems.whereType<GalleryModel>());
+      _newItems
+        ..clear()
+        ..addAll(allItems.whereType<_PendingGalleryImage>());
+    });
+  }
+
+  List<Object> _combinedItems() => [..._serverItems, ..._newItems];
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final updateState = ref.watch(salonUpdateViewModelProvider);
-    
-    // Total count combines server images and new picks
-    final totalCount = _currentServerGallery.length + _newFilesToUpload.length;
+    final allItems = _combinedItems();
 
     return Scaffold(
       appBar: AppBar(
@@ -151,122 +199,243 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
           updateState.isLoading
               ? const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
                 )
-              : TextButton(
-                  onPressed: _handleSave,
-                  child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
+              : TextButton(onPressed: _handleSave, child: const Text('Save')),
         ],
       ),
-      floatingActionButton: totalCount < 10
+      floatingActionButton: _totalCount < 10
           ? FloatingActionButton.extended(
               onPressed: _showPickerOptions,
-              label: const Text("Add Image"),
+              label: const Text('Add Photo'),
               icon: const Icon(Icons.add_photo_alternate_outlined),
             )
           : null,
-      body: totalCount == 0
-      ? Center(
-          child: Text(
-            "No gallery images yet.\nTap 'Add Image' to start.",
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium,
-          ),
-        )
-      : GridView.builder(
-          padding: const EdgeInsets.all(12),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 640 / 420,
-          ),
-          itemCount: totalCount,
-          itemBuilder: (context, index) {
-            // Determine if we are showing a server image or a new file
-            final bool isServerImage = index < _currentServerGallery.length;
+      body: allItems.isEmpty
+          ? _EmptyGalleryState(onAdd: _showPickerOptions)
+          : ReorderableListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+              itemCount: allItems.length,
+              onReorder: _reorder,
+              itemBuilder: (context, index) {
+                final item = allItems[index];
+                if (item is GalleryModel) {
+                  return _GalleryRow(
+                    key: ValueKey('server-${item.id}'),
+                    image: CachedNetworkImage(
+                      imageUrl: item.imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error),
+                    ),
+                    category: item.category,
+                    isNew: false,
+                    categories: _categories,
+                    onCategoryChanged: (value) {
+                      final serverIndex = _serverItems.indexWhere(
+                        (existing) => existing.id == item.id,
+                      );
+                      if (serverIndex < 0) return;
+                      setState(() {
+                        _serverItems[serverIndex] = GalleryModel(
+                          id: item.id,
+                          imageUrl: item.imageUrl,
+                          category: value,
+                          position: item.position,
+                        );
+                      });
+                    },
+                    onDelete: () {
+                      final serverIndex = _serverItems.indexWhere(
+                        (existing) => existing.id == item.id,
+                      );
+                      if (serverIndex >= 0) _confirmDeleteExisting(serverIndex);
+                    },
+                  );
+                }
 
-            if (isServerImage) {
-              final item = _currentServerGallery[index];
-              return _GalleryItemWidget(
-                imageChild: CachedNetworkImage(
-                  imageUrl: item.imageUrl, // Assuming your model uses .image for URL
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: theme.colorScheme.surfaceContainerHighest),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
-                ),
-                onDelete: () => _removeExistingImage(index),
-                isNew: false,
-              );
-            } else {
-              final fileIndex = index - _currentServerGallery.length;
-              final file = _newFilesToUpload[fileIndex];
-              return _GalleryItemWidget(
-                imageChild: Image.file(file, fit: BoxFit.cover),
-                onDelete: () => _removeNewFile(fileIndex),
-                isNew: true,
-              );
-            }
-          },
-        ),
+                final newItem = item as _PendingGalleryImage;
+                final newIndex = _newItems.indexWhere(
+                  (x) => x.id == newItem.id,
+                );
+                return _GalleryRow(
+                  key: ValueKey(newItem.id),
+                  image: Image.file(newItem.file, fit: BoxFit.cover),
+                  category: newItem.category,
+                  isNew: true,
+                  categories: _categories,
+                  onCategoryChanged: (value) {
+                    setState(() => newItem.category = value);
+                  },
+                  onDelete: () => _confirmDeleteNew(newIndex),
+                );
+              },
+            ),
     );
   }
 }
 
-class _GalleryItemWidget extends StatelessWidget {
-  final Widget imageChild;
-  final VoidCallback onDelete;
-  final bool isNew;
+class _PendingGalleryImage {
+  _PendingGalleryImage({required this.id, required this.file});
 
-  const _GalleryItemWidget({
-    required this.imageChild,
-    required this.onDelete,
+  final String id;
+  final File file;
+  String category = 'general';
+}
+
+class _GalleryRow extends StatelessWidget {
+  const _GalleryRow({
+    super.key,
+    required this.image,
+    required this.category,
     required this.isNew,
+    required this.categories,
+    required this.onCategoryChanged,
+    required this.onDelete,
   });
+
+  final Widget image;
+  final String category;
+  final bool isNew;
+  final List<String> categories;
+  final ValueChanged<String> onCategoryChanged;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: imageChild,
-        ),
-        Positioned(
-          top: 8,
-          right: 8,
-          child: GestureDetector(
-            onTap: onDelete,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.close, size: 18, color: Colors.white),
+    final scheme = theme.colorScheme;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(width: 112, height: 78, child: image),
             ),
-          ),
-        ),
-        if (isNew)
-          Positioned(
-            bottom: 8,
-            left: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                "NEW",
-                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          isNew ? 'New photo' : 'Gallery photo',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.drag_indicator_rounded,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: categories.contains(category)
+                        ? category
+                        : 'general',
+                    decoration: const InputDecoration(
+                      labelText: 'Category',
+                      isDense: true,
+                    ),
+                    items: [
+                      for (final item in categories)
+                        DropdownMenuItem(
+                          value: item,
+                          child: Text(_categoryLabel(item)),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) onCategoryChanged(value);
+                    },
+                  ),
+                ],
               ),
             ),
-          ),
-      ],
+            IconButton(
+              tooltip: 'Delete',
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline_rounded),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _categoryLabel(String value) {
+    if (value.isEmpty) return 'General';
+    return value[0].toUpperCase() + value.substring(1);
+  }
+}
+
+class _EmptyGalleryState extends StatelessWidget {
+  const _EmptyGalleryState({required this.onAdd});
+
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: scheme.primary.withValues(alpha: 0.12),
+              child: Icon(
+                Icons.photo_library_outlined,
+                color: scheme.primary,
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'No gallery photos yet',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Add salon work, interiors, team photos, or style examples.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: const Text('Add Photo'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

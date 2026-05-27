@@ -114,6 +114,10 @@ class _CoverProfileSection extends StatelessWidget {
               ? CachedNetworkImage(
                   imageUrl: salon.displayAds,
                   fit: BoxFit.cover,
+                  alignment: Alignment(
+                    (salon.coverPositionX * 2) - 1,
+                    (salon.coverPositionY * 2) - 1,
+                  ),
                   placeholder: (_, _) =>
                       Container(color: colorScheme.surfaceContainerHighest),
                   errorWidget: (_, _, _) =>
@@ -275,9 +279,9 @@ class _WorkingHoursSection extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.08),
+              color: primaryColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: primaryColor.withOpacity(0.2)),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
             ),
             child: Column(
               children: salon.workingHours.map((hour) {
@@ -326,7 +330,7 @@ class _HourRow extends StatelessWidget {
           day,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         Text(
@@ -505,23 +509,6 @@ class _ContactLocationSection extends StatelessWidget {
   }
 }
 
-class _MapPlaceholder extends StatelessWidget {
-  const _MapPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 120,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      alignment: Alignment.center,
-      child: const Text('Map Preview'),
-    );
-  }
-}
-
 // ------------------------------------------------------------------
 // Reusable Widgets
 // ------------------------------------------------------------------
@@ -561,7 +548,9 @@ class SettingsHeader extends StatelessWidget {
           // ───────────── Edit Action ─────────────
           Container(
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.5,
+              ),
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -620,10 +609,10 @@ class DisplayText extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.08),
+              color: primaryColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: primaryColor.withOpacity(0.2),
+                color: primaryColor.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -639,8 +628,8 @@ class DisplayText extends StatelessWidget {
                   child: Text(
                     text,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: primaryColor.withOpacity(
-                        0.9,
+                      color: primaryColor.withValues(
+                        alpha: 0.9,
                       ), // Slightly softer than title
                       fontWeight: FontWeight.w500,
                       height: 1.5,

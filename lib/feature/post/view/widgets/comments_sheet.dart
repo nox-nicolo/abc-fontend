@@ -704,6 +704,7 @@ class _CommentTile extends StatelessWidget {
     final now = DateTime.now().toUtc();
     final diff = now.difference(dt.toUtc());
 
+    if (diff.isNegative) return 'Just now';
     if (diff.inSeconds < 60) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';

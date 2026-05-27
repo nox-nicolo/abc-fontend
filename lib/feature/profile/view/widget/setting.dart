@@ -4,12 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 
 class SettingAccount extends StatefulWidget {
-  const SettingAccount(
-    {
-      super.key, 
-      required this.isCustomer,
-      }
-    );
+  const SettingAccount({super.key, required this.isCustomer});
 
   final bool isCustomer;
 
@@ -20,12 +15,16 @@ class SettingAccount extends StatefulWidget {
 class _SettingAccountState extends State<SettingAccount> {
   late bool _isCustomer;
 
-  @override 
+  @override
   void initState() {
     super.initState();
 
     _isCustomer = widget.isCustomer;
   }
+
+  ShapeBorder get _sheetShape => const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+  );
 
   // show modal for setting account
   void _settingModal() {
@@ -33,26 +32,29 @@ class _SettingAccountState extends State<SettingAccount> {
       useSafeArea: true,
       showDragHandle: true,
       isScrollControlled: true,
-      context: context, 
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: _sheetShape,
+      context: context,
       builder: (context) {
         return const SalonSetting();
-      }
+      },
     );
   }
 
-    // customer show modal for setting account
-    void _customerSettingModal() {
+  // customer show modal for setting account
+  void _customerSettingModal() {
     showModalBottomSheet(
       useSafeArea: true,
       showDragHandle: true,
       isScrollControlled: true,
-      context: context, 
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: _sheetShape,
+      context: context,
       builder: (context) {
         return const CustomerSettings();
-      }
+      },
     );
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +63,7 @@ class _SettingAccountState extends State<SettingAccount> {
         _isCustomer ? _customerSettingModal() : _settingModal();
       },
       icon: Icon(
-        Bootstrap.gear_fill, 
+        Bootstrap.gear_fill,
         size: 16,
         color: Theme.of(context).colorScheme.onPrimary,
       ),

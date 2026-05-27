@@ -12,6 +12,17 @@ class AppointmentRemindersPage extends ConsumerWidget {
     return hours == 1 ? '1 hour before' : '$hours hours before';
   }
 
+  String _promotionTimeLabel(String? value) {
+    if (value == null || value.isEmpty) return 'Send when salons publish';
+    final parts = value.split(':');
+    if (parts.length != 2) return value;
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts[1]) ?? 0;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(notificationPreferencesViewModelProvider);
@@ -78,6 +89,8 @@ class AppointmentRemindersPage extends ConsumerWidget {
                 ),
                 _ReminderTimingTile(
                   enabled: prefs.allowReminders,
+                  title: 'Reminder timing',
+                  icon: Icons.schedule_outlined,
                   label: _labelFor(prefs.reminderLeadMinutes),
                   onTap: prefs.allowReminders
                       ? () => _pickLeadTime(context, prefs, vm)
@@ -96,6 +109,15 @@ class AppointmentRemindersPage extends ConsumerWidget {
                       'Promotions and campaigns from salons you engage with',
                   icon: Icons.campaign_outlined,
                   onChanged: (v) => vm.update(allowPromotions: v),
+                ),
+                _ReminderTimingTile(
+                  enabled: prefs.allowPromotions,
+                  title: 'Delivery time',
+                  icon: Icons.access_time_outlined,
+                  label: _promotionTimeLabel(prefs.promotionsPreferredTime),
+                  onTap: prefs.allowPromotions
+                      ? () => _pickPromotionTime(context, prefs, vm)
+                      : null,
                 ),
               ],
             ),
@@ -157,6 +179,29 @@ class AppointmentRemindersPage extends ConsumerWidget {
 
     if (picked != null && picked != prefs.reminderLeadMinutes) {
       await vm.update(reminderLeadMinutes: picked);
+    }
+  }
+
+  Future<void> _pickPromotionTime(
+    BuildContext context,
+    NotificationPreferences prefs,
+    NotificationPreferencesViewModel vm,
+  ) async {
+    final initialParts = (prefs.promotionsPreferredTime ?? '18:00').split(':');
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: int.tryParse(initialParts.first) ?? 18,
+        minute: initialParts.length > 1
+            ? int.tryParse(initialParts[1]) ?? 0
+            : 0,
+      ),
+    );
+    if (picked == null) return;
+    final value =
+        '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    if (value != prefs.promotionsPreferredTime) {
+      await vm.update(promotionsPreferredTime: value);
     }
   }
 }
@@ -297,11 +342,15 @@ class _PremiumSwitchTile extends StatelessWidget {
 class _ReminderTimingTile extends StatelessWidget {
   const _ReminderTimingTile({
     required this.enabled,
+    required this.title,
+    required this.icon,
     required this.label,
     required this.onTap,
   });
 
   final bool enabled;
+  final String title;
+  final IconData icon;
   final String label;
   final VoidCallback? onTap;
 
@@ -312,11 +361,8 @@ class _ReminderTimingTile extends StatelessWidget {
     return ListTile(
       enabled: enabled,
       minVerticalPadding: 14,
-      leading: _IconBadge(icon: Icons.schedule_outlined, active: enabled),
-      title: const Text(
-        'Reminder timing',
-        style: TextStyle(fontWeight: FontWeight.w700),
-      ),
+      leading: _IconBadge(icon: icon, active: enabled),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 3),
         child: Text(label),

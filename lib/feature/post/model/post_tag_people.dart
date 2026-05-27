@@ -1,11 +1,13 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 // Model for tagging people in posts
 class PostTagPeopleModel {
   final String id;
-  final String username; 
-  final String name; 
+  final String username;
+  final String name;
   final String profilePicture;
 
   PostTagPeopleModel({
@@ -43,12 +45,15 @@ class PostTagPeopleModel {
       id: map['id'] as String,
       username: map['username'] as String,
       name: map['name'] as String,
-      profilePicture: map['profilePicture'] as String,
+      profilePicture: imageUrlOrEmpty(
+        map['profilePicture'] ?? map['profile_picture'] ?? map['avatar'],
+      ),
     );
   }
 
   String toJson() => json.encode(toMap());
-  factory PostTagPeopleModel.fromJson(String source) => PostTagPeopleModel.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory PostTagPeopleModel.fromJson(String source) =>
+      PostTagPeopleModel.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
@@ -58,7 +63,7 @@ class PostTagPeopleModel {
   @override
   bool operator ==(covariant PostTagPeopleModel other) {
     if (identical(this, other)) return true;
-    
+
     // An object is uniquely identified by its ID.
     return other.id == id;
   }

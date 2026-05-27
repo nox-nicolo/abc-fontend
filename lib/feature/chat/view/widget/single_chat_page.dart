@@ -12,11 +12,13 @@ class SingleChatPage extends ConsumerStatefulWidget {
     this.conversationId,
     this.salonId,
     this.initialTitle,
+    this.initialMessage,
   }) : assert(conversationId != null || salonId != null);
 
   final String? conversationId;
   final String? salonId;
   final String? initialTitle;
+  final String? initialMessage;
 
   @override
   ConsumerState<SingleChatPage> createState() => _SingleChatPageState();
@@ -33,6 +35,10 @@ class _SingleChatPageState extends ConsumerState<SingleChatPage> {
   void initState() {
     super.initState();
     _conversationId = widget.conversationId;
+    final initialMessage = widget.initialMessage;
+    if (initialMessage != null && initialMessage.trim().isNotEmpty) {
+      _messageController.text = initialMessage.trim();
+    }
     if (_conversationId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _start());
     }

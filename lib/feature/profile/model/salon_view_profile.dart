@@ -1,6 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class SalonViewProfileModel {
   final SalonCoreModel salon;
   final SalonViewerModel viewer;
@@ -167,8 +169,8 @@ class SalonCoreModel {
       name: map['name'] ?? '',
       slogan: map['slogan'] ?? '',
       description: map['description'] ?? '',
-      profilePicture: map['profile_picture'] ?? '',
-      coverImage: map['cover_image'] ?? '',
+      profilePicture: imageUrlOrEmpty(map['profile_picture']),
+      coverImage: imageUrlOrEmpty(map['cover_image']),
       isVerified: map['is_verified'] ?? false,
       verificationStatus: map['verification_status'] ?? 'not_verified',
       verificationLabel: map['verification_label'] ?? 'Not verified',
@@ -470,7 +472,7 @@ class SalonGalleryModel {
   factory SalonGalleryModel.fromMap(Map<String, dynamic> map) {
     return SalonGalleryModel(
       id: map['id'] ?? '',
-      imageUrl: map['image_url'] ?? '',
+      imageUrl: imageUrlOrEmpty(map['image_url']),
       order: map['order'] ?? 0,
     );
   }
@@ -629,7 +631,9 @@ class SalonServiceStylistModel {
     return SalonServiceStylistModel(
       id: map['id'] ?? '',
       name: map['name'] ?? '',
-      avatar: map['avatar'],
+      avatar: resolveImageUrl(
+        map['avatar'] ?? map['profile_picture'] ?? map['profile_picture_url'],
+      ),
     );
   }
 }

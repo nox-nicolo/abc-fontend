@@ -1,259 +1,106 @@
-Add push notifications with Firebase Cloud Messaging or OneSignal.
-Store device tokens per user/device on backend.
-<!-- Add notification preferences: likes, comments, bookings, promotions, reminders. -->
-<!-- Add “mute salon/user/post” controls. -->
-<!-- Add deep links so tapping a notification opens the exact post, booking, comment, or profile. -->
-Add real-time updates with WebSockets/SSE so unread count updates without refreshing.
-<!-- Add notification grouping: “Asha and 12 others liked your post.” -->
-<!-- Add scheduled reminders for upcoming bookings. -->
-<!-- Add AI-assisted salon booking notification messages for reminders/rebooking, with strict send-time, frequency, and personalization rules. -->
-Add in-app stylist availability alerts when a followed/preferred stylist opens new booking slots.
-Add admin/system notifications for platform announcements.
-<!-- Add delivery status: created, sent, failed, read. -->
-Backend
-
-<!-- Add migrations with Alembic instead of relying only on Base.metadata.create_all. -->
-<!-- Add background workers for emails, push notifications, cleanup, ranking, reminders. Celery/RQ/Arq would help. -->
-<!-- Add proper pagination everywhere, not only some endpoints. -->
-<!-- Add rate limiting for login, verification, comments, likes, booking actions. -->
-Add audit logs for important actions: bookings, payments, profile edits.
-<!-- Add centralized logging and error monitoring. -->
-Add automated tests for auth, bookings, posts, notifications, and permissions.
-<!-- Add role/permission checks more formally: customer, salon owner, stylist, admin. -->
-<!-- Add API versioning, e.g. /api/v1/.... -->
-<!-- Add database indexes for feed, search, bookings, notifications, and user relationships. -->
-Frontend
-
-<!-- Add app-wide notification access, not only Home. Profile or bottom navigation could also expose it. -->
-<!-- Add loading skeletons instead of mostly spinners. -->
-Add empty states with action buttons.
-<!-- Add offline handling and retry banners. -->
-<!-- Add optimistic UI for likes, follows, comments, saves, and booking actions. -->
-Add route/deep-link handling.
-<!-- Add better state refresh after important actions. Example: after booking confirm/cancel, refresh booking list and unread count. -->
-<!-- Add crash reporting. -->
-Add accessibility improvements: labels, contrast, tap target sizes.
-Product Features
-
-Payments and deposits for bookings.
-<!-- Reviews and ratings after completed bookings. -->
-<!-- Salon availability calendar. -->
-Stylist assignment for bookings.
-<!-- Chat between customer and salon. -->
-<!-- Saved salons/services/styles. -->
-<!-- Promotions, discount codes, campaigns. -->
-Referral system.
-<!-- Location-based discovery. -->
-Trust and safety: report user/post/salon, block user, moderation queue.
-Admin dashboard for users, salons, posts, bookings, reports, payments.
-Admin/Owner analytics for product decisions: signups, active users, salon views, saves, searches, booking funnels, notification performance, and promotion performance.
-Ads
-
-Salon Booking Notification AI
-
-Purpose: generate personalized booking/rebooking messages for customers using their booking data. These are notification/reminder messages, not human chat messages.
-
-Personality:
-- Warm, friendly, and professional.
-- Speak like a helpful friend, not a corporate robot.
-- Always personal; use the customer's first name.
-- Short and clear; respect the customer's time.
-
-Available data:
-- customer_name, first name only.
-- service_type, for example braids, weave, nails, facial.
-- salon_name.
-- stylist_name.
-- booking_date.
-- booking_time.
-- salon_address.
-- booking_link.
-- weeks_since_last_visit.
-- upcoming_event, if any, for example Eid, Christmas, school holidays.
-
-Rules:
-- Always use customer_name; never say "Dear Customer".
-- Mention stylist_name when available; if missing, skip it and never leave a blank placeholder.
-- Always include booking_link at the end.
-- Keep messages under 50 words.
-- Only send between 09:00 and 19:00 Tanzania time.
-- Never send more than 3 reminders per rebooking cycle.
-- Use simple English.
-- Add one relevant emoji per message, not more.
-- Never mention competitor platforms or salons.
-
-Stylist Availability In-App Alert
-
-Trigger: when a customer's preferred/followed stylist opens new booking slots.
-
-Purpose: generate an in-app notification/message that lets interested customers know their stylist has availability.
-
-Available data:
-- customer_name, first name only.
-- stylist_name.
-- salon_name.
-- available_dates.
-- booking_link.
-
-Output format:
-- channel: in app notification.
-- send_at: immediately when slots open, respecting notification preferences and send window.
-- trigger: stylist_availability.
+Production Android identity and signing
+Your Android app still uses com.example.africa_beuty and debug signing in android/app/build.gradle.kts (line 27).
+This is a launch blocker. Set a real package name, release keystore, and release signing config.
 
-Rules:
-- Personal; focus on the stylist, not just the salon.
-- Exciting but not desperate.
-- Keep messages under 40 words.
-- Include booking_link.
-- Do not use WhatsApp for this unless a separate WhatsApp integration is added later.
-- Avoid sending if the customer already has an upcoming booking with that stylist/salon.
-- Limit repeated availability alerts for the same stylist.
+Secure token storage
+Auth tokens are stored in SharedPreferences in local_storage_service.dart (line 31).
+Before launch, move access/refresh tokens to flutter_secure_storage or platform secure storage.
 
-Example:
-Hi Amina 👋 Good news — Stylist Faith at Queens Beauty just opened new slots this week! Book before they fill up: africanbeauty://booking
-Scale And Quality
+Production backend/environment config
+API URL is hardcoded to Render in server_constants.dart (line 6).
+Add proper dev/staging/prod environment configuration, and confirm the production backend is stable, HTTPS-only, backed up, and monitored.
 
-Move secrets/config out of code and into environment management.
-Add staging and production environments.
-Add CI/CD for backend and frontend.
-Add database backups.
-Add media optimization: thumbnails, compression, CDN caching.
-Add monitoring for API latency, failed requests, DB load, notification delivery.
-Add security review: token storage, refresh flow, CORS, file uploads, authorization checks.
-Add data deletion/export support for privacy compliance.
-The next best notification-specific additions would be: push notifications, device-token registration, notification preferences, and deep-link navigation. Those would make the feature feel real rather than just an in-app inbox.
+Crash/error monitoring fully enabled
+You already have ErrorMonitor, but Bugfender only works if BUGFENDER_APP_KEY is passed at build time in error_monitor.dart (line 10).
+First launch needs real crash reporting, backend error reporting, and a way to see failures quickly.
 
-Add rate limiting for login, verification, comments, likes, booking actions.
+Permissions review
+Android requests location, notifications, exact alarms, and boot completed in AndroidManifest.xml (line 2).
+Make sure each permission is truly needed, explained in the UI, and supported by privacy policy/store declarations.
 
-    Note: this limiter is in-memory, good for local/single-process deployment. For serious production scale, the next upgrade should move rate-limit counters to Redis so limits work across multiple server instances.
+Core launch flows must be tested end-to-end
+The must-pass flows are: onboarding, sign up, verify account, login, logout/session expiry, profile setup, salon/customer profile, search, create post, view post, booking, notifications, reminders, image upload, and offline/timeout behavior.
 
-        That’s totally okay. You do not need Redis right now.
+Store-ready branding
+App icon/splash mostly exists, but APP_ICON_SPLASH_REVIEW.md (line 15) says a dedicated brand splash asset is still needed. Also update README/package metadata because it still says “A new Flutter project.”
 
-        For where the project is today, the in-memory rate limiter I added is enough to protect the app during development and early launch. It costs nothing and requires no extra service.
+Analyzer cleanup
+flutter analyze currently reports 44 issues: mostly deprecated withOpacity, plus a few unused declarations. Not a huge blocker, but clean these before release so real problems don’t hide in noise.
 
-        The tradeoff is simple:
+If I had to pick the “important one” first: fix Android package/signing and secure auth token storage. Those are the two I would not launch without.
 
-        Works well when backend runs as one server/process.
-        Resets when the server restarts.
-        If Render/production runs multiple instances, each instance has its own limit counter.
-        Not perfect against serious abuse, but much better than having no protection.
-        For now I’d keep it this way.
 
-        Later, when the app starts getting real traffic or money, Redis becomes useful for:
 
-        shared rate limiting across servers
-        Celery background jobs
-        caching
-        session/device state
-        notification queues
-        But today, we can avoid that cost. A good low-cost path is:
 
-        Keep in-memory rate limiting now.
-        Keep Celery/Redis code as “production-ready foundation,” but don’t enable BACKGROUND_JOBS_ENABLED=true yet.
-        Continue sending emails directly as fallback.
-        When money/traffic arrives, add Redis through Render, Upstash, Railway, or another provider.
+Rotate and remove committed secrets
+Backend .env is tracked by git, and secrets/default credentials also appear in core/database.py (line 74) and send_code.py (line 12).
+This is the biggest backend launch blocker. Rotate DB, R2, JWT, email, Firebase credentials, remove .env from git history if this repo has ever been pushed, and require env vars in production.
 
-<!-- in the home screen at top there is africa Beauty name and Icon but I want to replace that icone with the app icon (i.e, African Beauty Icon image).  -->
+Secure frontend token storage
+Frontend still stores auth tokens in shared preferences. Move access/refresh tokens to secure storage before launch.
 
-<!-- Can't return to the choosing account if you goes for salon or customer returns gives blank screen.  -->
-<!-- 
-the username, profile picture is not load second time if it's being updated only we see the old version stored in the phone and It has to work like if updated then see update information. so this is most durring the registration so this information should stored when entering to the home screen since is the first place are going to be presented.  -->
+Production app identity and signing
+Android still uses com.example.africa_beuty and debug signing. This must be fixed before Play Store/testing release.
 
-<!-- In Customer profile - Edit account for customer is not that premium (UI/UX) -->
-<!-- so in the setting about notification for customer part (like is wrong since customer will never post any post. Comment and Reply only yes because sometime salon will reply or customer comment, other are correct) -->
+Production environment config
+Frontend is hardcoded to the Render backend, and backend has fallback production-looking URLs. Both sides need clean dev/staging/prod config with no secret fallbacks.
 
-<!-- Setting  Account it has to be things relates with the customer and other for service 
-in the setting also explain about Privacy
-Security -->
+Fix the refresh endpoint typo carefully
+Backend route is /auth/refersh in routes/auth.py (line 97), and frontend calls the same typo. Add the correct /auth/refresh endpoint while keeping /refersh temporarily for old app builds.
 
+Lock down API exposure
+Backend currently includes routers twice: /api/v1/... and also root compatibility routes in main.py (line 57). Decide if root routes are truly needed for launch. If not, remove them to reduce accidental public surface.
 
+Enable production monitoring
+Backend has Sentry support and JSON logs. Frontend has Bugfender/backend crash reporting. Make sure SENTRY_DSN, BUGFENDER_APP_KEY, health checks, and alerting are actually configured in production.
 
-and in the customer profile page there is booking tab and review tab, those are not like that sort off think of this the app also it has button for booking save following and chats also in the tabs have that feel me so those two tabs are not necessary try find something premium to put there. 
+Run full end-to-end launch flows
+Especially auth, verification email, token refresh/logout, image uploads to R2, booking, notifications/FCM, reminders, posts, search, and profile setup.
 
-<!-- So booking from other place not the booking page, it says the booking data incomplete.  -->
+Good news: backend tests pass: 21 passed, 1 warning. Frontend analyzer still has 44 issues, mostly deprecated withOpacity plus unused declarations. Backend is structurally closer than I expected, but the committed secrets/fallback credentials are the loudest “do this before launch” item.
 
-<!-- the shimmery load for salon view profile is not that well as the other shimmery like.  -->
 
-<!-- the booking message look like come from the receiver and it has to be come from the sender (it has to be from the receiver if ) -->
+User choice to select the own time for promotions and events.
 
 
 
+<!-- Hope so -->
+Best Things To Add Next
 
+Public Profile Preview Mode
+Let customer/salon see exactly how their profile looks to other people.
+“View as public”
+“View as customer”
+“View as salon owner”
+Show hidden/visible labels based on privacy settings
 
-Release Blockers
 
 
-Android release config is still development-grade: android/app/build.gradle.kts (line 15) uses com.example.africa_beuty, and release signing still uses the debug key at line 32. This must become a real package name and real release keystore.
+Role-Aware Profile Dashboard
+Instead of only settings/tools, add a profile “command center”.
+Customer:
+Upcoming booking
+Saved salons
+Beauty preferences
+Recommendation status
+Recent profile activity
+Salon:
+Today’s bookings
+Pending requests
+Profile reach
+Top service
+Draft campaigns
+Staff access alerts
 
-<!-- Backend has secrets/database history in source: core/database.py (line 73) has a live-looking database fallback URL, plus old commented credentials. Remove all real credentials from code and rely only on env vars. -->
 
-The Firebase Admin key that was shared earlier should be rotated before launch. Treat it as exposed.
 
-<!-- Backend logs still print sensitive operational data, especially R2 bucket/key paths in core/r2_config.py (line 28). Replace print with structured logging and avoid exposing bucket keys. -->
+Deep Link Handling
+You added share links, but next is making the app open them:
+/u/{username} opens customer profile
+/s/{username} opens salon profile
+Fallback web preview if app not installed
 
-flutter analyze currently reports 66 issues. Most are lint/info, but some are release-relevant: async BuildContext usage, production print, unused code, deprecated API usage.
 
-<!-- Backend has almost no real automated tests. I found only test.py-style files, not a proper booking/auth/notification/profile test suite. -->
 
-<!-- Alembic migration is too rough for production: 20260512_0001_initial_schema.py (line 18) uses Base.metadata.create_all, and downgrade drops all tables. Before real users, migrations should be explicit and rollback-safe. -->
 
-
-High Priority Improvements
-
-
-Add real release environments: dev/staging/prod API URLs, Firebase projects, backend env files, and separate app IDs if needed.
-
-<!-- Finish booking as the backbone: clear booking state machine, cancel/reschedule/no-show flows, salon/customer reminders, timezone handling, and strong backend validation. -->
-
-Make notifications fully reliable: token cleanup, duplicate prevention, notification category routing, FCM test endpoint, and real-device background/terminated testing.
-
-Add backend-enforced privacy. Customer/salon profile visibility cannot only be UI behavior.
-
-Complete verification/premium as real systems: application/review flow, admin approval, proof upload, payment/subscription source of truth, expiration, and badge audit trail.
-
-Add moderation: report/block flow, content review queue, abusive message/post handling, and admin controls.
-
-Search/discover needs pagination polish. Backend already has a TODO for cursor pagination in service/search/search.py (line 36).
-
-
-Frontend Polish
-
-
-<!-- Remove all production print/debug logs. -->
-
-<!-- Fix async context warnings in post/profile flows because they can cause navigation/snackbar crashes after screen changes. -->
-
-<!-- Replace remaining placeholder values like "Not Set" with nullable fields or typed fallbacks. -->
-
-<!-- Make loading, empty, error, and offline states consistent across booking, salon profile, customer profile, chat, notifications, and search. -->
-
-<!-- Add app icon/splash review, permission rationale screens, notification permission retry UX, and first-run welcome flow polish. -->
-
-
-Backend Polish
-
-
-Add rate limits for login, OTP/email, registration, comments, likes, follow, booking, and chat.
-
-<!-- Add health/readiness endpoints for DB, R2, Firebase, Redis/Celery if used. -->
-
-Add request validation limits for image/video upload size, MIME type, dimensions, and content safety.
-
-Remove duplicate/legacy routes before final if old app builds are not needed, or document them clearly.
-
-Pin backend dependency versions in requirements.txt; current unpinned packages can break future deploys unexpectedly.
-
-Clean tracked/generated __pycache__/.pyc files from git history/worktree before release.
-
-
-Testing Needed Before Launch
-
-
-Flutter: auth/register/profile setup, booking from every entry point, chat booking card sender/receiver, FCM foreground/background/terminated, notification settings, salon owner/self-salon behavior, customer profile viewed by salon.
-
-Backend: auth/refresh token, role permissions, booking lifecycle, notification creation + FCM send, device token registration, salon verification eligibility, premium badge, privacy permissions.
-
-Real-device test matrix: at least Android 12, 13, 14, 15/16 behavior for notification permission and background delivery.
-
-
-My honest release call: feature direction is strong, but do one hardening sprint before final release. The biggest things are release signing/package name, secrets cleanup/rotation, booking reliability, notification real-device verification, backend tests, and production-safe migrations.
+The strongest next move is Public Profile Preview + Profile Completion Score + backend enforcement of saved settings. Those will make the profile feel less like “settings screens” and more like a real production-grade account system.

@@ -1,5 +1,7 @@
 import 'package:africa_beuty/core/page/bottom_nav.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
+import 'package:africa_beuty/feature/ads/provider/ad_provider.dart';
+import 'package:africa_beuty/feature/ads/view/sponsored_ad_post.dart';
 import 'package:africa_beuty/feature/auth/view_model/me_viewmodel.dart';
 import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
 import 'package:africa_beuty/feature/home/view_model/post_like.dart';
@@ -55,6 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final topSalons = ref.watch(topSalonViewModelProvider);
     final feed = ref.watch(feedViewModelProvider);
     final categories = ref.watch(homeCategoriesViewModelProvider);
+    final homeAds = ref.watch(adsByPlacementProvider(adPlacementHomeFeed));
     final colorScheme = Theme.of(context).colorScheme;
 
     Future<void> refreshHome() async {
@@ -307,12 +310,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 );
                               },
                               child: Container(
-                                width: MediaQuery.of(context).size.width * 0.85,
+                                width: MediaQuery.of(context).size.width * 0.78,
                                 margin: const EdgeInsets.only(right: 12),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
-                                  color: colorScheme
-                                      .surfaceContainerHighest, // fallback if no cover
+                                  gradient: salon.coverUrl.isEmpty
+                                      ? LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            colorScheme.primaryContainer,
+                                            colorScheme.tertiaryContainer,
+                                          ],
+                                        )
+                                      : null,
                                   image: salon.coverUrl.isNotEmpty
                                       ? DecorationImage(
                                           image: NetworkImage(salon.coverUrl),
@@ -419,21 +430,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
 
                           data: (posts) {
-                            // ADS — unchanged logic
-                            if (index % 5 == 0 && index != 0) {
-                              return Container(
-                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                height: 200,
-                                child: Card(
-                                  elevation: 4,
-                                  child: const Center(child: Text('Ad')),
-                                ),
-                              );
-                              // implement the ads data here!
+                            final ads = homeAds.asData?.value ?? const [];
+                            final hasAds = ads.isNotEmpty;
+
+                            if (hasAds && index % 5 == 0 && index != 0) {
+                              final adIndex = ((index ~/ 5) - 1) % ads.length;
+                              return SponsoredAdPost(ad: ads[adIndex]);
                             }
 
-                            // FIX index shift due to ads
-                            final postIndex = index - (index ~/ 5);
+                            final postIndex = hasAds
+                                ? index - (index ~/ 5)
+                                : index;
                             if (postIndex >= posts.length) return null;
 
                             final post = posts[postIndex];
@@ -492,7 +499,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                       childCount: feed.maybeWhen(
-                        data: (posts) => posts.length + (posts.length ~/ 4),
+                        data: (posts) {
+                          final hasAds =
+                              (homeAds.asData?.value ?? const []).isNotEmpty;
+                          return hasAds
+                              ? posts.length + (posts.length ~/ 4)
+                              : posts.length;
+                        },
                         orElse: () => 1,
                       ),
                     ),

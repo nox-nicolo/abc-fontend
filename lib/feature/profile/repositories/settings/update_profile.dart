@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -11,16 +10,19 @@ import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 
 class UpdateSalonRepository {
-
   // Cover and Profile Picture
   Future<Either<AppFailure, MediaUpdate>> updateAccountMedia({
     File? profileImage,
     File? coverImage,
+    double? coverPositionX,
+    double? coverPositionY,
   }) async {
     final token = await LocalStorageService.getAccessToken();
     if (token == null) return Left(AppFailure('Authentication required'));
 
-    final uri = Uri.parse('${ServerConstants.serverUrl}/profile/upload_account_media');
+    final uri = Uri.parse(
+      '${ServerConstants.serverUrl}/profile/upload_account_media',
+    );
 
     try {
       final request = http.MultipartRequest('PATCH', uri);
@@ -30,20 +32,33 @@ class UpdateSalonRepository {
       });
 
       if (profileImage != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'profile_image', // Changed from 'profile_picture'
-          profileImage.path,
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'profile_image', // Changed from 'profile_picture'
+            profileImage.path,
+          ),
+        );
       }
 
       if (coverImage != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'cover_ads', // Changed from 'display_ads'
-          coverImage.path,
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'cover_ads', // Changed from 'display_ads'
+            coverImage.path,
+          ),
+        );
       }
 
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      if (coverPositionX != null) {
+        request.fields['cover_position_x'] = coverPositionX.toString();
+      }
+      if (coverPositionY != null) {
+        request.fields['cover_position_y'] = coverPositionY.toString();
+      }
+
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -68,19 +83,21 @@ class UpdateSalonRepository {
     final uri = Uri.parse('${ServerConstants.serverUrl}/profile/salon_profile');
 
     try {
-      final response = await http.patch(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'title': title,
-          'slogan': slogan,
-          'description': description,
-        }),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .patch(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'title': title,
+              'slogan': slogan,
+              'description': description,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return Right(SalonProfileUpdate.fromJson(response.body));
@@ -122,15 +139,17 @@ class UpdateSalonRepository {
         if (latitude != null) 'latitude': latitude,
         if (longitude != null) 'longitude': longitude,
       };
-      final response = await http.patch(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .patch(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return Right(SalonProfileUpdate.fromJson(response.body));
@@ -143,24 +162,26 @@ class UpdateSalonRepository {
 
   // Update working hours:
 
-  Future<Either<AppFailure, void>> updateWorkingHours(List<Map<String, dynamic>> workingDays) async {
+  Future<Either<AppFailure, void>> updateWorkingHours(
+    List<Map<String, dynamic>> workingDays,
+  ) async {
     final token = await LocalStorageService.getAccessToken();
     if (token == null) return Left(AppFailure('Authentication required'));
 
     final uri = Uri.parse('${ServerConstants.serverUrl}/profile/working_hours');
 
     try {
-      final response = await http.put(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        // Matches SalonWorkingHoursUpdateRequest structure
-        body: jsonEncode({
-          'working_days': workingDays,
-        }),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .put(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            // Matches SalonWorkingHoursUpdateRequest structure
+            body: jsonEncode({'working_days': workingDays}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return const Right(null);
@@ -170,12 +191,15 @@ class UpdateSalonRepository {
       return Left(AppFailure('Failed to update working hours: $e'));
     }
   }
-  
+
   // Updateing Salon Galleries
 
   Future<Either<AppFailure, void>> updateGallery({
     required List<File> newFiles,
     required List<String> deleteIds,
+    required List<String> galleryOrder,
+    required Map<String, String> galleryCategories,
+    required List<String> newFileCategories,
   }) async {
     final token = await LocalStorageService.getAccessToken();
     if (token == null) return Left(AppFailure('Authentication required'));
@@ -190,21 +214,24 @@ class UpdateSalonRepository {
         'Accept': 'application/json',
       });
 
-      // 1. Add IDs to delete
-      // FastAPI List[str] = Form() usually expects multiple fields with same key
-      for (var id in deleteIds) {
-        request.fields['delete_ids'] = id; 
-      }
+      request.fields['delete_ids'] = deleteIds.join(',');
+      request.fields['gallery_order'] = jsonEncode(galleryOrder);
+      request.fields['gallery_categories'] = jsonEncode(galleryCategories);
+      request.fields['new_file_categories'] = jsonEncode(newFileCategories);
 
       // 2. Add new files
       for (var file in newFiles) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'files', // Key matches backend 'files'
-          file.path,
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'files', // Key matches backend 'files'
+            file.path,
+          ),
+        );
       }
 
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -215,7 +242,7 @@ class UpdateSalonRepository {
       return Left(AppFailure('Gallery update failed: $e'));
     }
   }
-  
+
   // Reusable methods
   AppFailure _mapHttpError(http.Response response) {
     switch (response.statusCode) {

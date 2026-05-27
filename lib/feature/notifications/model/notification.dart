@@ -1,3 +1,6 @@
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class NotificationActorModel {
   final String id;
   final String username;
@@ -17,7 +20,9 @@ class NotificationActorModel {
     return NotificationActorModel(
       id: map['id'] ?? '',
       username: map['username'] ?? '',
-      profilePicture: map['profile_picture'],
+      profilePicture: resolveImageUrl(
+        map['profile_picture'] ?? map['profile_picture_url'] ?? map['avatar'],
+      ),
       role: map['role'],
       salonId: map['salon_id'],
     );
@@ -56,6 +61,11 @@ class NotificationModel {
     required this.createdAt,
   });
 
+  bool get isCampaign =>
+      type == 'salon_event_marketing' || type == 'salon_promotion_campaign';
+
+  bool get isPromotionCampaign => type == 'salon_promotion_campaign';
+
   NotificationModel copyWith({bool? isRead, String? deliveryStatus}) {
     return NotificationModel(
       id: id,
@@ -86,7 +96,7 @@ class NotificationModel {
       groupCount: (map['group_count'] as num?)?.toInt() ?? 1,
       isRead: map['is_read'] ?? false,
       deliveryStatus: map['delivery_status'] ?? 'sent',
-      createdAt: DateTime.parse(map['created_at']),
+      createdAt: parseApiDateTime(map['created_at']),
     );
   }
 }

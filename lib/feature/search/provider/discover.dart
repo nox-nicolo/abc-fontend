@@ -86,8 +86,32 @@ final topSalonsProvider = FutureProvider.autoDispose<List<TopSalonItem>>((
   return result.fold((l) => throw l.message, (r) => r);
 });
 
+final topSalonsAllProvider = FutureProvider.autoDispose<List<TopSalonItem>>((
+  ref,
+) async {
+  final result = await _discoverRepo.getTopSalons(limit: 50);
+  return result.fold((l) => throw l.message, (r) => r);
+});
+
 final trendingStylesProvider =
     FutureProvider.autoDispose<List<TrendingStyleItem>>((ref) async {
       final result = await _discoverRepo.getTrending();
+      return result.fold((l) => throw l.message, (r) => r);
+    });
+
+final trendingStylesAllProvider =
+    FutureProvider.autoDispose<List<TrendingStyleItem>>((ref) async {
+      final result = await _discoverRepo.getTrending(limit: 50);
+      return result.fold((l) => throw l.message, (r) => r);
+    });
+
+final nearbySalonsAllProvider =
+    FutureProvider.autoDispose<List<NearbySalonItem>>((ref) async {
+      final position = await _getPosition();
+      final result = await _discoverRepo.getNearby(
+        lat: position.latitude,
+        lng: position.longitude,
+        limit: 50,
+      );
       return result.fold((l) => throw l.message, (r) => r);
     });

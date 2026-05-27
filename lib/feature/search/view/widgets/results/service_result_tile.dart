@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/utils/image_url.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
 
@@ -22,7 +23,7 @@ class ServiceResultTile extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    final imageUrl = data['image_url'];
+    final imageUrl = resolveImageUrl(data['image_url']);
 
     if (imageUrl != null && imageUrl.toString().isNotEmpty) {
       return ClipRRect(

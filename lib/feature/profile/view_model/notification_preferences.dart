@@ -33,6 +33,7 @@ class NotificationPreferencesViewModel
     bool? allowComments,
     bool? allowBookings,
     bool? allowPromotions,
+    String? promotionsPreferredTime,
     bool? allowReminders,
     int? reminderLeadMinutes,
   }) async {
@@ -42,6 +43,7 @@ class NotificationPreferencesViewModel
       allowComments: allowComments,
       allowBookings: allowBookings,
       allowPromotions: allowPromotions,
+      promotionsPreferredTime: promotionsPreferredTime,
       allowReminders: allowReminders,
       reminderLeadMinutes: reminderLeadMinutes,
     );

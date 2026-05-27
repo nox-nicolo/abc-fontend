@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class PostResponseModel {
   final List<PostModel> items;
   final String? nextCursor;
@@ -127,7 +129,7 @@ class PostAuthor {
       userId: map['user_id'] ?? '',
       username: map['username'] ?? '',
       isVerified: map['is_verified'] ?? false,
-      profilePicture: map['profile_picture'] ?? '',
+      profilePicture: imageUrlOrEmpty(map['profile_picture']),
       salon: map['salon'] != null ? SalonInfo.fromMap(map['salon']) : null,
     );
   }
@@ -164,7 +166,7 @@ class PostMedia {
 
   factory PostMedia.fromMap(Map<String, dynamic> map) {
     return PostMedia(
-      url: map['url'] ?? '',
+      url: imageUrlOrEmpty(map['url']),
       type: map['type'] ?? 'IMAGE',
       aspectRatio: (map['aspect_ratio'] as num?)?.toDouble() ?? 1.0,
     );

@@ -1,3 +1,5 @@
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+
 class AvailabilitySlot {
   const AvailabilitySlot({
     required this.startAt,
@@ -11,8 +13,8 @@ class AvailabilitySlot {
 
   factory AvailabilitySlot.fromMap(Map<String, dynamic> map) {
     return AvailabilitySlot(
-      startAt: DateTime.parse(map['start_at'] as String).toLocal(),
-      endAt: DateTime.parse(map['end_at'] as String).toLocal(),
+      startAt: parseApiDateTime(map['start_at']).toLocal(),
+      endAt: parseApiDateTime(map['end_at']).toLocal(),
       remainingCapacity: (map['remaining_capacity'] as num?)?.toInt() ?? 1,
     );
   }

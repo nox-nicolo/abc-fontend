@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:africa_beuty/core/constants/server_constants.dart';
 import 'package:africa_beuty/core/http/api_client.dart';
 import 'package:africa_beuty/core/http/paginated_response.dart';
+import 'package:africa_beuty/core/utils/api_datetime.dart';
 import 'package:africa_beuty/feature/profile/model/notification_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -145,7 +146,7 @@ class ReminderService {
             .map(
               (m) => (
                 m['id'] as String,
-                DateTime.parse(m['start_at'] as String).toLocal(),
+                parseApiDateTime(m['start_at']).toLocal(),
                 m['service_name_snapshot'] as String?,
               ),
             )
@@ -168,7 +169,7 @@ class ReminderService {
             .map(
               (m) => (
                 m['id'] as String,
-                DateTime.parse(m['start_at'] as String).toLocal(),
+                parseApiDateTime(m['start_at']).toLocal(),
                 _salonLabel(m),
               ),
             )

@@ -1,3 +1,4 @@
+import 'package:africa_beuty/core/utils/api_datetime.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/feature/profile/model/salon_activity.dart';
 import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
@@ -28,9 +29,9 @@ class ActivityFeedTile extends StatelessWidget {
       ),
       subtitle: Text(
         _formatTimeAgo(item.createdAt),
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
       ),
       trailing: _buildIcon(scheme),
       onTap: tappable ? () => _handleTap(context) : null,
@@ -71,11 +72,8 @@ class ActivityFeedTile extends StatelessWidget {
             width: 40,
             height: 40,
             fit: BoxFit.cover,
-            errorWidget: (_, _, _) => Icon(
-              Icons.person,
-              size: 20,
-              color: scheme.onSurfaceVariant,
-            ),
+            errorWidget: (_, _, _) =>
+                Icon(Icons.person, size: 20, color: scheme.onSurfaceVariant),
           ),
         ),
       );
@@ -117,9 +115,10 @@ class ActivityFeedTile extends StatelessWidget {
 
   static String _formatTimeAgo(String isoString) {
     try {
-      final dt = DateTime.parse(isoString);
-      final diff = DateTime.now().difference(dt);
+      final dt = parseApiDateTime(isoString);
+      final diff = DateTime.now().toUtc().difference(dt.toUtc());
 
+      if (diff.isNegative) return 'Just now';
       if (diff.inSeconds < 60) return 'Just now';
       if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
       if (diff.inHours < 24) return '${diff.inHours}h ago';

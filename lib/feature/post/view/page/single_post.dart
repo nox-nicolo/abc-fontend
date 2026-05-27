@@ -1,6 +1,7 @@
 import 'package:africa_beuty/feature/home/model/post_like.dart';
 import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
 import 'package:africa_beuty/feature/post/view/widgets/comments_sheet.dart';
+import 'package:africa_beuty/feature/post/view/widgets/post_share_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,6 +46,7 @@ class _PostState extends ConsumerState<Post> {
   bool isExpanded = false;
   late bool _isLiked;
   late int _likesCount;
+  late int _sharesCount;
   late bool _isSaved;
   bool _likeInFlight = false;
 
@@ -59,6 +61,7 @@ class _PostState extends ConsumerState<Post> {
 
     _isLiked = widget.isLiked;
     _likesCount = widget.likesCount;
+    _sharesCount = widget.sharesCount;
     _isSaved = widget.isSaved;
 
     _likeSub = ref.listenManual(postLikeViewModelProvider, (previous, next) {
@@ -136,6 +139,12 @@ class _PostState extends ConsumerState<Post> {
         });
       },
     );
+  }
+
+  Future<void> _sharePost() async {
+    final sharedCount = await showPostShareSheet(context, ref, widget.postId);
+    if (!mounted || sharedCount == null || sharedCount <= 0) return;
+    setState(() => _sharesCount += sharedCount);
   }
 
   @override
@@ -303,19 +312,23 @@ class _PostState extends ConsumerState<Post> {
 
                     const SizedBox(width: 24),
 
-                    Row(
-                      children: [
-                        Icon(
-                          FontAwesome.paper_plane_solid,
-                          color: colorScheme.primary,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          widget.sharesCount.toString(),
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                      ],
+                    GestureDetector(
+                      onTap: _sharePost,
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        children: [
+                          Icon(
+                            FontAwesome.paper_plane_solid,
+                            color: colorScheme.primary,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            _sharesCount.toString(),
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                        ],
+                      ),
                     ),
 
                     const SizedBox(width: 24),

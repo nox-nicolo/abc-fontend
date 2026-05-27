@@ -1,3 +1,6 @@
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class ChatConversation {
   final String id;
   final String customerId;
@@ -30,15 +33,15 @@ class ChatConversation {
       id: map['id'] ?? '',
       customerId: map['customer_id'] ?? '',
       customerName: map['customer_name'] ?? 'Customer',
-      customerAvatar: map['customer_avatar'],
+      customerAvatar: resolveImageUrl(map['customer_avatar']),
       salonId: map['salon_id'] ?? '',
       salonName: map['salon_name'] ?? 'Salon',
-      salonAvatar: map['salon_avatar'],
+      salonAvatar: resolveImageUrl(map['salon_avatar']),
       lastMessagePreview: map['last_message_preview'],
       lastMessageType: map['last_message_type'],
       lastMessageAt: map['last_message_at'] == null
           ? null
-          : DateTime.parse(map['last_message_at']),
+          : parseApiDateTime(map['last_message_at']),
       unreadCount: map['unread_count'] ?? 0,
     );
   }
@@ -82,8 +85,8 @@ class ChatMessage {
       bookingId: map['booking_id'],
       createdBySystem: map['created_by_system'] ?? false,
       isMine: map['is_mine'] ?? false,
-      readAt: map['read_at'] == null ? null : DateTime.parse(map['read_at']),
-      createdAt: DateTime.parse(map['created_at']),
+      readAt: map['read_at'] == null ? null : parseApiDateTime(map['read_at']),
+      createdAt: parseApiDateTime(map['created_at']),
     );
   }
 }

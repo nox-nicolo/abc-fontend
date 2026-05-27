@@ -1,6 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:africa_beuty/core/utils/api_datetime.dart';
+
 class CreateBookingRequestModel {
   CreateBookingRequestModel({
     required this.salonServicePriceId,
@@ -44,9 +46,7 @@ class CreateBookingRequestModel {
   factory CreateBookingRequestModel.fromMap(Map<String, dynamic> map) {
     return CreateBookingRequestModel(
       salonServicePriceId: map['salon_service_price_id']?.toString() ?? '',
-      startAt:
-          DateTime.tryParse(map['start_at']?.toString() ?? '') ??
-          DateTime.now(),
+      startAt: tryParseApiDateTime(map['start_at']) ?? DateTime.now().toUtc(),
       note: map['note']?.toString(),
     );
   }
@@ -213,11 +213,8 @@ class BookingModel {
       customerName: map['customer_name']?.toString(),
       salonId: map['salon_id']?.toString() ?? '',
       status: map['status']?.toString() ?? 'pending',
-      startAt:
-          DateTime.tryParse(map['start_at']?.toString() ?? '') ??
-          DateTime.now(),
-      endAt:
-          DateTime.tryParse(map['end_at']?.toString() ?? '') ?? DateTime.now(),
+      startAt: tryParseApiDateTime(map['start_at']) ?? DateTime.now().toUtc(),
+      endAt: tryParseApiDateTime(map['end_at']) ?? DateTime.now().toUtc(),
       serviceNameSnapshot: map['service_name_snapshot']?.toString() ?? '',
       priceSnapshot: (map['price_snapshot'] as num?)?.toDouble() ?? 0.0,
       currencySnapshot: map['currency_snapshot']?.toString() ?? '',
@@ -228,15 +225,11 @@ class BookingModel {
       hasReview: map['has_review'] == true,
       reviewRating: (map['review_rating'] as num?)?.toInt(),
       reviewComment: map['review_comment']?.toString(),
-      reviewCreatedAt: DateTime.tryParse(
-        map['review_created_at']?.toString() ?? '',
-      ),
+      reviewCreatedAt: tryParseApiDateTime(map['review_created_at']),
       createdAt:
-          DateTime.tryParse(map['created_at']?.toString() ?? '') ??
-          DateTime.now(),
+          tryParseApiDateTime(map['created_at']) ?? DateTime.now().toUtc(),
       updatedAt:
-          DateTime.tryParse(map['updated_at']?.toString() ?? '') ??
-          DateTime.now(),
+          tryParseApiDateTime(map['updated_at']) ?? DateTime.now().toUtc(),
     );
   }
 

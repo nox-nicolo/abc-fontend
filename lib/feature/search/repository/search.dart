@@ -23,6 +23,12 @@ abstract class SearchRepository {
     required String query,
     int limit = 20,
   });
+
+  /// SEARCH people only, for direct post sharing.
+  Future<Either<AppFailure, List<SearchUserResult>>> searchUsers({
+    required String query,
+    int limit = 20,
+  });
 }
 
 /* ------------------------------------------------------------
@@ -66,9 +72,7 @@ class SearchRepositoryImpl implements SearchRepository {
         try {
           body = jsonDecode(response.body);
         } catch (_) {}
-        return Left(
-          AppFailure(body?['detail'] ?? 'Search failed'),
-        );
+        return Left(AppFailure(body?['detail'] ?? 'Search failed'));
       }
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
@@ -87,6 +91,59 @@ class SearchRepositoryImpl implements SearchRepository {
       return Left(AppFailure('Request timed out'));
     } catch (e) {
       return Left(AppFailure('Search error: $e'));
+    }
+  }
+
+  @override
+  Future<Either<AppFailure, List<SearchUserResult>>> searchUsers({
+    required String query,
+    int limit = 20,
+  }) async {
+    try {
+      final token = await LocalStorageService.getAccessToken();
+      if (token == null) {
+        return Left(AppFailure('No access token'));
+      }
+
+      final uri = Uri.parse(
+        '${ServerConstants.serverUrl}/search/users'
+        '?q=${Uri.encodeQueryComponent(query)}'
+        '&limit=$limit',
+      );
+
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200) {
+        Map<String, dynamic>? body;
+        try {
+          body = jsonDecode(response.body);
+        } catch (_) {}
+        return Left(AppFailure(body?['detail'] ?? 'User search failed'));
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final List resultsJson = decoded['results'] ?? [];
+
+      return Right(
+        resultsJson
+            .whereType<Map<String, dynamic>>()
+            .map((raw) => SearchUserResult.fromMap(_normalizeKeys(raw)))
+            .toList(),
+      );
+    } on SocketException {
+      return Left(AppFailure('No internet connection'));
+    } on TimeoutException {
+      return Left(AppFailure('Request timed out'));
+    } catch (e) {
+      return Left(AppFailure('User search error: $e'));
     }
   }
 

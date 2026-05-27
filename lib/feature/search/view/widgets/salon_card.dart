@@ -20,9 +20,9 @@ class SalonCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 150,
+        width: 172,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
         child: Column(
@@ -30,10 +30,11 @@ class SalonCard extends StatelessWidget {
           children: [
             // Cover image
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(8),
+              ),
               child: SizedBox(
-                height: 90,
+                height: 112,
                 width: double.infinity,
                 child: coverImage != null
                     ? CachedNetworkImage(
@@ -45,7 +46,7 @@ class SalonCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -72,7 +73,7 @@ class SalonCard extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-        color: Colors.grey.shade300,
-        child: const Center(child: Icon(Icons.store, size: 32)),
-      );
+    color: Colors.grey.shade300,
+    child: const Center(child: Icon(Icons.store, size: 32)),
+  );
 }

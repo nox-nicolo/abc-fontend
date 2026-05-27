@@ -6,6 +6,9 @@ import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/profile/model/salon.dart';
+import 'package:africa_beuty/feature/profile/view/widget/profile_completion_card.dart';
+import 'package:africa_beuty/feature/profile/view/widget/profile_insights_card.dart';
+import 'package:africa_beuty/feature/profile/view/widget/profile_trust_card.dart';
 import 'package:africa_beuty/feature/profile/view/widget/setting.dart';
 import 'package:africa_beuty/feature/profile/view/widget/three_dots.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon.dart';
@@ -197,6 +200,10 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
                       CachedNetworkImage(
                         imageUrl: salon.displayAds,
                         fit: BoxFit.cover,
+                        alignment: Alignment(
+                          (salon.coverPositionX * 2) - 1,
+                          (salon.coverPositionY * 2) - 1,
+                        ),
                         errorWidget: (context, url, error) =>
                             const SizedBox.shrink(),
                       ),
@@ -481,6 +488,10 @@ class _SalonCustomWidgetState extends ConsumerState<SalonCustomWidget>
               ),
             ),
           ),
+
+          const SliverToBoxAdapter(child: ProfileCompletionCard()),
+          const SliverToBoxAdapter(child: ProfileTrustCard(role: 'salon')),
+          const SliverToBoxAdapter(child: ProfileInsightsCard(role: 'salon')),
 
           SliverSpaceHeader(title: 'Bio'),
           SliverToBoxAdapter(

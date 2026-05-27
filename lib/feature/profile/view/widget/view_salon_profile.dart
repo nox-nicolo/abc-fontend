@@ -1,4 +1,3 @@
-import 'package:africa_beuty/core/widgets/activity_feed.dart';
 import 'package:africa_beuty/core/widgets/grid_widget.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
@@ -12,7 +11,6 @@ import 'package:africa_beuty/feature/post/view/page/view_post.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/booking.dart';
 import 'package:africa_beuty/feature/profile/model/salon_view_profile.dart';
 import 'package:africa_beuty/feature/profile/view/widget/salon_profile_view_services.dart';
-import 'package:africa_beuty/feature/profile/view_model/salon_activity.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon_profile_post.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon_view_follow_action.dart';
 import 'package:africa_beuty/feature/profile/view_model/salon_view_profile.dart';
@@ -830,22 +828,10 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
       profilePostsViewModelProvider(salon.salon.id).notifier,
     );
 
-    final activityState = ref.watch(
-      salonActivityViewModelProvider(salon.salon.id),
-    );
-    final activityNotifier = ref.read(
-      salonActivityViewModelProvider(salon.salon.id).notifier,
-    );
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Only call if still loading and no data
       if (postsState.isLoading && !postsState.hasValue) {
         postsNotifier.getInitialPosts();
-      }
-      if (_selectedTabIndex == 2 &&
-          activityState.isLoading &&
-          !activityState.hasValue) {
-        activityNotifier.getInitialActivity();
       }
     });
 
@@ -864,8 +850,6 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
 
             if (_selectedTabIndex == 0 || _selectedTabIndex == 1) {
               postsNotifier.getMorePosts();
-            } else if (_selectedTabIndex == 2) {
-              activityNotifier.getMoreActivity();
             }
             return false;
           },
@@ -1592,13 +1576,13 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(
-                                  Icons.workspace_premium,
+                                  Icons.event_available_rounded,
                                   size: 18,
-                                  color: Color.fromARGB(255, 151, 143, 116),
+                                  color: Color(0xFF64748B),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  "5+ Years",
+                                  '5+ years',
                                   style: Theme.of(context).textTheme.labelSmall,
                                 ),
                               ],
@@ -1783,7 +1767,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                         text: 'Grid',
                       ),
                       Tab(icon: Icon(Bootstrap.view_stacked), text: 'Posts'),
-                      Tab(icon: Icon(Bootstrap.activity), text: 'Activity'),
+                      Tab(icon: Icon(Bootstrap.megaphone), text: 'Offers'),
                     ],
                   ),
                 ),
@@ -1820,27 +1804,8 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
               //       ),
               // ],
               if (_selectedTabIndex == 2)
-                activityState.when(
-                  loading: () => const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (e, _) => SliverToBoxAdapter(
-                    child: Center(child: Text('Error: $e')),
-                  ),
-                  data: (items) {
-                    if (items.isEmpty) {
-                      return const SliverFillRemaining(
-                        child: Center(child: Text('No recent activity')),
-                      );
-                    }
-                    return SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) =>
-                            ActivityFeedTile(item: items[index]),
-                        childCount: items.length,
-                      ),
-                    );
-                  },
+                SliverToBoxAdapter(
+                  child: _PublicSalonOffersSection(salon: salon),
                 )
               else
                 postsState.when(
@@ -1914,10 +1879,9 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
                 ),
 
               // 3. PAGINATION SPINNER
-              if ((_selectedTabIndex == 2 && activityNotifier.isLoadingMore) ||
-                  (_selectedTabIndex != 2 &&
-                      postsState.isLoading &&
-                      postsState.hasValue))
+              if (_selectedTabIndex != 2 &&
+                  postsState.isLoading &&
+                  postsState.hasValue)
                 const SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
@@ -2052,7 +2016,7 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
               tabs: const [
                 Tab(icon: Icon(Bootstrap.grid_3x3_gap_fill)),
                 Tab(icon: Icon(Bootstrap.view_stacked)),
-                Tab(icon: Icon(Bootstrap.list_task)),
+                Tab(icon: Icon(Bootstrap.megaphone)),
               ],
             ),
           ),
@@ -2066,6 +2030,61 @@ class _ViewServiceProfilePageState extends ConsumerState<ViewServiceProfilePage>
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PublicSalonOffersSection extends StatelessWidget {
+  const _PublicSalonOffersSection({required this.salon});
+
+  final SalonViewProfileModel salon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final salonName = salon.salon.name.trim().isEmpty
+        ? 'This salon'
+        : salon.salon.name.trim();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.48),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: scheme.primaryContainer,
+              child: Icon(
+                Icons.campaign_rounded,
+                color: scheme.onPrimaryContainer,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'No public offers right now',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$salonName can share promotions, discounts, and events here.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

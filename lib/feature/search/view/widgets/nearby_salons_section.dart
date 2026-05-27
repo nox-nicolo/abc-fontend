@@ -2,6 +2,7 @@ import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/core/widgets/skeleton.dart';
 import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:africa_beuty/feature/search/provider/discover.dart';
+import 'package:africa_beuty/feature/search/view/page/discover_list_page.dart';
 import 'package:africa_beuty/feature/search/view/widgets/salon_card.dart';
 import 'package:africa_beuty/feature/search/view/widgets/section_header.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,15 @@ class NearbySalonsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(title: 'Nearby salons', onSeeAll: () {}),
+        SectionHeader(
+          title: 'Nearby salons',
+          onSeeAll: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  const DiscoverListPage(type: DiscoverListType.nearbySalons),
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
         SizedBox(
           height: 180,

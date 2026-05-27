@@ -160,6 +160,16 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                         ),
                       ),
 
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/forgot_password');
+                          },
+                          child: const Text('Forgot password?'),
+                        ),
+                      ),
+
                       const SizedBox(height: 25),
 
                       GestureDetector(

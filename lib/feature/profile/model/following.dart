@@ -1,3 +1,5 @@
+import 'package:africa_beuty/core/utils/image_url.dart';
+
 class FollowedSalonModel {
   final String salonId;
   final String title;
@@ -16,7 +18,7 @@ class FollowedSalonModel {
       salonId: map['salon_id']?.toString() ?? '',
       title: map['title']?.toString() ?? '',
       username: map['username']?.toString() ?? '',
-      profilePicture: map['profile_picture']?.toString(),
+      profilePicture: resolveImageUrl(map['profile_picture']),
     );
   }
 }
