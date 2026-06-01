@@ -43,4 +43,9 @@ class BookingActionRepository {
 
   Future<Either<AppFailure, BookingModel>> complete(String id) =>
       _post('/booking/$id/complete');
+
+  Future<Either<AppFailure, BookingModel>> assignStylist(
+    String id, {
+    required String stylistId,
+  }) => _post('/booking/$id/assign-stylist', body: {'stylist_id': stylistId});
 }

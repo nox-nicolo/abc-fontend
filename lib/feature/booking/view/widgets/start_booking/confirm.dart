@@ -36,14 +36,25 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
         data: (booking) {
           if (booking != null) {
             ref.read(bookingDraftProvider.notifier).reset();
-            _showSuccessDialog(context);
+            _showSuccessDialog(context, booking);
           }
         },
       );
     });
   }
 
-  void _showSuccessDialog(BuildContext context) {
+  void _showSuccessDialog(BuildContext context, BookingModel booking) {
+    final status = booking.status.toLowerCase();
+    final isConfirmed = status == 'confirmed';
+    final title = isConfirmed ? 'Booking confirmed' : 'Booking request sent';
+    final message = isConfirmed
+        ? 'Your appointment has been successfully scheduled. You can view it in your bookings.'
+        : 'Your request has been sent to the salon. You can track its status in your bookings.';
+    final icon = isConfirmed
+        ? Icons.check_circle
+        : Icons.mark_email_read_rounded;
+    final color = isConfirmed ? Colors.green : Colors.orange;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -60,25 +71,24 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
+                    color: color.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 60,
-                  ),
+                  child: Icon(icon, color: color, size: 60),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  "Booking Confirmed!",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                  ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  "Your appointment has been successfully scheduled. You can view it in your bookings.",
+                Text(
+                  message,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontSize: 15),
+                  style: const TextStyle(color: Colors.grey, fontSize: 15),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -123,6 +133,7 @@ class _ConfirmBookingPageState extends ConsumerState<ConfirmBookingPage> {
     final request = CreateBookingRequestModel(
       salonServicePriceId: draft.salonServicePriceId!,
       startAt: draft.startAt!,
+      stylistId: draft.stylistId,
       note: draft.note,
     );
     ref

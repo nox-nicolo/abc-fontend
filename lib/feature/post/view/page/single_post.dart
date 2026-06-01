@@ -4,6 +4,7 @@ import 'package:africa_beuty/feature/post/view/widgets/comments_sheet.dart';
 import 'package:africa_beuty/feature/post/view/widgets/post_share_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:africa_beuty/feature/home/view_model/post_like.dart';
@@ -161,69 +162,73 @@ class _PostState extends ConsumerState<Post> {
           // POST IMAGES
           // --------------------------------------------------
           if (widget.images.isNotEmpty)
-            Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                AspectRatio(
-                  aspectRatio: widget.aspectRatio,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
-                      bottom: Radius.circular(12),
-                    ),
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (int page) {
-                        setState(() {
-                          _currentPage = page;
-                        });
-                      },
-                      itemCount: widget.images.length,
-                      itemBuilder: (context, index) {
-                        return CachedNetworkImage(
-                          imageUrl: widget.images[index],
-                          fit: BoxFit.cover,
-                          memCacheWidth: 1080,
-                          fadeOutDuration: const Duration(milliseconds: 300),
-                          filterQuality: FilterQuality.low,
-                          placeholder: (context, url) => Container(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest,
-                          ),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.error),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                if (widget.images.length > 1)
-                  Positioned(
-                    bottom: 10,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(widget.images.length, (index) {
-                        bool isActive = _currentPage == index;
-                        return AnimatedContainer(
-                          duration: const Duration(
-                            milliseconds: 300,
-                          ), // Smoothly transition
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: isActive ? 12 : 6, // Active dot is wider
-                          height: 6,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(3),
-                            // Active dot is solid white, others are faded
-                            color: isActive
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.5),
-                          ),
-                        );
-                      }),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onDoubleTap: () {
+                HapticFeedback.lightImpact();
+                _toggleLike();
+              },
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  AspectRatio(
+                    aspectRatio: widget.aspectRatio,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                        bottom: Radius.circular(12),
+                      ),
+                      child: PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: (int page) {
+                          setState(() {
+                            _currentPage = page;
+                          });
+                        },
+                        itemCount: widget.images.length,
+                        itemBuilder: (context, index) {
+                          return CachedNetworkImage(
+                            imageUrl: widget.images[index],
+                            fit: BoxFit.cover,
+                            memCacheWidth: 1080,
+                            fadeOutDuration: const Duration(milliseconds: 300),
+                            filterQuality: FilterQuality.low,
+                            placeholder: (context, url) => Container(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                            ),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.error),
+                          );
+                        },
+                      ),
                     ),
                   ),
-              ],
+                  if (widget.images.length > 1)
+                    Positioned(
+                      bottom: 10,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(widget.images.length, (index) {
+                          bool isActive = _currentPage == index;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: isActive ? 12 : 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(3),
+                              color: isActive
+                                  ? Colors.white
+                                  : Colors.white.withValues(alpha: 0.5),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                ],
+              ),
             ),
           // --------------------------------------------------
           // USER INFO

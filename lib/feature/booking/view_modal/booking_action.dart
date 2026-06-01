@@ -42,6 +42,16 @@ class BookingActionViewModel extends _$BookingActionViewModel {
     );
   }
 
+  Future<void> assignStylist(String bookingId, String stylistId) async {
+    await _run(
+      () => ref
+          .read(bookingActionRepositoryProvider)
+          .assignStylist(bookingId, stylistId: stylistId),
+      bookingId: bookingId,
+      optimisticStatus: '',
+    );
+  }
+
   Future<void> _run(
     Future<Either<AppFailure, BookingModel>> Function() action, {
     required String bookingId,
@@ -51,7 +61,9 @@ class BookingActionViewModel extends _$BookingActionViewModel {
 
     state = const AsyncValue.loading();
     final snapshots = _snapshots();
-    _applyOptimisticStatus(bookingId, optimisticStatus, snapshots);
+    if (optimisticStatus.isNotEmpty) {
+      _applyOptimisticStatus(bookingId, optimisticStatus, snapshots);
+    }
 
     final result = await action();
 
@@ -131,6 +143,10 @@ class BookingActionViewModel extends _$BookingActionViewModel {
       status: booking.status,
       customerId: booking.customerId,
       customerName: booking.customerName ?? '',
+      salonServicePriceId: booking.salonServicePriceId,
+      stylistId: booking.stylistId,
+      stylistName: booking.stylistName,
+      stylistAvatar: booking.stylistAvatar,
       startAt: booking.startAt,
       endAt: booking.endAt,
       serviceName: booking.serviceNameSnapshot,

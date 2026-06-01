@@ -19,9 +19,10 @@ import 'package:http/http.dart' as http;
 
 abstract class SearchRepository {
   /// SEARCH across users, salons, services, hashtags
-  Future<Either<AppFailure, List<SearchResult>>> search({
+  Future<Either<AppFailure, SearchPageResult>> search({
     required String query,
     int limit = 20,
+    String? cursor,
   });
 
   /// SEARCH people only, for direct post sharing.
@@ -37,9 +38,10 @@ abstract class SearchRepository {
 
 class SearchRepositoryImpl implements SearchRepository {
   @override
-  Future<Either<AppFailure, List<SearchResult>>> search({
+  Future<Either<AppFailure, SearchPageResult>> search({
     required String query,
     int limit = 20,
+    String? cursor,
   }) async {
     try {
       // 1. Get access token
@@ -52,7 +54,8 @@ class SearchRepositoryImpl implements SearchRepository {
       final uri = Uri.parse(
         '${ServerConstants.serverUrl}/search'
         '?q=${Uri.encodeQueryComponent(query)}'
-        '&limit=$limit',
+        '&limit=$limit'
+        '${cursor == null ? '' : '&cursor=${Uri.encodeQueryComponent(cursor)}'}',
       );
 
       // 3. Send request
@@ -84,7 +87,12 @@ class SearchRepositoryImpl implements SearchRepository {
         return SearchResult.fromMap(map);
       }).toList();
 
-      return Right(results);
+      return Right(
+        SearchPageResult(
+          results: results,
+          nextCursor: decoded['next_cursor']?.toString(),
+        ),
+      );
     } on SocketException {
       return Left(AppFailure('No internet connection'));
     } on TimeoutException {
@@ -156,6 +164,7 @@ class SearchRepositoryImpl implements SearchRepository {
       'id': raw['id'],
       'entity': raw['entity'],
       'score': raw['score'],
+      'isSaved': raw['is_saved'],
 
       // USER
       'username': raw['username'],
@@ -175,7 +184,12 @@ class SearchRepositoryImpl implements SearchRepository {
       'parentServiceName': raw['parent_service_name'],
       'priceMin': raw['price_min'],
       'priceMax': raw['price_max'],
+      'currency': raw['currency'],
+      'durationMinutes': raw['duration_minutes'],
       'imageUrl': raw['image_url'],
+      'salonId': raw['salon_id'],
+      'salonName': raw['salon_name'],
+      'salonServicePriceId': raw['salon_service_price_id'],
 
       // HASHTAG
       'tag': raw['tag'],

@@ -3,6 +3,7 @@ import 'package:africa_beuty/feature/ads/provider/ad_provider.dart';
 import 'package:africa_beuty/feature/ads/view/sponsored_ad_post.dart';
 import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
 import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
+import 'package:africa_beuty/feature/home/view_model/post_like.dart';
 import 'package:africa_beuty/feature/mute/repository/mute_repository.dart';
 import 'package:africa_beuty/feature/post/model/single_post_view.dart';
 import 'package:africa_beuty/feature/post/providers/post_repository_provider.dart';
@@ -19,7 +20,7 @@ import 'package:africa_beuty/feature/post/view/widgets/view_post/service_review.
 import 'package:africa_beuty/feature/post/view/widgets/view_post/sponsored_salon.dart';
 import 'package:africa_beuty/feature/post/view/widgets/view_post/stylist.dart';
 import 'package:africa_beuty/feature/post/view_model/single_post_view.dart';
-import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
+import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,6 +84,7 @@ class _PostViewBody extends ConsumerStatefulWidget {
 class _PostViewBodyState extends ConsumerState<_PostViewBody> {
   late final ScrollController _scrollCtrl;
   bool _loadingMore = false;
+  bool _imageLikeInFlight = false;
   bool _openedComments = false;
   bool _shownOwnerReactionSummary = false;
 
@@ -94,7 +96,11 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_openedComments) {
           _openedComments = true;
-          showCommentsSheet(context, widget.data.post.id);
+          showCommentsSheet(
+            context,
+            widget.data.post.id,
+            canComment: widget.data.engagement.canComment,
+          );
         }
       });
     }
@@ -150,13 +156,13 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
+              final salonId = post.author.salonId;
+              if (salonId == null || salonId.isEmpty) return;
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ViewProfilePage(
-                    isServiceProfile: true,
-                    userId: post.author.id,
-                  ),
+                  builder: (context) =>
+                      ViewServiceProfilePage(salonId: salonId),
                 ),
               );
             },
@@ -245,7 +251,7 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
           SliverToBoxAdapter(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onDoubleTap: () => HapticFeedback.lightImpact(),
+              onDoubleTap: () => _likePostFromImage(post),
               onLongPress: () {},
               child: AspectRatio(
                 aspectRatio: post.images.first.aspectRatio,
@@ -266,6 +272,10 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
             shares: post.stats.shares,
             isLiked: post.viewerState.isLiked,
             isSaved: post.viewerState.isSaved,
+            canComment: data.engagement.canComment,
+            onShare: data.engagement.canShare
+                ? () => showPostShareSheet(context, ref, post.id)
+                : null,
           ),
         ),
 
@@ -383,11 +393,16 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
                     (s) => SponsoredSalon(
                       id: s.salonId,
                       name: s.name,
-                      imageUrl: '',
+                      imageUrl: s.imageUrl ?? '',
                       location: s.location ?? '',
-                      price: '${s.price} ${s.currency}',
+                      price: s.price > 0 ? '${s.price} ${s.currency}' : null,
                       rating: s.rating,
-                      onTap: () {},
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ViewServiceProfilePage(salonId: s.salonId),
+                        ),
+                      ),
                     ),
                   )
                   .toList(),
@@ -472,6 +487,35 @@ class _PostViewBodyState extends ConsumerState<_PostViewBody> {
 
   int _reactionTotal(Map<String, int> reactions) {
     return reactions.values.fold(0, (sum, count) => sum + count);
+  }
+
+  Future<void> _likePostFromImage(PostItemModel post) async {
+    if (_imageLikeInFlight) return;
+
+    HapticFeedback.lightImpact();
+    _imageLikeInFlight = true;
+
+    await ref
+        .read(postLikeViewModelProvider.notifier)
+        .toggleLike(postId: post.id);
+
+    if (!mounted) return;
+
+    final result = ref.read(postLikeViewModelProvider);
+    _imageLikeInFlight = false;
+
+    result?.whenOrNull(
+      data: (like) {
+        if (like.postId == post.id) {
+          ref.invalidate(singlePostViewModelProvider(post.id));
+        }
+      },
+      error: (error, _) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      },
+    );
   }
 
   void _startPostBooking(

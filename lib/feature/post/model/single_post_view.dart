@@ -118,6 +118,7 @@ class AuthorLocationModel {
 /// =================================================
 class PostAuthorModel {
   final String id;
+  final String? salonId;
   final String salonName;
   final String username;
   final String? displayPicture;
@@ -126,6 +127,7 @@ class PostAuthorModel {
 
   const PostAuthorModel({
     required this.id,
+    this.salonId,
     required this.salonName,
     required this.username,
     this.displayPicture,
@@ -136,6 +138,7 @@ class PostAuthorModel {
   factory PostAuthorModel.fromMap(Map<String, dynamic> map) {
     return PostAuthorModel(
       id: map['id'],
+      salonId: map['salon_id'],
       salonName: map['salon_name'] ?? '',
       username: map['username'] ?? '',
       displayPicture: resolveImageUrl(
@@ -442,6 +445,7 @@ class SimilarSectionModel {
 class SponsoredSalonModel {
   final String salonId;
   final String name;
+  final String? imageUrl;
   final String? location;
   final double? rating;
   final double price;
@@ -451,6 +455,7 @@ class SponsoredSalonModel {
   const SponsoredSalonModel({
     required this.salonId,
     required this.name,
+    this.imageUrl,
     this.location,
     this.rating,
     required this.price,
@@ -462,6 +467,7 @@ class SponsoredSalonModel {
     return SponsoredSalonModel(
       salonId: map['salon_id'],
       name: map['name'] ?? '',
+      imageUrl: resolveImageUrl(map['image_url']),
       location: map['location'],
       rating: map['rating'] != null ? (map['rating'] as num).toDouble() : null,
       price: (map['price'] as num?)?.toDouble() ?? 0,

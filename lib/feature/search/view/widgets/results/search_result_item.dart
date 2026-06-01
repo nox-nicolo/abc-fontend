@@ -1,6 +1,9 @@
 import 'package:africa_beuty/core/failure/failure.dart';
+import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
+import 'package:africa_beuty/feature/booking/view/widgets/start_booking/select_time.dart';
 import 'package:africa_beuty/feature/post/view/page/hashtag_result.dart';
 import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
+import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:africa_beuty/feature/saved/provider/saved_provider.dart';
 import 'package:africa_beuty/feature/search/model/search.dart';
 import 'package:africa_beuty/feature/service/view/page/service_view_page.dart';
@@ -10,16 +13,17 @@ import 'package:fpdart/fpdart.dart';
 
 class SearchResultItem extends StatelessWidget {
   final SearchResult result;
+  final VoidCallback? onSelected;
 
-  const SearchResultItem({super.key, required this.result});
+  const SearchResultItem({super.key, required this.result, this.onSelected});
 
   @override
   Widget build(BuildContext context) {
     return switch (result) {
-      SearchUserResult r => _UserTile(user: r),
-      SearchSalonResult r => _SalonTile(salon: r),
-      SearchServiceResult r => _ServiceTile(service: r),
-      SearchHashtagResult r => _HashtagTile(hashtag: r),
+      SearchUserResult r => _UserTile(user: r, onSelected: onSelected),
+      SearchSalonResult r => _SalonTile(salon: r, onSelected: onSelected),
+      SearchServiceResult r => _ServiceTile(service: r, onSelected: onSelected),
+      SearchHashtagResult r => _HashtagTile(hashtag: r, onSelected: onSelected),
     };
   }
 }
@@ -30,8 +34,9 @@ class SearchResultItem extends StatelessWidget {
 
 class _UserTile extends StatelessWidget {
   final SearchUserResult user;
+  final VoidCallback? onSelected;
 
-  const _UserTile({required this.user});
+  const _UserTile({required this.user, this.onSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +51,7 @@ class _UserTile extends StatelessWidget {
       subtitle: user.fullName != null ? Text(user.fullName!) : null,
       // trailing: const Icon(Icons.chevron_right),  // Display later base on the user profile
       onTap: () {
+        onSelected?.call();
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) =>
@@ -63,8 +69,9 @@ class _UserTile extends StatelessWidget {
 
 class _SalonTile extends StatelessWidget {
   final SearchSalonResult salon;
+  final VoidCallback? onSelected;
 
-  const _SalonTile({required this.salon});
+  const _SalonTile({required this.salon, this.onSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -83,16 +90,17 @@ class _SalonTile extends StatelessWidget {
           if (salon.isVerified) const Icon(Icons.verified, color: Colors.blue),
           _SaveButton(
             id: salon.id,
+            initialSaved: salon.isSaved,
             onToggle: (ref, id) =>
                 ref.read(savedRepositoryProvider).toggleSalon(id),
           ),
         ],
       ),
       onTap: () {
+        onSelected?.call();
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) =>
-                ViewProfilePage(isServiceProfile: true, userId: salon.id),
+            builder: (_) => ViewServiceProfilePage(salonId: salon.id),
           ),
         );
       },
@@ -104,16 +112,16 @@ class _SalonTile extends StatelessWidget {
 /// SERVICE TILE
 ////////////////////////////////////////////////////////////
 
-class _ServiceTile extends StatelessWidget {
+class _ServiceTile extends ConsumerWidget {
   final SearchServiceResult service;
+  final VoidCallback? onSelected;
 
-  const _ServiceTile({required this.service});
+  const _ServiceTile({required this.service, this.onSelected});
 
   @override
-  Widget build(BuildContext context) {
-    final priceText = service.priceMin != null
-        ? 'From \$${service.priceMin!.toStringAsFixed(0)}'
-        : null;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final priceText = _priceText(service);
+    final offerId = service.salonServicePriceId;
 
     return ListTile(
       leading: CircleAvatar(
@@ -127,15 +135,18 @@ class _ServiceTile extends StatelessWidget {
       title: Text(service.serviceName),
       subtitle: Text(
         [
+          if (service.salonName != null) 'At ${service.salonName}',
           service.parentServiceName,
           priceText,
+          if (service.durationMinutes != null) '${service.durationMinutes} min',
         ].where((e) => e != null).join(' • '),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _SaveButton(
-            id: service.id,
+            id: service.salonServicePriceId ?? service.id,
+            initialSaved: service.isSaved,
             onToggle: (ref, id) =>
                 ref.read(savedRepositoryProvider).toggleService(id),
           ),
@@ -143,6 +154,24 @@ class _ServiceTile extends StatelessWidget {
         ],
       ),
       onTap: () {
+        onSelected?.call();
+        if (offerId != null && offerId.isNotEmpty) {
+          ref.read(bookingDraftProvider.notifier)
+            ..reset()
+            ..selectSalonOffer(
+              salonServicePriceId: offerId,
+              salonName: service.salonName ?? 'Selected salon',
+              serviceName: service.serviceName,
+              price: service.priceMin ?? 0,
+              currency: service.currency ?? '',
+              durationMinutes: service.durationMinutes ?? 60,
+            );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const PickDateTimePage()));
+          return;
+        }
+
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ServiceDetailsPage(serviceId: service.id),
@@ -151,12 +180,32 @@ class _ServiceTile extends StatelessWidget {
       },
     );
   }
+
+  String? _priceText(SearchServiceResult service) {
+    final currency = service.currency?.trim();
+    final currencyPrefix = currency == null || currency.isEmpty
+        ? ''
+        : '$currency ';
+    final min = service.priceMin;
+    final max = service.priceMax;
+    if (min == null && max == null) return null;
+    if (min != null && max != null && max != min) {
+      return '$currencyPrefix${min.toStringAsFixed(0)}-${max.toStringAsFixed(0)}';
+    }
+    final price = min ?? max;
+    return 'From $currencyPrefix${price!.toStringAsFixed(0)}';
+  }
 }
 
 class _SaveButton extends ConsumerStatefulWidget {
-  const _SaveButton({required this.id, required this.onToggle});
+  const _SaveButton({
+    required this.id,
+    required this.onToggle,
+    this.initialSaved = false,
+  });
 
   final String id;
+  final bool initialSaved;
   final Future<Either<AppFailure, bool>> Function(WidgetRef ref, String id)
   onToggle;
 
@@ -165,8 +214,23 @@ class _SaveButton extends ConsumerStatefulWidget {
 }
 
 class _SaveButtonState extends ConsumerState<_SaveButton> {
-  bool _saved = false;
+  late bool _saved;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _saved = widget.initialSaved;
+  }
+
+  @override
+  void didUpdateWidget(covariant _SaveButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.id != widget.id ||
+        oldWidget.initialSaved != widget.initialSaved) {
+      _saved = widget.initialSaved;
+    }
+  }
 
   Future<void> _toggle() async {
     if (_loading) return;
@@ -216,8 +280,9 @@ class _SaveButtonState extends ConsumerState<_SaveButton> {
 
 class _HashtagTile extends StatelessWidget {
   final SearchHashtagResult hashtag;
+  final VoidCallback? onSelected;
 
-  const _HashtagTile({required this.hashtag});
+  const _HashtagTile({required this.hashtag, this.onSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +292,7 @@ class _HashtagTile extends StatelessWidget {
       subtitle: Text('${hashtag.postCount} posts'),
       trailing: const Icon(Icons.chevron_right),
       onTap: () {
+        onSelected?.call();
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => HashtagScreen(hashtagId: hashtag.id),

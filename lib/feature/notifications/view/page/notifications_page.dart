@@ -330,41 +330,6 @@ class _NotificationTile extends StatelessWidget {
 
   const _NotificationTile({required this.item, required this.onTap});
 
-  String _actionText(String type) {
-    switch (type) {
-      case 'like':
-        return 'liked your post';
-      case 'welcome':
-        return 'Welcome to African Beauty';
-      case 'comment':
-        return 'commented on your post';
-      case 'reply':
-        return 'replied to your comment';
-      case 'message':
-        return 'sent you a message';
-      case 'booking_new':
-        return 'booked your service';
-      case 'booking_confirmed':
-        return 'confirmed your booking';
-      case 'booking_rejected':
-        return 'declined your booking';
-      case 'booking_cancelled':
-        return 'cancelled their booking';
-      case 'booking_completed':
-        return 'marked your booking as completed';
-      case 'booking_rescheduled':
-        return 'rescheduled their booking';
-      case 'booking_reminder_ai':
-        return 'sent a booking reminder';
-      case 'salon_event_marketing':
-        return 'invited you to an event';
-      case 'salon_promotion_campaign':
-        return 'shared a promotion';
-      default:
-        return 'sent you a notification';
-    }
-  }
-
   IconData _leadingIcon(String type) {
     switch (type) {
       case 'like':
@@ -377,17 +342,29 @@ class _NotificationTile extends StatelessWidget {
         return Icons.mode_comment;
       case 'message':
         return Icons.chat_bubble;
+      case 'post_share':
+        return Icons.ios_share_rounded;
       case 'booking_new':
         return Icons.event_available;
       case 'booking_confirmed':
       case 'booking_completed':
+      case 'booking_review_request':
+      case 'booking_review_requested':
+      case 'review_request':
         return Icons.check_circle;
       case 'booking_rejected':
       case 'booking_cancelled':
+      case 'booking_expired':
+      case 'booking_no_show':
         return Icons.cancel;
       case 'booking_rescheduled':
       case 'booking_reminder_ai':
+      case 'rebooking_reminder_ai':
         return Icons.schedule;
+      case 'booking_stylist_assigned':
+      case 'stylist_assigned':
+      case 'stylist_assigned_to_booking':
+        return Icons.badge_rounded;
       case 'salon_event_marketing':
         return Icons.celebration_rounded;
       case 'salon_promotion_campaign':
@@ -407,19 +384,29 @@ class _NotificationTile extends StatelessWidget {
       case 'comment':
       case 'reply':
       case 'message':
+      case 'post_share':
         return scheme.primary;
       case 'booking_new':
       case 'booking_rescheduled':
       case 'booking_reminder_ai':
+      case 'rebooking_reminder_ai':
+      case 'booking_stylist_assigned':
+      case 'stylist_assigned':
+      case 'stylist_assigned_to_booking':
         return scheme.tertiary;
       case 'salon_event_marketing':
       case 'salon_promotion_campaign':
         return scheme.primary;
       case 'booking_confirmed':
       case 'booking_completed':
+      case 'booking_review_request':
+      case 'booking_review_requested':
+      case 'review_request':
         return scheme.secondary;
       case 'booking_rejected':
       case 'booking_cancelled':
+      case 'booking_expired':
+      case 'booking_no_show':
         return scheme.error;
       default:
         return scheme.onSurfaceVariant;
@@ -436,11 +423,194 @@ class _NotificationTile extends StatelessWidget {
     return '${(diff.inDays / 7).floor()}w';
   }
 
+  _NotificationCopy _copyFor(NotificationModel item) {
+    final actorName = item.actor.username.trim().isEmpty
+        ? 'Someone'
+        : item.actor.username.trim();
+    final preview = item.preview?.trim();
+    final hasPreview = preview != null && preview.isNotEmpty;
+
+    switch (item.type) {
+      case 'welcome':
+        return const _NotificationCopy(
+          title: 'Welcome to African Beauty',
+          subtitle:
+              'Your bookings, salon updates, messages, and post activity will show here.',
+        );
+      case 'like':
+        return _NotificationCopy(
+          title: '$actorName liked your post',
+          subtitle: hasPreview ? preview : 'Open the post to see the activity.',
+          action: 'View post',
+        );
+      case 'comment':
+        return _NotificationCopy(
+          title: '$actorName commented on your post',
+          subtitle: hasPreview
+              ? preview
+              : 'Open the post to join the conversation.',
+          action: 'Open comments',
+        );
+      case 'reply':
+        return _NotificationCopy(
+          title: '$actorName replied to your comment',
+          subtitle: hasPreview
+              ? preview
+              : 'Open the post to continue the thread.',
+          action: 'Open reply',
+        );
+      case 'message':
+        return _NotificationCopy(
+          title: 'New message from $actorName',
+          subtitle: hasPreview
+              ? preview
+              : 'Open chats to continue the conversation.',
+          action: 'Open chats',
+        );
+      case 'post_share':
+        return _NotificationCopy(
+          title: '$actorName shared a post with you',
+          subtitle: hasPreview
+              ? preview
+              : 'Open the post to see what they sent.',
+          action: 'View post',
+        );
+      case 'booking_new':
+        return _NotificationCopy(
+          title: 'New booking request',
+          subtitle: hasPreview
+              ? preview
+              : '$actorName requested a service booking.',
+          action: 'Review booking',
+        );
+      case 'booking_confirmed':
+        return _NotificationCopy(
+          title: 'Booking confirmed',
+          subtitle: hasPreview
+              ? preview
+              : 'Your appointment is confirmed. Check the time, service, and salon details.',
+          action: 'View booking',
+        );
+      case 'booking_rejected':
+        return _NotificationCopy(
+          title: 'Booking declined',
+          subtitle: hasPreview
+              ? preview
+              : 'The salon could not accept this request. Choose another time when you are ready.',
+          action: 'Choose another time',
+        );
+      case 'booking_cancelled':
+        return _NotificationCopy(
+          title: 'Booking cancelled',
+          subtitle: hasPreview ? preview : '$actorName cancelled this booking.',
+          action: 'View details',
+        );
+      case 'booking_completed':
+      case 'booking_review_request':
+      case 'booking_review_requested':
+      case 'review_request':
+        return _NotificationCopy(
+          title: item.type == 'booking_completed'
+              ? 'Service marked complete'
+              : 'Review request',
+          subtitle: hasPreview
+              ? preview
+              : 'Your review is optional and helps future customers choose with confidence.',
+          action: 'Leave a review',
+        );
+      case 'booking_rescheduled':
+        return _NotificationCopy(
+          title: 'Booking rescheduled',
+          subtitle: hasPreview
+              ? preview
+              : 'The appointment time changed. Open the booking to confirm the new details.',
+          action: 'Check new time',
+        );
+      case 'booking_stylist_assigned':
+      case 'stylist_assigned':
+      case 'stylist_assigned_to_booking':
+        return _NotificationCopy(
+          title: 'Stylist assigned',
+          subtitle: hasPreview
+              ? preview
+              : 'A stylist has been assigned to your booking.',
+          action: 'View stylist',
+        );
+      case 'booking_reminder_ai':
+        return _NotificationCopy(
+          title: 'Upcoming booking reminder',
+          subtitle: hasPreview
+              ? preview
+              : 'Your appointment is coming up. Open it to review the time and location.',
+          action: 'View booking',
+        );
+      case 'rebooking_reminder_ai':
+        return _NotificationCopy(
+          title: 'Time to book again',
+          subtitle: hasPreview
+              ? preview
+              : 'A service you liked may be ready for another visit.',
+          action: 'Book again',
+        );
+      case 'booking_expired':
+        return _NotificationCopy(
+          title: 'Booking request expired',
+          subtitle: hasPreview
+              ? preview
+              : 'This request expired before it could be approved.',
+          action: 'View booking',
+        );
+      case 'booking_no_show':
+        return _NotificationCopy(
+          title: 'Booking marked no-show',
+          subtitle: hasPreview
+              ? preview
+              : 'Contact the salon if this does not look right.',
+          action: 'View booking',
+        );
+      case 'salon_event_marketing':
+        return _NotificationCopy(
+          title: 'Salon event invitation',
+          subtitle: hasPreview ? preview : '$actorName shared a salon event.',
+          action: 'View event',
+        );
+      case 'salon_promotion_campaign':
+        return _NotificationCopy(
+          title: 'Salon offer',
+          subtitle: hasPreview ? preview : '$actorName shared a promotion.',
+          action: 'View offer',
+        );
+      case 'event_based_booking':
+        return _NotificationCopy(
+          title: 'Booking idea',
+          subtitle: hasPreview
+              ? preview
+              : '$actorName has a suggestion for your next visit.',
+          action: 'View suggestion',
+        );
+      default:
+        return _NotificationCopy(
+          title: hasPreview ? preview : 'New notification',
+          subtitle: hasPreview ? null : '$actorName sent you an update.',
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final avatar = item.actor.profilePicture;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final copy =
+        item.isGrouped &&
+            item.preview != null &&
+            item.preview!.trim().isNotEmpty
+        ? _NotificationCopy(
+            title: item.preview!.trim(),
+            subtitle: 'Open the post to see the latest activity.',
+            action: 'View post',
+          )
+        : _copyFor(item);
 
     return InkWell(
       onTap: onTap,
@@ -490,61 +660,52 @@ class _NotificationTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (item.type == 'welcome')
-                    Text(
-                      _actionText(item.type),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    )
-                  else if (item.isGrouped &&
-                      item.preview != null &&
-                      item.preview!.isNotEmpty)
-                    Text(
-                      item.preview!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    )
-                  else
-                    RichText(
-                      text: TextSpan(
-                        style: theme.textTheme.bodyMedium,
-                        children: [
-                          TextSpan(
-                            text: item.actor.username,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          const TextSpan(text: ' '),
-                          TextSpan(text: _actionText(item.type)),
-                        ],
-                      ),
+                  Text(
+                    copy.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: item.isRead
+                          ? FontWeight.w600
+                          : FontWeight.w800,
                     ),
-                  if (!item.isGrouped &&
-                      item.preview != null &&
-                      item.preview!.isNotEmpty) ...[
+                  ),
+                  if (copy.subtitle != null && copy.subtitle!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      item.preview!,
+                      copy.subtitle!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.7,
+                          alpha: 0.72,
                         ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 4),
-                  Text(
-                    _relativeTime(item.createdAt),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 2,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        _relativeTime(item.createdAt),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                      ),
+                      if (copy.action != null)
+                        Text(
+                          copy.action!,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: _leadingColor(item.type, scheme),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -564,4 +725,12 @@ class _NotificationTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _NotificationCopy {
+  const _NotificationCopy({required this.title, this.subtitle, this.action});
+
+  final String title;
+  final String? subtitle;
+  final String? action;
 }

@@ -5,7 +5,11 @@ import 'package:africa_beuty/feature/post/view_model/comment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-Future<void> showCommentsSheet(BuildContext context, String postId) {
+Future<void> showCommentsSheet(
+  BuildContext context,
+  String postId, {
+  bool canComment = true,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -15,7 +19,7 @@ Future<void> showCommentsSheet(BuildContext context, String postId) {
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
-    builder: (_) => _CommentsSheet(postId: postId),
+    builder: (_) => _CommentsSheet(postId: postId, canComment: canComment),
   );
 }
 
@@ -23,6 +27,7 @@ Future<void> showRepliesSheet(
   BuildContext context,
   String postId,
   CommentModel parent,
+  bool canComment,
 ) {
   return showModalBottomSheet<void>(
     context: context,
@@ -32,23 +37,31 @@ Future<void> showRepliesSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (_) => _RepliesSheet(postId: postId, parent: parent),
+    builder: (_) =>
+        _RepliesSheet(postId: postId, parent: parent, canComment: canComment),
   );
 }
 
 class _CommentsSheet extends ConsumerStatefulWidget {
   final String postId;
-  const _CommentsSheet({required this.postId});
+  final bool canComment;
+
+  const _CommentsSheet({required this.postId, required this.canComment});
 
   @override
   ConsumerState<_CommentsSheet> createState() => _CommentsSheetState();
 }
 
 class _RepliesSheet extends ConsumerStatefulWidget {
-  const _RepliesSheet({required this.postId, required this.parent});
+  const _RepliesSheet({
+    required this.postId,
+    required this.parent,
+    required this.canComment,
+  });
 
   final String postId;
   final CommentModel parent;
+  final bool canComment;
 
   @override
   ConsumerState<_RepliesSheet> createState() => _RepliesSheetState();
@@ -80,7 +93,7 @@ class _RepliesSheetState extends ConsumerState<_RepliesSheet> {
 
   Future<void> _send() async {
     final text = _controller.text.trim();
-    if (text.isEmpty || _sending) return;
+    if (!widget.canComment || text.isEmpty || _sending) return;
     _controller.clear();
     setState(() => _sending = true);
     final result = await ref
@@ -183,44 +196,45 @@ class _RepliesSheetState extends ConsumerState<_RepliesSheet> {
               },
             ),
           ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              10,
-              16,
-              MediaQuery.of(context).viewInsets.bottom + 16,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: 'Write a reply...',
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.4),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
+          if (widget.canComment)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                10,
+                16,
+                MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        hintText: 'Write a reply...',
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.4),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                IconButton.filled(
-                  onPressed: _sending ? null : _send,
-                  icon: _sending
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.arrow_upward_rounded),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  IconButton.filled(
+                    onPressed: _sending ? null : _send,
+                    icon: _sending
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.arrow_upward_rounded),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -253,7 +267,7 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
 
   Future<void> _send() async {
     final text = _controller.text.trim();
-    if (text.isEmpty || _sending) return;
+    if (!widget.canComment || text.isEmpty || _sending) return;
 
     _controller.clear();
     setState(() => _sending = true);
@@ -352,7 +366,10 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
           Expanded(child: _buildList(state, theme)),
 
           // Input Section
-          _buildInputArea(theme),
+          if (widget.canComment)
+            _buildInputArea(theme)
+          else
+            _CommentsOffFooter(theme: theme),
         ],
       ),
     );
@@ -478,7 +495,9 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
             const SizedBox(height: 12),
             Text('No comments yet', style: theme.textTheme.bodyLarge),
             Text(
-              'Be the first to join the conversation.',
+              widget.canComment
+                  ? 'Be the first to join the conversation.'
+                  : 'Comments are off for this post.',
               style: theme.textTheme.bodySmall,
             ),
           ],
@@ -504,12 +523,51 @@ class _CommentsSheetState extends ConsumerState<_CommentsSheet> {
           onLike: () => ref
               .read(commentsViewModelProvider(widget.postId).notifier)
               .toggleLike(c.id),
-          onReply: () => setState(() => _replyingTo = c),
+          onReply: widget.canComment
+              ? () => setState(() => _replyingTo = c)
+              : null,
           onViewReplies: c.replyCount > 0
-              ? () => showRepliesSheet(context, widget.postId, c)
+              ? () => showRepliesSheet(
+                  context,
+                  widget.postId,
+                  c,
+                  widget.canComment,
+                )
               : null,
         );
       },
+    );
+  }
+}
+
+class _CommentsOffFooter extends StatelessWidget {
+  const _CommentsOffFooter({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        16,
+        14,
+        16,
+        MediaQuery.of(context).viewInsets.bottom + 18,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          top: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5),
+        ),
+      ),
+      child: Text(
+        'Comments are off for this post.',
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }

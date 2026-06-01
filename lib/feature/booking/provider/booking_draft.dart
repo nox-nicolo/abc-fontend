@@ -31,12 +31,20 @@ class BookingDraftNotifier extends _$BookingDraftNotifier {
       price: price,
       currency: currency,
       durationMinutes: durationMinutes,
+      clearStylist: true,
     );
   }
 
   // DATE & TIME
   void setStartAt(DateTime dateTime) {
-    state = state.copyWith(startAt: dateTime);
+    state = state.copyWith(startAt: dateTime, clearStylist: true);
+  }
+
+  void setStylist(String? stylistId) {
+    state = state.copyWith(
+      stylistId: stylistId,
+      clearStylist: stylistId == null,
+    );
   }
 
   // NOTE

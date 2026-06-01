@@ -12,23 +12,30 @@ class AvailabilityRequest {
     required this.salonServicePriceId,
     required this.startDate,
     this.days = 14,
+    this.stylistId,
   });
 
   final String salonServicePriceId;
   final DateTime startDate;
   final int days;
+  final String? stylistId;
 
   @override
   bool operator ==(Object other) {
     return other is AvailabilityRequest &&
         other.salonServicePriceId == salonServicePriceId &&
+        other.stylistId == stylistId &&
         DateUtils.isSameDay(other.startDate, startDate) &&
         other.days == days;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(salonServicePriceId, DateUtils.dateOnly(startDate), days);
+  int get hashCode => Object.hash(
+    salonServicePriceId,
+    stylistId,
+    DateUtils.dateOnly(startDate),
+    days,
+  );
 }
 
 final availabilityProvider = FutureProvider.autoDispose
@@ -39,6 +46,7 @@ final availabilityProvider = FutureProvider.autoDispose
             salonServicePriceId: request.salonServicePriceId,
             startDate: request.startDate,
             days: request.days,
+            stylistId: request.stylistId,
           );
       return result.match((failure) => throw failure.message, (days) => days);
     });

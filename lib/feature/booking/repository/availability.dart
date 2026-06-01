@@ -12,12 +12,15 @@ class AvailabilityRepository {
     required String salonServicePriceId,
     required DateTime startDate,
     int days = 14,
+    String? stylistId,
   }) async {
     try {
       final uri = Uri.parse('${ServerConstants.serverUrl}/booking/availability')
           .replace(
             queryParameters: {
               'salon_service_price_id': salonServicePriceId,
+              if (stylistId != null && stylistId.isNotEmpty)
+                'stylist_id': stylistId,
               'start_date': DateFormat('yyyy-MM-dd').format(startDate),
               'days': days.toString(),
             },

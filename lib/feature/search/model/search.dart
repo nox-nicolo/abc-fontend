@@ -5,6 +5,13 @@ import 'package:africa_beuty/core/utils/image_url.dart';
 
 enum SearchEntityType { user, salon, service, hashtag }
 
+class SearchPageResult {
+  final List<SearchResult> results;
+  final String? nextCursor;
+
+  const SearchPageResult({required this.results, this.nextCursor});
+}
+
 sealed class SearchResult {
   final String id;
   final SearchEntityType entity;
@@ -107,6 +114,7 @@ class SearchSalonResult extends SearchResult {
   final String? coverImage;
   final bool isVerified;
   final String ownerName;
+  final bool isSaved;
 
   const SearchSalonResult({
     required super.id,
@@ -116,6 +124,7 @@ class SearchSalonResult extends SearchResult {
     this.coverImage,
     required this.isVerified,
     required this.ownerName,
+    this.isSaved = false,
   }) : super(entity: SearchEntityType.salon);
 
   SearchSalonResult copyWith({
@@ -126,6 +135,7 @@ class SearchSalonResult extends SearchResult {
     String? coverImage,
     bool? isVerified,
     String? ownerName,
+    bool? isSaved,
   }) {
     return SearchSalonResult(
       id: id ?? this.id,
@@ -135,6 +145,7 @@ class SearchSalonResult extends SearchResult {
       coverImage: coverImage ?? this.coverImage,
       isVerified: isVerified ?? this.isVerified,
       ownerName: ownerName ?? this.ownerName,
+      isSaved: isSaved ?? this.isSaved,
     );
   }
 
@@ -147,6 +158,7 @@ class SearchSalonResult extends SearchResult {
       coverImage: resolveImageUrl(map['coverImage']),
       isVerified: map['isVerified'] ?? false,
       ownerName: _textOrEmpty(map['ownerName']),
+      isSaved: map['isSaved'] == true,
     );
   }
 
@@ -161,6 +173,7 @@ class SearchSalonResult extends SearchResult {
       'coverImage': coverImage,
       'isVerified': isVerified,
       'ownerName': ownerName,
+      'isSaved': isSaved,
     };
   }
 
@@ -174,7 +187,8 @@ class SearchSalonResult extends SearchResult {
         other.title == title &&
         other.coverImage == coverImage &&
         other.isVerified == isVerified &&
-        other.ownerName == ownerName;
+        other.ownerName == ownerName &&
+        other.isSaved == isSaved;
   }
 
   @override
@@ -185,7 +199,8 @@ class SearchSalonResult extends SearchResult {
       title.hashCode ^
       coverImage.hashCode ^
       isVerified.hashCode ^
-      ownerName.hashCode;
+      ownerName.hashCode ^
+      isSaved.hashCode;
 }
 
 String _textOrEmpty(Object? value) => _textOrNull(value) ?? '';
@@ -203,7 +218,13 @@ class SearchServiceResult extends SearchResult {
   final String? parentServiceName;
   final double? priceMin;
   final double? priceMax;
+  final String? currency;
+  final int? durationMinutes;
   final String? imageUrl;
+  final String? salonId;
+  final String? salonName;
+  final String? salonServicePriceId;
+  final bool isSaved;
 
   const SearchServiceResult({
     required super.id,
@@ -213,7 +234,13 @@ class SearchServiceResult extends SearchResult {
     this.parentServiceName,
     this.priceMin,
     this.priceMax,
+    this.currency,
+    this.durationMinutes,
     this.imageUrl,
+    this.salonId,
+    this.salonName,
+    this.salonServicePriceId,
+    this.isSaved = false,
   }) : super(entity: SearchEntityType.service);
 
   SearchServiceResult copyWith({
@@ -224,7 +251,13 @@ class SearchServiceResult extends SearchResult {
     String? parentServiceName,
     double? priceMin,
     double? priceMax,
+    String? currency,
+    int? durationMinutes,
     String? imageUrl,
+    String? salonId,
+    String? salonName,
+    String? salonServicePriceId,
+    bool? isSaved,
   }) {
     return SearchServiceResult(
       id: id ?? this.id,
@@ -234,7 +267,13 @@ class SearchServiceResult extends SearchResult {
       parentServiceName: parentServiceName ?? this.parentServiceName,
       priceMin: priceMin ?? this.priceMin,
       priceMax: priceMax ?? this.priceMax,
+      currency: currency ?? this.currency,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
       imageUrl: imageUrl ?? this.imageUrl,
+      salonId: salonId ?? this.salonId,
+      salonName: salonName ?? this.salonName,
+      salonServicePriceId: salonServicePriceId ?? this.salonServicePriceId,
+      isSaved: isSaved ?? this.isSaved,
     );
   }
 
@@ -247,7 +286,13 @@ class SearchServiceResult extends SearchResult {
       parentServiceName: map['parentServiceName'],
       priceMin: (map['priceMin'] as num?)?.toDouble(),
       priceMax: (map['priceMax'] as num?)?.toDouble(),
+      currency: _textOrNull(map['currency']),
+      durationMinutes: (map['durationMinutes'] as num?)?.toInt(),
       imageUrl: resolveImageUrl(map['imageUrl']),
+      salonId: _textOrNull(map['salonId']),
+      salonName: _textOrNull(map['salonName']),
+      salonServicePriceId: _textOrNull(map['salonServicePriceId']),
+      isSaved: map['isSaved'] == true,
     );
   }
 
@@ -262,7 +307,13 @@ class SearchServiceResult extends SearchResult {
       'parentServiceName': parentServiceName,
       'priceMin': priceMin,
       'priceMax': priceMax,
+      'currency': currency,
+      'durationMinutes': durationMinutes,
       'imageUrl': imageUrl,
+      'salonId': salonId,
+      'salonName': salonName,
+      'salonServicePriceId': salonServicePriceId,
+      'isSaved': isSaved,
     };
   }
 
@@ -277,7 +328,13 @@ class SearchServiceResult extends SearchResult {
         other.parentServiceName == parentServiceName &&
         other.priceMin == priceMin &&
         other.priceMax == priceMax &&
-        other.imageUrl == imageUrl;
+        other.currency == currency &&
+        other.durationMinutes == durationMinutes &&
+        other.imageUrl == imageUrl &&
+        other.salonId == salonId &&
+        other.salonName == salonName &&
+        other.salonServicePriceId == salonServicePriceId &&
+        other.isSaved == isSaved;
   }
 
   @override
@@ -289,7 +346,13 @@ class SearchServiceResult extends SearchResult {
       parentServiceName.hashCode ^
       priceMin.hashCode ^
       priceMax.hashCode ^
-      imageUrl.hashCode;
+      currency.hashCode ^
+      durationMinutes.hashCode ^
+      imageUrl.hashCode ^
+      salonId.hashCode ^
+      salonName.hashCode ^
+      salonServicePriceId.hashCode ^
+      isSaved.hashCode;
 }
 
 class SearchHashtagResult extends SearchResult {

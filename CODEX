@@ -104,3 +104,36 @@ Fallback web preview if app not installed
 
 
 The strongest next move is Public Profile Preview + Profile Completion Score + backend enforcement of saved settings. Those will make the profile feel less like “settings screens” and more like a real production-grade account system.
+
+Later, if you want richer ratings, you can add optional categories:
+Service quality
+Cleanliness
+Time keeping
+Stylist skill
+Value for money
+
+
+Notifications page
+Important for booking trust: confirmed, rejected, completed, review request, stylist assigned, rescheduled.
+Need clean copy and correct navigation when tapped.
+My strongest next pick: Create Post page, because salon content quality powers the whole app.
+
+
+Best next moves, in order:
+
+Create Post quality guide
+Add subtle checks/copy for “clear service photo, service selected, useful caption, hashtags, tag stylist/client where relevant.”
+
+Post preview before publish
+Let salon see how the post will appear in feed/profile before submitting.
+
+Draft/save recovery
+If they leave mid-post, keep caption/images/settings so content is not lost.
+
+Better post success flow
+After posting: “View post”, “Create another”, “Share”, maybe “Boost later”.
+
+Notifications tap polish follow-up
+If backend sends exact notification types for stylist assigned/review request, confirm frontend recognizes all names.
+
+My pick: Post preview before publish + better success flow. It’s visible, high-impact, and makes salon content creation feel much more professional.

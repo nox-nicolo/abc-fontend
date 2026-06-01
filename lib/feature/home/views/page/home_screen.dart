@@ -4,7 +4,6 @@ import 'package:africa_beuty/feature/ads/provider/ad_provider.dart';
 import 'package:africa_beuty/feature/ads/view/sponsored_ad_post.dart';
 import 'package:africa_beuty/feature/auth/view_model/me_viewmodel.dart';
 import 'package:africa_beuty/feature/chat/view/page/chats_page.dart';
-import 'package:africa_beuty/feature/home/view_model/post_like.dart';
 import 'package:africa_beuty/feature/post/view/page/single_post.dart';
 import 'package:africa_beuty/core/widgets/spacing.dart';
 import 'package:africa_beuty/feature/home/view_model/category.dart';
@@ -12,10 +11,8 @@ import 'package:africa_beuty/feature/home/view_model/home_posts.dart';
 import 'package:africa_beuty/feature/home/view_model/top_salon.dart';
 import 'package:africa_beuty/feature/notifications/view/widget/notifications_bell.dart';
 import 'package:africa_beuty/feature/post/view/page/view_post.dart';
-import 'package:africa_beuty/feature/profile/view/page/view_profile.dart';
 import 'package:africa_beuty/feature/profile/view/widget/view_salon_profile.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -64,6 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       await Future.wait([
         ref.read(meViewModelProvider.notifier).getMeeData(),
         ref.read(topSalonViewModelProvider.notifier).refresh(),
+        ref.read(homeCategoriesViewModelProvider.notifier).refresh(),
         ref.read(feedViewModelProvider.notifier).refresh(),
       ]);
     }
@@ -302,10 +300,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ViewProfilePage(
-                                      isServiceProfile: true,
-                                      userId: salon.salonId,
-                                    ),
+                                    builder: (context) =>
+                                        ViewServiceProfilePage(
+                                          salonId: salon.salonId,
+                                        ),
                                   ),
                                 );
                               },
@@ -430,6 +428,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
 
                           data: (posts) {
+                            if (posts.isEmpty) {
+                              return const _EmptyFeedState();
+                            }
+
                             final ads = homeAds.asData?.value ?? const [];
                             final hasAds = ads.isNotEmpty;
 
@@ -456,15 +458,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         PostViewPage(postId: post.id),
                                   ),
                                 );
-                              },
-
-                              // ---------------- DOUBLE TAP → LIKE ----------------
-                              onDoubleTap: () {
-                                ref
-                                    .read(postLikeViewModelProvider.notifier)
-                                    .toggleLike(postId: post.id);
-                                // Style more
-                                HapticFeedback.lightImpact();
                               },
 
                               // ---------------- LONG PRESS (FUTURE) ----------------
@@ -500,6 +493,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       },
                       childCount: feed.maybeWhen(
                         data: (posts) {
+                          if (posts.isEmpty) return 1;
                           final hasAds =
                               (homeAds.asData?.value ?? const []).isNotEmpty;
                           return hasAds
@@ -514,7 +508,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // Feed footer — loading more / end of feed
                   SliverToBoxAdapter(
                     child: feed.maybeWhen(
-                      data: (_) {
+                      data: (posts) {
+                        if (posts.isEmpty) return const SizedBox.shrink();
                         final notifier = ref.read(
                           feedViewModelProvider.notifier,
                         );
@@ -690,6 +685,46 @@ class _FeedFooterSkeleton extends StatelessWidget {
         SizedBox(height: 10),
         SkeletonCard(width: 160, height: 12),
       ],
+    );
+  }
+}
+
+class _EmptyFeedState extends StatelessWidget {
+  const _EmptyFeedState();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.auto_awesome_outlined,
+            size: 44,
+            color: colorScheme.primary,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No posts yet',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Follow salons, save styles, or search for services to shape your home feed.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

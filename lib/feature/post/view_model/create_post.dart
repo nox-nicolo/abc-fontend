@@ -52,7 +52,12 @@ class CreatePostViewModel extends _$CreatePostViewModel {
   Future<void> submit() async {
     if (state.isSubmitting) return;
 
-    state = state.copyWith(isSubmitting: true, isSuccess: false, error: null);
+    state = state.copyWith(
+      isSubmitting: true,
+      isSuccess: false,
+      clearError: true,
+      clearCreatedPostId: true,
+    );
 
     final model = _toModel(state);
 
@@ -65,10 +70,11 @@ class CreatePostViewModel extends _$CreatePostViewModel {
         error: failure.message,
       ),
 
-      Right(value: final _) => state.copyWith(
+      Right(value: final postId) => state.copyWith(
         isSubmitting: false,
         isSuccess: true,
-        error: null,
+        clearError: true,
+        createdPostId: postId,
       ),
     };
   }

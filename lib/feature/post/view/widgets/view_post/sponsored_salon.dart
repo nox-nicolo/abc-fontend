@@ -1,4 +1,3 @@
-
 /* ---------------------------------------------------
    SPONSORED SALONS
 --------------------------------------------------- */
@@ -12,10 +11,7 @@ import 'package:flutter/material.dart';
 class SponsoredSalonsSection extends StatelessWidget {
   final List<SponsoredSalon> salons;
 
-  const SponsoredSalonsSection({
-    super.key,
-    required this.salons,
-  });
+  const SponsoredSalonsSection({super.key, required this.salons});
 
   @override
   Widget build(BuildContext context) {
@@ -71,69 +67,82 @@ class _SalonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final hasImage = salon.imageUrl.trim().isNotEmpty;
+    final initial = salon.name.trim().isNotEmpty
+        ? salon.name.trim()[0].toUpperCase()
+        : 'S';
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        color: scheme.surfaceContainerLowest,
-        boxShadow: [
-          BoxShadow(
-            color: scheme.primary.withOpacity(0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          /// SALON LOGO / IMAGE
-          CircleAvatar(
-            radius: 26,
-            backgroundImage: NetworkImage(salon.imageUrl),
-          ),
-
-          const SizedBox(width: 14),
-
-          /// INFO
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  salon.name,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  salon.location,
-                  style: theme.textTheme.labelSmall,
-                ),
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    if (salon.price != null)
-                      _PricePill(price: salon.price!),
-                    if (salon.rating != null) ...[
-                      const SizedBox(width: 8),
-                      _RatingChip(rating: salon.rating!),
-                    ],
-                  ],
-                ),
-              ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: salon.onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: scheme.surfaceContainerLowest,
+          boxShadow: [
+            BoxShadow(
+              color: scheme.primary.withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
-          ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            /// SALON LOGO / IMAGE
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: scheme.primaryContainer,
+              backgroundImage: hasImage ? NetworkImage(salon.imageUrl) : null,
+              child: hasImage
+                  ? null
+                  : Text(
+                      initial,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
 
-          /// CTA
-          TextButton(
-            onPressed: salon.onTap,
-            child: const Text('View'),
-          ),
-        ],
+            const SizedBox(width: 14),
+
+            /// INFO
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    salon.name,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (salon.location.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(salon.location, style: theme.textTheme.labelSmall),
+                  ],
+                  const SizedBox(height: 8),
+
+                  Row(
+                    children: [
+                      if (salon.price != null) _PricePill(price: salon.price!),
+                      if (salon.rating != null) ...[
+                        const SizedBox(width: 8),
+                        _RatingChip(rating: salon.rating!),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            /// CTA
+            TextButton(onPressed: salon.onTap, child: const Text('View')),
+          ],
+        ),
       ),
     );
   }
@@ -155,15 +164,15 @@ class _PricePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: scheme.primary.withOpacity(0.12),
+        color: scheme.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         price,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: scheme.primary,
-            ),
+          fontWeight: FontWeight.w700,
+          color: scheme.primary,
+        ),
       ),
     );
   }

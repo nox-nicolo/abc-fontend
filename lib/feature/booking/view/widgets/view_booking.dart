@@ -1,5 +1,8 @@
 import 'package:africa_beuty/feature/booking/model/booking_status.dart';
+import 'package:africa_beuty/feature/booking/model/booking_stylist.dart';
+import 'package:africa_beuty/feature/booking/provider/salon_offer.dart';
 import 'package:africa_beuty/feature/booking/view_modal/booking_action.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -81,6 +84,12 @@ class _BookingDetailPageState extends ConsumerState<BookingDetailPage> {
                           icon: Icons.spa_outlined,
                           label: 'Service',
                           value: booking.serviceName,
+                        ),
+                        const SizedBox(height: 14),
+                        _InfoRow(
+                          icon: Icons.person_rounded,
+                          label: 'Stylist',
+                          value: _stylistDisplayName(booking),
                         ),
                       ],
                     ),
@@ -522,40 +531,268 @@ class _ActionButtons extends ConsumerWidget {
       case 'expired':
         return const SizedBox.shrink();
       case 'pending':
-        return Row(
+        return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
+            SizedBox(
+              width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: loading ? null : () => vm.reject(booking.id),
-                icon: const Icon(Icons.close_rounded),
-                label: const Text('Reject'),
+                onPressed: loading
+                    ? null
+                    : () => _showAssignStylistSheet(context, ref, booking),
+                icon: const Icon(Icons.person_add_alt_rounded),
+                label: Text(
+                  booking.stylistId == null || booking.stylistId!.isEmpty
+                      ? 'Assign Stylist'
+                      : 'Change Stylist',
+                ),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: loading ? null : () => vm.accept(booking.id),
-                icon: const Icon(Icons.check_rounded),
-                label: const Text('Accept'),
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: loading ? null : () => vm.reject(booking.id),
+                    icon: const Icon(Icons.close_rounded),
+                    label: const Text('Reject'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: loading ? null : () => vm.accept(booking.id),
+                    icon: const Icon(Icons.check_rounded),
+                    label: const Text('Accept'),
+                  ),
+                ),
+              ],
             ),
           ],
         );
 
       case 'confirmed':
-        return SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: FilledButton.icon(
-            onPressed: loading ? null : () => vm.complete(booking.id),
-            icon: const Icon(Icons.task_alt_rounded),
-            label: const Text('Mark as Completed'),
-          ),
+        if (booking.endAt.isAfter(DateTime.now())) {
+          return SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: OutlinedButton.icon(
+              onPressed: loading
+                  ? null
+                  : () => _showAssignStylistSheet(context, ref, booking),
+              icon: const Icon(Icons.person_add_alt_rounded),
+              label: Text(
+                booking.stylistId == null || booking.stylistId!.isEmpty
+                    ? 'Assign Stylist'
+                    : 'Change Stylist',
+              ),
+            ),
+          );
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: loading
+                    ? null
+                    : () => _showAssignStylistSheet(context, ref, booking),
+                icon: const Icon(Icons.person_add_alt_rounded),
+                label: Text(
+                  booking.stylistId == null || booking.stylistId!.isEmpty
+                      ? 'Assign Stylist'
+                      : 'Change Stylist',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: FilledButton.icon(
+                onPressed: loading ? null : () => vm.complete(booking.id),
+                icon: const Icon(Icons.task_alt_rounded),
+                label: const Text('Mark as Completed'),
+              ),
+            ),
+          ],
         );
 
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  void _showAssignStylistSheet(
+    BuildContext context,
+    WidgetRef ref,
+    BookingListItem booking,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (_) => _AssignStylistSheet(booking: booking),
+    );
+  }
+}
+
+class _AssignStylistSheet extends ConsumerWidget {
+  const _AssignStylistSheet({required this.booking});
+
+  final BookingListItem booking;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final request = BookingStylistsRequest(
+      salonServicePriceId: booking.salonServicePriceId,
+      startAt: booking.startAt,
+      excludeBookingId: booking.id,
+    );
+    final stylists = ref.watch(bookingStylistsProvider(request));
+    final actionLoading = ref.watch(bookingActionViewModelProvider).isLoading;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          16 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.62,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Assign stylist',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DateFormat('EEE, MMM d • HH:mm').format(booking.startAt),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: stylists.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, _) => Center(
+                    child: Text(error.toString(), textAlign: TextAlign.center),
+                  ),
+                  data: (items) {
+                    if (items.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No available stylists for this appointment time.',
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final stylist = items[index];
+                        return _AssignStylistTile(
+                          stylist: stylist,
+                          selected: booking.stylistId == stylist.stylistId,
+                          loading: actionLoading,
+                          onTap: () {
+                            ref
+                                .read(bookingActionViewModelProvider.notifier)
+                                .assignStylist(booking.id, stylist.stylistId);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AssignStylistTile extends StatelessWidget {
+  const _AssignStylistTile({
+    required this.stylist,
+    required this.selected,
+    required this.loading,
+    required this.onTap,
+  });
+
+  final BookingStylistModel stylist;
+  final bool selected;
+  final bool loading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ListTile(
+      enabled: !loading,
+      onTap: loading ? null : onTap,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: selected ? scheme.primary : scheme.outlineVariant,
+        ),
+      ),
+      leading: ClipOval(
+        child: stylist.image.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: stylist.image,
+                width: 46,
+                height: 46,
+                fit: BoxFit.cover,
+                errorWidget: (_, _, _) => const _StylistFallback(),
+              )
+            : const _StylistFallback(),
+      ),
+      title: Text(stylist.name),
+      subtitle: Text(_stylistSubtitle(stylist)),
+      trailing: selected
+          ? Icon(Icons.check_circle_rounded, color: scheme.primary)
+          : const Icon(Icons.chevron_right_rounded),
+    );
+  }
+
+  String _stylistSubtitle(BookingStylistModel stylist) {
+    final parts = <String>[];
+    final title = stylist.title?.trim();
+    if (title != null && title.isNotEmpty) parts.add(title);
+    if (stylist.reviewsCount > 0) {
+      parts.add('${stylist.rating.toStringAsFixed(1)} rating');
+    }
+    return parts.isEmpty ? 'Available at this time' : parts.join(' · ');
+  }
+}
+
+class _StylistFallback extends StatelessWidget {
+  const _StylistFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      radius: 23,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Icon(
+        Icons.person_rounded,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    );
   }
 }
 
@@ -564,4 +801,13 @@ String _effectiveBookingStatus(BookingListItem booking) {
     return 'expired';
   }
   return booking.status;
+}
+
+String _stylistDisplayName(BookingListItem booking) {
+  final name = booking.stylistName?.trim();
+  if (name != null && name.isNotEmpty) return name;
+  if (booking.stylistId != null && booking.stylistId!.isNotEmpty) {
+    return 'Assigned';
+  }
+  return 'Salon will assign';
 }

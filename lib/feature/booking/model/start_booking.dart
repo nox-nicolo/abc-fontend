@@ -2,16 +2,19 @@
 import 'dart:convert';
 
 import 'package:africa_beuty/core/utils/api_datetime.dart';
+import 'package:africa_beuty/core/utils/image_url.dart';
 
 class CreateBookingRequestModel {
   CreateBookingRequestModel({
     required this.salonServicePriceId,
     required this.startAt,
+    this.stylistId,
     this.note,
   });
 
   final String salonServicePriceId;
   final DateTime startAt;
+  final String? stylistId;
   final String? note;
 
   // --------------------------------------------------
@@ -20,11 +23,13 @@ class CreateBookingRequestModel {
   CreateBookingRequestModel copyWith({
     String? salonServicePriceId,
     DateTime? startAt,
+    String? stylistId,
     String? note,
   }) {
     return CreateBookingRequestModel(
       salonServicePriceId: salonServicePriceId ?? this.salonServicePriceId,
       startAt: startAt ?? this.startAt,
+      stylistId: stylistId ?? this.stylistId,
       note: note ?? this.note,
     );
   }
@@ -35,6 +40,7 @@ class CreateBookingRequestModel {
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'salon_service_price_id': salonServicePriceId,
+      if (stylistId != null && stylistId!.isNotEmpty) 'stylist_id': stylistId,
       'start_at': startAt.toIso8601String(),
       if (note != null && note!.isNotEmpty) 'note': note,
     };
@@ -47,6 +53,7 @@ class CreateBookingRequestModel {
     return CreateBookingRequestModel(
       salonServicePriceId: map['salon_service_price_id']?.toString() ?? '',
       startAt: tryParseApiDateTime(map['start_at']) ?? DateTime.now().toUtc(),
+      stylistId: map['stylist_id']?.toString(),
       note: map['note']?.toString(),
     );
   }
@@ -72,12 +79,16 @@ class CreateBookingRequestModel {
 
     return other.salonServicePriceId == salonServicePriceId &&
         other.startAt == startAt &&
+        other.stylistId == stylistId &&
         other.note == note;
   }
 
   @override
   int get hashCode {
-    return salonServicePriceId.hashCode ^ startAt.hashCode ^ note.hashCode;
+    return salonServicePriceId.hashCode ^
+        startAt.hashCode ^
+        stylistId.hashCode ^
+        note.hashCode;
   }
 }
 
@@ -87,6 +98,10 @@ class BookingModel {
     required this.customerId,
     this.customerName,
     required this.salonId,
+    required this.salonServicePriceId,
+    this.stylistId,
+    this.stylistName,
+    this.stylistAvatar,
     required this.status,
     required this.startAt,
     required this.endAt,
@@ -108,6 +123,10 @@ class BookingModel {
   final String customerId;
   final String? customerName;
   final String salonId;
+  final String salonServicePriceId;
+  final String? stylistId;
+  final String? stylistName;
+  final String? stylistAvatar;
   final String status;
 
   final DateTime startAt;
@@ -136,6 +155,10 @@ class BookingModel {
     String? customerId,
     String? customerName,
     String? salonId,
+    String? salonServicePriceId,
+    String? stylistId,
+    String? stylistName,
+    String? stylistAvatar,
     String? status,
     DateTime? startAt,
     DateTime? endAt,
@@ -157,6 +180,10 @@ class BookingModel {
       customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
       salonId: salonId ?? this.salonId,
+      salonServicePriceId: salonServicePriceId ?? this.salonServicePriceId,
+      stylistId: stylistId ?? this.stylistId,
+      stylistName: stylistName ?? this.stylistName,
+      stylistAvatar: stylistAvatar ?? this.stylistAvatar,
       status: status ?? this.status,
       startAt: startAt ?? this.startAt,
       endAt: endAt ?? this.endAt,
@@ -185,6 +212,10 @@ class BookingModel {
       'customer_id': customerId,
       'customer_name': customerName,
       'salon_id': salonId,
+      'salon_service_price_id': salonServicePriceId,
+      'stylist_id': stylistId,
+      'stylist_name': stylistName,
+      'stylist_avatar': stylistAvatar,
       'status': status,
       'start_at': startAt.toIso8601String(),
       'end_at': endAt.toIso8601String(),
@@ -212,6 +243,14 @@ class BookingModel {
       customerId: map['customer_id']?.toString() ?? '',
       customerName: map['customer_name']?.toString(),
       salonId: map['salon_id']?.toString() ?? '',
+      salonServicePriceId: map['salon_service_price_id']?.toString() ?? '',
+      stylistId: map['stylist_id']?.toString(),
+      stylistName: map['stylist_name']?.toString(),
+      stylistAvatar: resolveImageUrl(
+        map['stylist_avatar'] ??
+            map['stylist_profile_picture'] ??
+            map['stylist_image'],
+      ),
       status: map['status']?.toString() ?? 'pending',
       startAt: tryParseApiDateTime(map['start_at']) ?? DateTime.now().toUtc(),
       endAt: tryParseApiDateTime(map['end_at']) ?? DateTime.now().toUtc(),
@@ -246,7 +285,7 @@ class BookingModel {
   // --------------------------------------------------
   @override
   String toString() {
-    return 'BookingModel(id: $id, customerId: $customerId, salonId: $salonId, status: $status, startAt: $startAt, endAt: $endAt, serviceNameSnapshot: $serviceNameSnapshot, priceSnapshot: $priceSnapshot, currencySnapshot: $currencySnapshot, durationMinutesSnapshot: $durationMinutesSnapshot, note: $note, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'BookingModel(id: $id, customerId: $customerId, salonId: $salonId, salonServicePriceId: $salonServicePriceId, stylistId: $stylistId, stylistName: $stylistName, stylistAvatar: $stylistAvatar, status: $status, startAt: $startAt, endAt: $endAt, serviceNameSnapshot: $serviceNameSnapshot, priceSnapshot: $priceSnapshot, currencySnapshot: $currencySnapshot, durationMinutesSnapshot: $durationMinutesSnapshot, note: $note, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -256,6 +295,10 @@ class BookingModel {
     return other.id == id &&
         other.customerId == customerId &&
         other.salonId == salonId &&
+        other.salonServicePriceId == salonServicePriceId &&
+        other.stylistId == stylistId &&
+        other.stylistName == stylistName &&
+        other.stylistAvatar == stylistAvatar &&
         other.status == status &&
         other.startAt == startAt &&
         other.endAt == endAt &&
@@ -277,6 +320,10 @@ class BookingModel {
     return id.hashCode ^
         customerId.hashCode ^
         salonId.hashCode ^
+        salonServicePriceId.hashCode ^
+        stylistId.hashCode ^
+        stylistName.hashCode ^
+        stylistAvatar.hashCode ^
         status.hashCode ^
         startAt.hashCode ^
         endAt.hashCode ^

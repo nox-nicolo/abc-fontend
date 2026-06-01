@@ -6,6 +6,7 @@ class BookingDraft {
 
   // backend-required
   final String? salonServicePriceId;
+  final String? stylistId;
   final DateTime? startAt;
   final String? note;
 
@@ -19,6 +20,7 @@ class BookingDraft {
   const BookingDraft({
     this.style,
     this.salonServicePriceId,
+    this.stylistId,
     this.startAt,
     this.note,
     this.salonName,
@@ -31,6 +33,7 @@ class BookingDraft {
   BookingDraft copyWith({
     PostMinorCategoriesModel? style,
     String? salonServicePriceId,
+    String? stylistId,
     DateTime? startAt,
     String? note,
     String? salonName,
@@ -38,19 +41,19 @@ class BookingDraft {
     double? price,
     String? currency,
     int? durationMinutes,
+    bool clearStylist = false,
   }) {
     return BookingDraft(
       style: style ?? this.style,
-      salonServicePriceId:
-          salonServicePriceId ?? this.salonServicePriceId,
+      salonServicePriceId: salonServicePriceId ?? this.salonServicePriceId,
+      stylistId: clearStylist ? null : stylistId ?? this.stylistId,
       startAt: startAt ?? this.startAt,
       note: note ?? this.note,
       salonName: salonName ?? this.salonName,
       serviceName: serviceName ?? this.serviceName,
       price: price ?? this.price,
       currency: currency ?? this.currency,
-      durationMinutes:
-          durationMinutes ?? this.durationMinutes,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
     );
   }
 }

@@ -1,26 +1,44 @@
 import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/feature/booking/model/availability.dart';
+import 'package:africa_beuty/feature/booking/model/start_booking.dart';
 import 'package:africa_beuty/feature/booking/provider/availability.dart';
-import 'package:africa_beuty/feature/booking/provider/booking_draft.dart';
-import 'package:africa_beuty/feature/booking/view/widgets/start_booking/choose_stylist.dart';
+import 'package:africa_beuty/feature/booking/view_modal/customer_booking.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class PickDateTimePage extends ConsumerStatefulWidget {
-  const PickDateTimePage({super.key});
+class RescheduleBookingPage extends ConsumerStatefulWidget {
+  const RescheduleBookingPage({super.key, required this.booking});
+
+  final BookingModel booking;
 
   @override
-  ConsumerState<PickDateTimePage> createState() => _PickDateTimePageState();
+  ConsumerState<RescheduleBookingPage> createState() =>
+      _RescheduleBookingPageState();
 }
 
-class _PickDateTimePageState extends ConsumerState<PickDateTimePage> {
+class _RescheduleBookingPageState extends ConsumerState<RescheduleBookingPage> {
   DateTime _startDate = DateTime.now();
   DateTime? _selectedDay;
   AvailabilitySlot? _selectedSlot;
 
-  void _selectSlot(AvailabilitySlot slot) {
-    setState(() => _selectedSlot = slot);
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(customerBookingActionViewModelProvider, (prev, next) {
+      if (prev?.isLoading != true) return;
+      next.whenOrNull(
+        data: (_) {
+          if (mounted) Navigator.pop(context);
+        },
+        error: (err, _) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(err.toString())));
+        },
+      );
+    });
   }
 
   Future<void> _openDatePicker() async {
@@ -38,52 +56,29 @@ class _PickDateTimePageState extends ConsumerState<PickDateTimePage> {
     });
   }
 
-  void _continue() {
+  void _submit() {
     final slot = _selectedSlot;
     if (slot == null) return;
-
-    ref.read(bookingDraftProvider.notifier).setStartAt(slot.startAt.toUtc());
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChooseStylistPage(
-          salonServicePriceId: ref
-              .read(bookingDraftProvider)
-              .salonServicePriceId!,
-        ),
-      ),
-    );
+    ref
+        .read(customerBookingActionViewModelProvider.notifier)
+        .reschedule(widget.booking.id, slot.startAt.toUtc());
   }
 
   @override
   Widget build(BuildContext context) {
-    final draft = ref.watch(bookingDraftProvider);
-    final salonServicePriceId = draft.salonServicePriceId;
-
-    if (salonServicePriceId == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Select Date & Time')),
-        body: const AppEmptyState(
-          icon: Icons.storefront_outlined,
-          title: 'Select a salon first',
-          message: 'Choose a salon before picking an appointment time.',
-        ),
-      );
-    }
-
     final request = AvailabilityRequest(
-      salonServicePriceId: salonServicePriceId,
+      salonServicePriceId: widget.booking.salonServicePriceId,
+      stylistId: widget.booking.stylistId,
       startDate: _startDate,
       days: 14,
-      stylistId: draft.stylistId,
     );
     final availability = ref.watch(availabilityProvider(request));
+    final actionLoading = ref
+        .watch(customerBookingActionViewModelProvider)
+        .isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Date & Time'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Reschedule')),
       body: availability.when(
         loading: () => const AppLoadingState(),
         error: (error, _) => AppErrorState(
@@ -103,7 +98,9 @@ class _PickDateTimePageState extends ConsumerState<PickDateTimePage> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Choose an available slot',
+                        widget.booking.serviceNameSnapshot,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
@@ -141,15 +138,25 @@ class _PickDateTimePageState extends ConsumerState<PickDateTimePage> {
                       : _SlotGrid(
                           slots: slots,
                           selectedSlot: _selectedSlot,
-                          onSelected: _selectSlot,
+                          onSelected: (slot) {
+                            setState(() => _selectedSlot = slot);
+                          },
                         ),
                 ),
                 SizedBox(
                   width: double.infinity,
                   height: 54,
                   child: FilledButton(
-                    onPressed: _selectedSlot == null ? null : _continue,
-                    child: const Text('Continue'),
+                    onPressed: actionLoading || _selectedSlot == null
+                        ? null
+                        : _submit,
+                    child: actionLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Reschedule Booking'),
                   ),
                 ),
               ],

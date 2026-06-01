@@ -15,6 +15,8 @@ class PostStatsRow extends ConsumerStatefulWidget {
   final int shares;
   final bool isLiked;
   final bool isSaved;
+  final bool canComment;
+  final VoidCallback? onShare;
 
   const PostStatsRow({
     super.key,
@@ -24,6 +26,8 @@ class PostStatsRow extends ConsumerStatefulWidget {
     required this.shares,
     this.isLiked = false,
     this.isSaved = false,
+    this.canComment = true,
+    this.onShare,
   });
 
   @override
@@ -41,6 +45,17 @@ class _PostStatsRowState extends ConsumerState<PostStatsRow> {
     super.initState();
     _liked = widget.isLiked;
     _saved = widget.isSaved;
+  }
+
+  @override
+  void didUpdateWidget(covariant PostStatsRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isLiked != widget.isLiked) {
+      _liked = widget.isLiked;
+    }
+    if (oldWidget.isSaved != widget.isSaved) {
+      _saved = widget.isSaved;
+    }
   }
 
   void _toggleLike() {
@@ -119,10 +134,15 @@ class _PostStatsRowState extends ConsumerState<PostStatsRow> {
           const SizedBox(width: 16),
           _IconBtn(
             icon: Icons.chat_bubble_outline,
-            onTap: () => showCommentsSheet(context, widget.postId),
+            onTap: () => showCommentsSheet(
+              context,
+              widget.postId,
+              canComment: widget.canComment,
+            ),
           ),
           const SizedBox(width: 16),
-          _IconBtn(icon: Icons.send_outlined, onTap: () {}),
+          if (widget.onShare != null)
+            _IconBtn(icon: Icons.send_outlined, onTap: widget.onShare!),
           const Spacer(),
           IconButton(
             splashRadius: 22,

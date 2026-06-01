@@ -1,6 +1,8 @@
 import 'package:africa_beuty/core/widgets/app_state.dart';
 import 'package:africa_beuty/feature/booking/model/start_booking.dart';
+import 'package:africa_beuty/feature/booking/view/pages/reschedule_booking.dart';
 import 'package:africa_beuty/feature/booking/view_modal/customer_booking.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -77,6 +79,14 @@ class _CustomerBookingDetailPageState
                           label: 'Duration',
                           value: '${booking.durationMinutesSnapshot} min',
                         ),
+                        if (booking.stylistName != null &&
+                            booking.stylistName!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          _StylistInfoRow(
+                            name: booking.stylistName!,
+                            avatarUrl: booking.stylistAvatar,
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -152,6 +162,11 @@ class _CustomerBookingDetailPageState
                         ],
                       ),
                     ],
+                    if (booking.status == 'completed' &&
+                        !booking.hasReview) ...[
+                      const SizedBox(height: 16),
+                      const _CompletionReviewNotice(),
+                    ],
                   ],
                 ),
               ),
@@ -196,7 +211,13 @@ class _ActionBar extends ConsumerWidget {
               child: FilledButton.icon(
                 onPressed: loading
                     ? null
-                    : () => _showRescheduleDialog(context, vm, booking),
+                    : () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              RescheduleBookingPage(booking: booking),
+                        ),
+                      ),
                 icon: const Icon(Icons.edit_calendar_rounded),
                 label: const Text('Reschedule'),
               ),
@@ -213,7 +234,7 @@ class _ActionBar extends ConsumerWidget {
                   ? null
                   : () => _showReviewDialog(context, vm, booking.id),
               icon: const Icon(Icons.star_outline_rounded),
-              label: const Text('Leave a Review'),
+              label: const Text('Leave a Review (Optional)'),
             ),
           );
         }
@@ -269,36 +290,6 @@ class _ActionBar extends ConsumerWidget {
     );
   }
 
-  void _showRescheduleDialog(
-    BuildContext context,
-    CustomerBookingActionViewModel vm,
-    BookingModel booking,
-  ) async {
-    final now = DateTime.now();
-    final date = await showDatePicker(
-      context: context,
-      initialDate: booking.startAt.isAfter(now) ? booking.startAt : now,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 90)),
-    );
-    if (date == null || !context.mounted) return;
-
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(booking.startAt),
-    );
-    if (time == null) return;
-
-    final newStart = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
-    vm.reschedule(booking.id, newStart);
-  }
-
   void _showReviewDialog(
     BuildContext context,
     CustomerBookingActionViewModel vm,
@@ -311,10 +302,15 @@ class _ActionBar extends ConsumerWidget {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          title: const Text('Leave a Review'),
+          title: const Text('Review This Service'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Text(
+                'The salon marked this booking complete. Your review is optional and helps future customers.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
@@ -355,7 +351,7 @@ class _ActionBar extends ConsumerWidget {
                   comment: commentCtrl.text.trim(),
                 );
               },
-              child: const Text('Submit'),
+              child: const Text('Submit Review'),
             ),
           ],
         ),
@@ -407,6 +403,24 @@ class _ReviewSummary extends StatelessWidget {
           const SizedBox(height: 10),
           _MessageBox(text: comment!.trim()),
         ],
+      ],
+    );
+  }
+}
+
+class _CompletionReviewNotice extends StatelessWidget {
+  const _CompletionReviewNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      title: 'Service Complete',
+      icon: Icons.task_alt_rounded,
+      children: const [
+        _MessageBox(
+          text:
+              'The salon marked this service complete. Leaving a review is optional, but it helps other customers and improves recommendations.',
+        ),
       ],
     );
   }
@@ -530,6 +544,72 @@ class _SectionCard extends StatelessWidget {
           const SizedBox(height: 14),
           ...children,
         ],
+      ),
+    );
+  }
+}
+
+class _StylistInfoRow extends StatelessWidget {
+  const _StylistInfoRow({required this.name, required this.avatarUrl});
+
+  final String name;
+  final String? avatarUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final imageUrl = avatarUrl?.trim();
+
+    return Row(
+      children: [
+        ClipOval(
+          child: imageUrl != null && imageUrl.isNotEmpty
+              ? CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, _, _) => const _StylistAvatarFallback(),
+                )
+              : const _StylistAvatarFallback(),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          'Stylist',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const Spacer(),
+        Flexible(
+          child: Text(
+            name,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StylistAvatarFallback extends StatelessWidget {
+  const _StylistAvatarFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: scheme.surfaceContainerHighest,
+      child: Icon(
+        Icons.person_rounded,
+        size: 19,
+        color: scheme.onSurfaceVariant,
       ),
     );
   }

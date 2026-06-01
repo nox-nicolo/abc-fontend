@@ -1,4 +1,5 @@
 import 'package:africa_beuty/core/utils/api_datetime.dart';
+import 'package:africa_beuty/core/utils/image_url.dart';
 
 class BookingListItem {
   final String id;
@@ -6,6 +7,10 @@ class BookingListItem {
 
   final String customerId;
   final String customerName;
+  final String salonServicePriceId;
+  final String? stylistId;
+  final String? stylistName;
+  final String? stylistAvatar;
 
   final DateTime startAt;
   final DateTime endAt;
@@ -28,6 +33,10 @@ class BookingListItem {
     required this.status,
     required this.customerId,
     required this.customerName,
+    required this.salonServicePriceId,
+    this.stylistId,
+    this.stylistName,
+    this.stylistAvatar,
     required this.startAt,
     required this.endAt,
     required this.serviceName,
@@ -47,6 +56,10 @@ class BookingListItem {
     String? status,
     String? customerId,
     String? customerName,
+    String? salonServicePriceId,
+    String? stylistId,
+    String? stylistName,
+    String? stylistAvatar,
     DateTime? startAt,
     DateTime? endAt,
     String? serviceName,
@@ -65,6 +78,10 @@ class BookingListItem {
       status: status ?? this.status,
       customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
+      salonServicePriceId: salonServicePriceId ?? this.salonServicePriceId,
+      stylistId: stylistId ?? this.stylistId,
+      stylistName: stylistName ?? this.stylistName,
+      stylistAvatar: stylistAvatar ?? this.stylistAvatar,
       startAt: startAt ?? this.startAt,
       endAt: endAt ?? this.endAt,
       serviceName: serviceName ?? this.serviceName,
@@ -87,6 +104,14 @@ class BookingListItem {
 
       customerId: map['customer_id']?.toString() ?? '',
       customerName: map['customer_name']?.toString() ?? '',
+      salonServicePriceId: map['salon_service_price_id']?.toString() ?? '',
+      stylistId: map['stylist_id']?.toString(),
+      stylistName: map['stylist_name']?.toString(),
+      stylistAvatar: resolveImageUrl(
+        map['stylist_avatar'] ??
+            map['stylist_profile_picture'] ??
+            map['stylist_image'],
+      ),
 
       startAt: parseApiDateTime(map['start_at']).toLocal(),
       endAt: parseApiDateTime(map['end_at']).toLocal(),

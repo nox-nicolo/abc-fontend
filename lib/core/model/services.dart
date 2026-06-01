@@ -1,27 +1,24 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
-
 class MajorServiceModel {
-  MajorServiceModel(
-    {
-      required this.id, 
-      required this.name, 
-      required this.fileName, 
-      required this.rated
-    }
-  );
+  MajorServiceModel({
+    required this.id,
+    required this.name,
+    required this.fileName,
+    required this.rated,
+  });
 
   final String id;
-  final String name; 
-  final String fileName; 
-  final double rated; 
+  final String name;
+  final String fileName;
+  final double rated;
 
   MajorServiceModel copyWith({
     String? id,
     String? name,
-    String? fileName, 
-    double?  rated
+    String? fileName,
+    double? rated,
   }) {
     return MajorServiceModel(
       id: id ?? this.id,
@@ -34,9 +31,9 @@ class MajorServiceModel {
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'id': id,
-      'name': name, 
-      'fileName': fileName, 
-      'rated': rated
+      'name': name,
+      'fileName': fileName,
+      'rated': rated,
     };
   }
 
@@ -44,14 +41,15 @@ class MajorServiceModel {
     return MajorServiceModel(
       id: map['id'] ?? "",
       name: map['name'] ?? "",
-      fileName: map['fileName'] ?? "", 
-      rated: (map['rated'] as num?)?.toDouble() ?? 0.0
+      fileName: map['fileName'] ?? "",
+      rated: (map['rated'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
-  String toJson() => json.encode(toMap()); 
+  String toJson() => json.encode(toMap());
 
-  factory MajorServiceModel.fromJson(String source) => MajorServiceModel.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory MajorServiceModel.fromJson(String source) =>
+      MajorServiceModel.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
@@ -62,25 +60,19 @@ class MajorServiceModel {
   bool operator ==(covariant MajorServiceModel other) {
     if (identical(this, other)) return true;
 
-    return 
-      other.id == id &&
-      other.name == name &&
-      other.fileName == fileName && 
-      other.rated == rated;
+    return other.id == id &&
+        other.name == name &&
+        other.fileName == fileName &&
+        other.rated == rated;
   }
 
   @override
   int get hashCode {
-    return id.hashCode ^
-      name.hashCode ^
-      fileName.hashCode ^
-      rated.hashCode;
+    return id.hashCode ^ name.hashCode ^ fileName.hashCode ^ rated.hashCode;
   }
-
 }
 
 // Minor Category Model
-
 
 class PostMinorCategoriesModel {
   PostMinorCategoriesModel({
@@ -93,10 +85,10 @@ class PostMinorCategoriesModel {
   });
 
   final String id;
-  final String serviceId; 
+  final String serviceId;
   final String name;
-  final String fileName; 
-  final String description; 
+  final String fileName;
+  final String description;
   final double rated;
 
   PostMinorCategoriesModel copyWith({
@@ -133,15 +125,18 @@ class PostMinorCategoriesModel {
       id: map['id'] as String,
       serviceId: map['serviceId'] as String,
       name: map['name'] as String,
-      fileName:map['fileName'] as String,
+      fileName: map['fileName'] as String,
       description: map['description'] as String,
-      rated:map['rated'] as double,
+      rated: (map['rated'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory PostMinorCategoriesModel.fromJson(String source) => PostMinorCategoriesModel.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory PostMinorCategoriesModel.fromJson(String source) =>
+      PostMinorCategoriesModel.fromMap(
+        json.decode(source) as Map<String, dynamic>,
+      );
 
   @override
   String toString() {
@@ -151,23 +146,22 @@ class PostMinorCategoriesModel {
   @override
   bool operator ==(covariant PostMinorCategoriesModel other) {
     if (identical(this, other)) return true;
-  
-    return 
-      other.id == id &&
-      other.serviceId == serviceId &&
-      other.name == name &&
-      other.fileName == fileName &&
-      other.description == description &&
-      other.rated == rated;
+
+    return other.id == id &&
+        other.serviceId == serviceId &&
+        other.name == name &&
+        other.fileName == fileName &&
+        other.description == description &&
+        other.rated == rated;
   }
 
   @override
   int get hashCode {
     return id.hashCode ^
-      serviceId.hashCode ^
-      name.hashCode ^
-      fileName.hashCode ^
-      description.hashCode ^
-      rated.hashCode;
+        serviceId.hashCode ^
+        name.hashCode ^
+        fileName.hashCode ^
+        description.hashCode ^
+        rated.hashCode;
   }
 }

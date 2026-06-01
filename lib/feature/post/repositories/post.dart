@@ -21,7 +21,7 @@ import 'package:http/http.dart' as http;
 ------------------------------------------------------------- */
 
 abstract class PostRepository {
-  Future<Either<AppFailure, bool>> createPost(CreatePostModel post);
+  Future<Either<AppFailure, String>> createPost(CreatePostModel post);
 
   Future<Either<AppFailure, bool>> updatePost(
     String postId,
@@ -74,7 +74,7 @@ class PostRepositoryImpl implements PostRepository {
      CREATE POST
   ----------------------------------------------------------- */
   @override
-  Future<Either<AppFailure, bool>> createPost(CreatePostModel post) async {
+  Future<Either<AppFailure, String>> createPost(CreatePostModel post) async {
     try {
       final token = await LocalStorageService.getAccessToken();
       if (token == null) {
@@ -92,7 +92,7 @@ class PostRepositoryImpl implements PostRepository {
         ..fields['status'] = post.status
         ..fields['hashtags'] = jsonEncode(post.hashtags)
         ..fields['tagged'] = jsonEncode(post.tagged)
-        ..fields['settings'] = jsonEncode(post.settings.toJson())
+        ..fields['settings'] = jsonEncode(post.settings.toMap())
         ..fields['media_metadata'] = jsonEncode(
           post.media.map((m) => {'aspect_ratio': m.aspectRatio}).toList(),
         );
@@ -112,7 +112,16 @@ class PostRepositoryImpl implements PostRepository {
       final response = await http.Response.fromStream(streamed);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return const Right(true);
+        final body = _safeDecode(response.body);
+        final postId = body?['post_id']?.toString();
+        if (postId == null || postId.isEmpty) {
+          return Left(
+            AppFailure(
+              'Post created, but the server did not return a post id.',
+            ),
+          );
+        }
+        return Right(postId);
       }
 
       final body = _safeDecode(response.body);

@@ -14,6 +14,7 @@ class CreatePostState {
   final bool isSubmitting;
   final bool isSuccess;
   final String? error;
+  final String? createdPostId;
   final String? status;
 
   const CreatePostState({
@@ -29,6 +30,7 @@ class CreatePostState {
     this.isSuccess = false,
     this.picture = "",
     this.error,
+    this.createdPostId,
     this.status,
   });
 
@@ -45,6 +47,9 @@ class CreatePostState {
     bool? isSubmitting,
     bool? isSuccess,
     String? error,
+    bool clearError = false,
+    String? createdPostId,
+    bool clearCreatedPostId = false,
     String? status,
   }) {
     return CreatePostState(
@@ -59,7 +64,10 @@ class CreatePostState {
       settings: settings ?? this.settings,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isSuccess: isSuccess ?? this.isSuccess,
-      error: error ?? this.error,
+      error: clearError ? null : error ?? this.error,
+      createdPostId: clearCreatedPostId
+          ? null
+          : createdPostId ?? this.createdPostId,
       status: status ?? this.status,
     );
   }

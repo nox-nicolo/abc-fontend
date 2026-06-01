@@ -4,19 +4,48 @@ import 'package:flutter/material.dart';
 
 class SearchResultList extends StatelessWidget {
   final List<SearchResult> results;
+  final VoidCallback? onLoadMore;
+  final ValueChanged<SearchResult>? onResultSelected;
+  final bool isLoadingMore;
 
-  const SearchResultList({super.key, required this.results});
+  const SearchResultList({
+    super.key,
+    required this.results,
+    this.onLoadMore,
+    this.onResultSelected,
+    this.isLoadingMore = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final visibleResults = _dedupe(results);
 
-    return ListView.builder(
-      itemCount: visibleResults.length,
-      itemBuilder: (context, index) {
-        final result = visibleResults[index];
-        return SearchResultItem(result: result);
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        final loadMore = onLoadMore;
+        if (loadMore == null || isLoadingMore) return false;
+        final metrics = notification.metrics;
+        if (metrics.pixels >= metrics.maxScrollExtent - 240) {
+          loadMore();
+        }
+        return false;
       },
+      child: ListView.builder(
+        itemCount: visibleResults.length + (isLoadingMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index >= visibleResults.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator.adaptive()),
+            );
+          }
+          final result = visibleResults[index];
+          return SearchResultItem(
+            result: result,
+            onSelected: () => onResultSelected?.call(result),
+          );
+        },
+      ),
     );
   }
 
